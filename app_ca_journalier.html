@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>CA Journalier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg:#0d0f14;--surface:#161920;--card:#1e2230;--border:#2a2f42;
+    --accent:#4ade80;--accent2:#f59e0b;--accent3:#60a5fa;--danger:#f87171;
+    --text:#e8eaf0;--muted:#6b7280;--radius:14px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+  html,body{min-height:100%;background:var(--bg);color:var(--text);font-family:'Sora',sans-serif}
+
+  .header{background:var(--surface);border-bottom:1px solid var(--border);padding:14px 20px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100}
+  .header-title{font-size:1.1rem;font-weight:700;letter-spacing:-0.02em}
+  .header-title span{color:var(--accent)}
+  .mode-pills{display:flex;gap:6px}
+  .pill{padding:6px 14px;border-radius:999px;font-size:.78rem;font-weight:600;border:1px solid var(--border);background:transparent;color:var(--muted);cursor:pointer;transition:all .2s}
+  .pill.active{background:var(--accent);color:#000;border-color:var(--accent)}
+
+  .screen{display:none;padding:20px;max-width:540px;margin:0 auto}
+  .screen.active{display:block}
+
+  .card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:16px}
+  .card h3{font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:16px}
+
+  .field{margin-bottom:14px}
+  .field:last-child{margin-bottom:0}
+  .field label{display:block;font-size:.82rem;color:var(--muted);margin-bottom:6px;font-weight:500}
+  .field input,.field select{width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:12px 14px;font-size:.95rem;font-family:'Sora',sans-serif;outline:none;transition:border-color .2s}
+  .field input:focus,.field select:focus{border-color:var(--accent)}
+  .hint{font-size:.75rem;color:var(--muted);margin-top:4px}
+
+  .montants-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+  .montant-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .montant-card label{display:block;font-size:.75rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+  .montant-card .emoji{font-size:1.3rem;margin-bottom:6px;display:block}
+  .montant-card input{width:100%;background:transparent;border:none;border-bottom:2px solid var(--border);color:var(--text);padding:4px 0;font-size:1.3rem;font-family:'DM Mono',monospace;font-weight:500;outline:none;transition:border-color .2s;text-align:right}
+  .montant-card input:focus{border-color:var(--accent)}
+  .montant-card.autre{grid-column:1/-1;display:flex;align-items:center;gap:16px;padding:14px 16px}
+  .montant-card.autre .left{flex:0 0 auto}
+  .montant-card.autre .right{flex:1}
+  .montant-card.autre input{font-size:1.1rem}
+
+  .total-box{background:linear-gradient(135deg,#14532d33,#052e1633);border:1px solid #4ade8044;border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;display:flex;justify-content:space-between;align-items:center}
+  .total-box .label{font-size:.82rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em}
+  .total-box .value{font-size:1.9rem;font-weight:700;font-family:'DM Mono',monospace;color:var(--accent)}
+
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:10px;font-size:.92rem;font-weight:600;border:none;cursor:pointer;transition:all .2s;font-family:'Sora',sans-serif}
+  .btn-primary{background:var(--accent);color:#000}
+  .btn-secondary{background:var(--card);color:var(--text);border:1px solid var(--border)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn-full{width:100%;justify-content:center;margin-top:8px}
+
+  .stats-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:16px}
+  .stat-card .label{font-size:.73rem;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px}
+  .stat-card .value{font-size:1.25rem;font-weight:700;font-family:'DM Mono',monospace}
+  .stat-card .value.green{color:var(--accent)}
+  .stat-card .value.amber{color:var(--accent2)}
+  .stat-card .value.blue{color:var(--accent3)}
+
+  .section-title{font-size:.82rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;margin-top:20px}
+  .table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid var(--border)}
+  table{width:100%;border-collapse:collapse;font-size:.82rem}
+  thead th{background:var(--surface);padding:10px 12px;text-align:left;font-weight:600;color:var(--muted);text-transform:uppercase;font-size:.7rem;letter-spacing:.07em;border-bottom:1px solid var(--border)}
+  tbody td{padding:10px 12px;border-bottom:1px solid var(--border)}
+  tbody tr:last-child td{border-bottom:none}
+  tbody tr:hover{background:var(--card)}
+  .text-right{text-align:right}
+
+  #toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(120px);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 22px;font-size:.88rem;font-weight:500;z-index:999;transition:transform .35s cubic-bezier(.34,1.56,.64,1);box-shadow:0 8px 32px #0008;max-width:90vw;text-align:center}
+  #toast.show{transform:translateX(-50%) translateY(0)}
+  #toast.success{border-color:var(--accent);color:var(--accent)}
+  #toast.error{border-color:var(--danger);color:var(--danger)}
+
+  .spinner{display:inline-block;width:18px;height:18px;border:2px solid #0004;border-top-color:currentColor;border-radius:50%;animation:spin .6s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  #loader{position:fixed;inset:0;background:var(--bg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;z-index:200;transition:opacity .5s}
+  #loader.hidden{opacity:0;pointer-events:none}
+  #loader .logo{font-size:2.2rem;font-weight:700;letter-spacing:-.03em}
+  #loader .logo span{color:var(--accent)}
+  #loader p{color:var(--muted);font-size:.88rem}
+
+  .mono{font-family:'DM Mono',monospace}
+</style>
+</head>
+<body>
+
+<div id="loader">
+  <div class="logo">CA<span>App</span></div>
+  <div class="spinner"></div>
+  <p>Initialisation…</p>
+</div>
+
+<div class="header">
+  <div class="header-title">CA<span>App</span></div>
+  <div class="mode-pills">
+    <button class="pill active" onclick="showScreen('saisie')">📝 Saisie</button>
+    <button class="pill" onclick="showScreen('histo')">📊 Historique</button>
+    <button class="pill" onclick="showScreen('config')">⚙️</button>
+  </div>
+</div>
+
+<!-- SAISIE -->
+<div class="screen active" id="screen-saisie">
+  <div class="card">
+    <h3>📅 Informations</h3>
+    <div class="field"><label>Date de clôture</label><input type="date" id="saisie-date" /></div>
+    <div class="field"><label>Magasin</label><input type="text" id="saisie-magasin" placeholder="Grasse" /></div>
+    <div class="field"><label>Employé</label><input type="text" id="saisie-employe" placeholder="Raphaël Perrone" /></div>
+  </div>
+
+  <div class="card">
+    <h3>💶 Répartition du CA</h3>
+    <div class="montants-grid">
+      <div class="montant-card">
+        <span class="emoji">💳</span>
+        <label>Carte bancaire</label>
+        <input type="number" id="m-cb" min="0" step="0.01" placeholder="0,00" oninput="recalcTotal()">
+      </div>
+      <div class="montant-card">
+        <span class="emoji">💵</span>
+        <label>Espèces</label>
+        <input type="number" id="m-esp" min="0" step="0.01" placeholder="0,00" oninput="recalcTotal()">
+      </div>
+      <div class="montant-card autre">
+        <div class="left"><span style="font-size:1.4rem">🔀</span></div>
+        <div class="right">
+          <label>Autres (chèques, bons…)</label>
+          <input type="number" id="m-autre" min="0" step="0.01" placeholder="0,00" oninput="recalcTotal()">
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-box">
+    <div><div class="label">Total CA journalier</div></div>
+    <div class="value" id="total-display">0,00 €</div>
+  </div>
+
+  <button class="btn btn-primary btn-full" id="btn-envoyer" onclick="envoyerCA()">✅ Enregistrer le CA</button>
+</div>
+
+<!-- HISTORIQUE -->
+<div class="screen" id="screen-histo">
+  <div class="stats-grid">
+    <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="h-total">—</div></div>
+    <div class="stat-card"><div class="label">Jours saisis</div><div class="value blue mono" id="h-jours">—</div></div>
+    <div class="stat-card"><div class="label">Total CB</div><div class="value mono" id="h-cb">—</div></div>
+    <div class="stat-card"><div class="label">Total Espèces</div><div class="value amber mono" id="h-esp">—</div></div>
+  </div>
+  <button class="btn btn-secondary" style="margin-bottom:4px" onclick="chargerHistorique()">🔄 Actualiser</button>
+  <div class="section-title">Dernières entrées</div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Date</th><th>Magasin</th><th>Employé</th><th class="text-right">Total</th></tr></thead>
+      <tbody id="histo-tbody"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Charger…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="screen" id="screen-config">
+  <div class="card">
+    <h3>🔑 Google API</h3>
+    <div class="field"><label>Clé API (lecture)</label><input type="password" id="cfg-apikey"></div>
+    <div class="field"><label>OAuth Client ID (écriture)</label><input type="text" id="cfg-clientid"></div>
+  </div>
+  <div class="card">
+    <h3>📋 Sheet TdB Manager</h3>
+    <div class="field">
+      <label>ID du Google Sheet</label>
+      <input type="text" id="cfg-sheet-id">
+      <div class="hint">Les saisies vont dans l'onglet "Données brutes CA"</div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>👤 Valeurs par défaut</h3>
+    <div class="field"><label>Magasin par défaut</label><input type="text" id="cfg-magasin" placeholder="Grasse"></div>
+    <div class="field"><label>Employé par défaut</label><input type="text" id="cfg-employe" placeholder="Raphaël Perrone"></div>
+  </div>
+  <button class="btn btn-primary btn-full" onclick="sauvegarderConfig()">💾 Enregistrer</button>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─── CONFIG PRÉCONFIGURÉE ──────────────────────────────────────────────────
+const DEFAULTS = {
+  'cfg-apikey':   'AIzaSyBOukP60-qBVWh0OllyCkwFBt-wp_EObTs',
+  'cfg-clientid': '421880671116-osve165o12ijsrl05tqllopokqs7ep0p.apps.googleusercontent.com',
+  'cfg-sheet-id': '1xRwPp8_Wz94pz7_lliOAVQ3z2ZdlZ4VtqNPFu7Uvd40',
+  'cfg-magasin':  '',
+  'cfg-employe':  '',
+};
+const CFG_KEYS = Object.keys(DEFAULTS);
+let tokenClient = null, accessToken = null;
+
+window.addEventListener('load', () => {
+  CFG_KEYS.forEach(k => {
+    const val = localStorage.getItem(k) ?? DEFAULTS[k];
+    if (val !== null && document.getElementById(k)) document.getElementById(k).value = val;
+  });
+  document.getElementById('saisie-date').value = new Date().toISOString().split('T')[0];
+  document.getElementById('saisie-magasin').value = getConfig('cfg-magasin');
+  document.getElementById('saisie-employe').value = getConfig('cfg-employe');
+  setTimeout(initGoogleAuth, 500);
+  setTimeout(() => document.getElementById('loader').classList.add('hidden'), 600);
+});
+
+function getConfig(k) { return localStorage.getItem(k) ?? DEFAULTS[k] ?? ''; }
+
+function sauvegarderConfig() {
+  CFG_KEYS.forEach(k => { const el = document.getElementById(k); if (el) localStorage.setItem(k, el.value.trim()); });
+  document.getElementById('saisie-magasin').value = getConfig('cfg-magasin');
+  document.getElementById('saisie-employe').value = getConfig('cfg-employe');
+  showToast('✅ Configuration enregistrée', 'success');
+  initGoogleAuth();
+}
+
+function showScreen(name) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.pill').forEach(p => p.classList.remove('active'));
+  document.getElementById('screen-' + name).classList.add('active');
+  document.querySelectorAll('.pill')[{saisie:0,histo:1,config:2}[name]].classList.add('active');
+  if (name === 'histo') chargerHistorique();
+}
+
+function recalcTotal() {
+  const cb    = parseFloat(document.getElementById('m-cb').value)    || 0;
+  const esp   = parseFloat(document.getElementById('m-esp').value)   || 0;
+  const autre = parseFloat(document.getElementById('m-autre').value) || 0;
+  const total = cb + esp + autre;
+  document.getElementById('total-display').textContent =
+    total.toLocaleString('fr-FR', {minimumFractionDigits:2, maximumFractionDigits:2}) + ' €';
+}
+
+function initGoogleAuth() {
+  const clientId = getConfig('cfg-clientid');
+  if (!clientId || !window.google?.accounts?.oauth2) { setTimeout(initGoogleAuth, 800); return; }
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: clientId,
+    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    callback: (resp) => { if (resp.access_token) { accessToken = resp.access_token; showToast('🔑 Connecté à Google', 'success'); } }
+  });
+}
+
+function demanderToken(callback) {
+  if (accessToken) { callback(); return; }
+  if (!tokenClient) { initGoogleAuth(); showToast('⚠️ Configure le Client ID OAuth', 'error'); return; }
+  tokenClient.callback = (resp) => {
+    if (resp.access_token) { accessToken = resp.access_token; callback(); }
+    else showToast('❌ Auth refusée', 'error');
+  };
+  tokenClient.requestAccessToken({ prompt: '' });
+}
+
+async function envoyerCA() {
+  const date    = document.getElementById('saisie-date').value;
+  const magasin = document.getElementById('saisie-magasin').value.trim();
+  const employe = document.getElementById('saisie-employe').value.trim();
+  const cb      = parseFloat(document.getElementById('m-cb').value)    || 0;
+  const esp     = parseFloat(document.getElementById('m-esp').value)   || 0;
+  const autre   = parseFloat(document.getElementById('m-autre').value) || 0;
+  const total   = cb + esp + autre;
+
+  if (!date)      { showToast('⚠️ Date requise', 'error'); return; }
+  if (!magasin)   { showToast('⚠️ Magasin requis', 'error'); return; }
+  if (!employe)   { showToast('⚠️ Employé requis', 'error'); return; }
+  if (total <= 0) { showToast('⚠️ Saisis au moins un montant', 'error'); return; }
+
+  demanderToken(() => _doEnvoi(date, magasin, employe, cb, esp, autre, total));
+}
+
+async function _doEnvoi(date, magasin, employe, cb, esp, autre, total) {
+  const btn = document.getElementById('btn-envoyer');
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span> Envoi…';
+
+  const sheetId = getConfig('cfg-sheet-id');
+  // Date → numéro sériel Google Sheets (jours depuis 30/12/1899)
+  const dateSerial = Math.floor((new Date(date) - new Date('1899-12-30')) / 86400000);
+  // Colonnes : Magasin | Employé | Date | En CB | En espèce | Autres | Total
+  const row = [magasin, employe, dateSerial, cb, esp, autre, total];
+
+  try {
+    const range = encodeURIComponent('Données brutes CA!A:G');
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`;
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${accessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values: [row] })
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.error?.message || `HTTP ${res.status}`); }
+
+    showToast(`✅ CA enregistré — ${total.toFixed(2)} €`, 'success');
+    ['m-cb','m-esp','m-autre'].forEach(id => document.getElementById(id).value = '');
+    recalcTotal();
+    // Passer au lendemain automatiquement
+    const next = new Date(date); next.setDate(next.getDate() + 1);
+    document.getElementById('saisie-date').value = next.toISOString().split('T')[0];
+
+  } catch(e) {
+    showToast('❌ ' + e.message, 'error');
+    console.error(e);
+  } finally {
+    btn.disabled = false; btn.innerHTML = '✅ Enregistrer le CA';
+  }
+}
+
+async function chargerHistorique() {
+  const sheetId = getConfig('cfg-sheet-id'), apiKey = getConfig('cfg-apikey');
+  const headers = accessToken ? { Authorization: `Bearer ${accessToken}` } : {};
+  const keyParam = accessToken ? '' : `?key=${apiKey}`;
+  try {
+    const range = encodeURIComponent('Données brutes CA!A2:G2000');
+    const res = await fetch(`https://sheets.googleapis.com/v4/spreadsheets/${sheetId}/values/${range}${keyParam}`, { headers });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const rows = (data.values || []).filter(r => r[0]);
+
+    let totalCA=0, totalCB=0, totalEsp=0;
+    rows.forEach(r => { totalCA+=parseFloat(r[6])||0; totalCB+=parseFloat(r[3])||0; totalEsp+=parseFloat(r[4])||0; });
+
+    document.getElementById('h-total').textContent = totalCA.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+    document.getElementById('h-jours').textContent = rows.length;
+    document.getElementById('h-cb').textContent    = totalCB.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+    document.getElementById('h-esp').textContent   = totalEsp.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+
+    const tbody = document.getElementById('histo-tbody');
+    const display = rows.slice(-30).reverse();
+    if (!display.length) { tbody.innerHTML='<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Aucune donnée</td></tr>'; return; }
+    tbody.innerHTML = display.map(r => {
+      let dateStr='—';
+      try { const s=parseFloat(r[2]); if(s>0) dateStr=new Date((s-25569)*86400000).toLocaleDateString('fr-FR'); } catch(e){}
+      return `<tr><td>${dateStr}</td><td>${r[0]||'—'}</td><td>${r[1]||'—'}</td><td class="text-right mono" style="color:var(--accent)">${(parseFloat(r[6])||0).toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td></tr>`;
+    }).join('');
+  } catch(e) { showToast('❌ '+e.message, 'error'); }
+}
+
+let toastTimer;
+function showToast(msg, type='') {
+  const t=document.getElementById('toast'); t.textContent=msg; t.className='show '+type;
+  clearTimeout(toastTimer); toastTimer=setTimeout(()=>t.className='',type==='error'?5000:3500);
+}
+</script>
+<script src="https://accounts.google.com/gsi/client" async></script>
+</body>
+</html>
