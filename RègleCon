@@ -1,0 +1,170 @@
+Prise en charge du règlement général sur la protection des données (RGPD) de l’Union Européenne dans ASP.NET Core
+Par Rick Anderson
+
+ASP.NET Core fournit des API et des modèles qui aident à satisfaire à certaines des exigences du Règlement général sur la protection des données (RGPD) :
+
+Les modèles de projet incluent des points d’extension et du balisage fictif que vous pouvez remplacer par votre politique de confidentialité et politique d’utilisation cookie.
+La page Pages/Privacy.cshtml ou la vue Views/Home/Privacy.cshtml fournit une page pour détailler la politique de confidentialité de votre site.
+Pour en savoir plus sur le RGPD en matière d’applications Blazor, consultez Prise en charge du règlement général sur la protection des données (RGPD) de l’Union Européenne dans ASP.NET Core Blazor.
+
+Pour activer la fonctionnalité de consentement par défaut cookie telle que celle qui se trouve dans les modèles ASP.NET Core 2.2 dans une application de modèle ASP.NET Core actuelle générée, ajoutez le code en surbrillance suivant à Program.cs:
+
+C#
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRazorPages();
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    // This lambda determines whether user consent for non-essential 
+    // cookies is needed for a given request.
+    options.CheckConsentNeeded = context => true;
+
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+});
+
+var app = builder.Build();
+
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler("/Error");
+    app.UseHsts();
+}
+
+app.UseHttpsRedirection();
+app.UseStaticFiles();
+app.UseCookiePolicy();
+
+app.UseRouting();
+
+app.UseAuthorization();
+
+app.MapRazorPages();
+
+app.Run();
+Dans le code précédent, CookiePolicyOptions et UseCookiePolicy sont tous deux utilisés.
+
+Ajoutez le cookie consentement partiel au _Layout.cshtml fichier :
+
+CSHTML
+            @*Previous markup removed for brevity*@
+    </header>
+    <div class="container">
+        <partial name="_CookieConsentPartial" />
+        <main role="main" class="pb-3">
+            @RenderBody()
+        </main>
+    </div>
+
+    <footer class="border-top footer text-muted">
+        <div class="container">
+            &copy; 2022 - WebGDPR - <a asp-area="" asp-page="/Privacy">Privacy</a>
+        </div>
+    </footer>
+
+    <script src="~/lib/jquery/dist/jquery.min.js"></script>
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
+Ajoutez le fichier _CookieConsentPartial.cshtml au projet :
+
+CSHTML
+@using Microsoft.AspNetCore.Http.Features
+
+@{
+    var consentFeature = Context.Features.Get<ITrackingConsentFeature>();
+    var showBanner = !consentFeature?.CanTrack ?? false;
+    var cookieString = consentFeature?.CreateConsentCookie();
+}
+
+@if (showBanner)
+{
+    <div id="cookieConsent" class="alert alert-info alert-dismissible fade show" role="alert">
+        Use this space to summarize your privacy and cookie use policy. <a asp-page="/Privacy">Learn More</a>.
+        <button type="button" class="accept-policy close" data-bs-dismiss="alert" aria-label="Close" data-cookie-string="@cookieString">
+            <span aria-hidden="true">Accept</span>
+        </button>
+    </div>
+    <script>
+        (function () {
+            var button = document.querySelector("#cookieConsent button[data-cookie-string]");
+            button.addEventListener("click", function (event) {
+                document.cookie = button.dataset.cookieString;
+            }, false);
+        })();
+    </script>
+}
+Sélectionnez la version ASP.NET Core 2.2 de cet article pour en savoir plus sur la fonctionnalité de cookie consentement.
+
+Personnaliser la valeur de consentement cookie
+Spécifiez la valeur utilisée pour suivre si l’utilisateur a consenti à la stratégie d’utilisation à l’aide cookie de la CookiePolicyOptions.ConsentCookieValue propriété :
+
+C#
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddRazorPages();
+builder.Services.Configure<CookiePolicyOptions>(options =>
+{
+    options.CheckConsentNeeded = context => true;
+    options.MinimumSameSitePolicy = SameSiteMode.None;
+    options.ConsentCookieValue = "true";
+});
+
+var app = builder.Build();
+Chiffrement au repos
+Certaines bases de données et mécanismes de stockage permettent le chiffrement au repos. Chiffrement au repos :
+
+Chiffre automatiquement les données stockées.
+Chiffre sans configuration, programmation ou autre travail pour le logiciel qui accède aux données.
+Est l’option la plus simple et la plus sûre.
+Permet à la base de données de gérer les clés et le chiffrement.
+Par exemple:
+
+Microsoft SQL et Azure SQL fournissent le chiffrement transparent des données (TDE).
+SQL Azure chiffre la base de données par défaut
+Les objets blob, les fichiers, les tables et le stockage file d’attente Azure sont chiffrés par défaut.
+Pour les bases de données qui ne fournissent pas de chiffrement intégré au repos, vous pouvez utiliser le chiffrement de disque pour fournir la même protection. Par exemple:
+
+BitLocker pour Windows Server
+Linux:
+eCryptfs
+EncFS.
+Ressources supplémentaires
+Centre de gestion de la confidentialité Microsoft : Protéger la confidentialité individuelle avec les services cloud de Microsoft : RGPD
+Commission européenne : la protection des données expliquée
+ Collaborer avec nous sur GitHub
+La source de ce contenu se trouve sur GitHub, où vous pouvez également créer et examiner les problèmes et les demandes de tirage. Pour plus d’informations, consultez notre guide du contributeur.
+
+Commentaires sur ASP.NET Core
+
+ASP.NET Core est un projet open source. Sélectionnez un lien pour fournir des commentaires :
+
+ Ouvrir un problème de documentation
+ Indiquer des commentaires sur le produit
+Ressources supplémentaires
+Documentation
+
+Éviter les attaques de falsification de demande intersites (XSRF/CSRF) dans ASP.NET Core
+
+Découvrez comment empêcher les attaques contre les applications Web lorsqu'un site Web malveillant peut influencer l'interaction entre un navigateur client et l'application.
+
+Empêcher les attaques de redirection ouvertes dans ASP.NET Core
+
+Montre comment empêcher les attaques de redirection ouvertes contre une application ASP.NET Core
+
+Utiliser l'cookieauthentification sans ASP.NET CoreIdentity
+
+Découvrez comment utiliser l'cookieauthentification sans ASP.NET Core Identity.
+
+Afficher 5 de plus
+Entrainement
+
+Module
+
+Mise en œuvre de la conformité dans une application .NET 8 native du cloud - Training
+
+Les applications micro-services, en raison de leur nature distribuée, peuvent être difficiles à sécuriser. Dans ce module, vous allez apprendre à classifier des données sensibles dans une application native cloud, à réactifier les données sensibles dans les fichiers journaux et à générer des rapports de conformité pour une application native cloud.
+
+Last updated on 09/01/2026
