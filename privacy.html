@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Politique de confidentialité — VenteApp</title>
+<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+  :root { --bg:#0d0f14; --card:#1e2230; --border:#2a2f42; --accent:#4ade80; --text:#e8eaf0; --muted:#6b7280; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { background:var(--bg); color:var(--text); font-family:'Sora',sans-serif; line-height:1.7; padding:0 0 60px; }
+  .header { background:#161920; border-bottom:1px solid var(--border); padding:18px 24px; display:flex; align-items:center; gap:12px; }
+  .logo { font-size:1.2rem; font-weight:700; } .logo span { color:var(--accent); }
+  .container { max-width:720px; margin:0 auto; padding:40px 24px; }
+  h1 { font-size:1.6rem; font-weight:700; margin-bottom:8px; }
+  .date { font-size:.82rem; color:var(--muted); margin-bottom:32px; }
+  h2 { font-size:1rem; font-weight:600; color:var(--accent); margin:28px 0 10px; }
+  p { font-size:.9rem; color:#c8cad4; margin-bottom:12px; }
+  ul { padding-left:20px; margin-bottom:12px; }
+  li { font-size:.9rem; color:#c8cad4; margin-bottom:6px; }
+  .card { background:var(--card); border:1px solid var(--border); border-radius:14px; padding:20px; margin-bottom:16px; }
+  a { color:var(--accent); }
+  .back { display:inline-flex; align-items:center; gap:6px; color:var(--muted); font-size:.82rem; text-decoration:none; margin-bottom:24px; }
+  .back:hover { color:var(--accent); }
+</style>
+</head>
+<body>
+<div class="header">
+  <div class="logo">Vente<span>App</span></div>
+  <span style="color:var(--muted);font-size:.85rem">— Politique de confidentialité</span>
+</div>
+<div class="container">
+  <a href="app_vente.html" class="back">← Retour à l'application</a>
+  <h1>Politique de confidentialité</h1>
+  <div class="date">Dernière mise à jour : avril 2026</div>
+
+  <div class="card">
+    <h2>1. Présentation</h2>
+    <p>VenteApp est une application interne de gestion des ventes, du chiffre d'affaires journalier et du planning des collaborateurs, développée pour un usage exclusivement professionnel au sein du réseau de magasins FG Développement / Maison Perrert / Saveur Trepir.</p>
+    <p>Cette politique décrit quelles données sont collectées, comment elles sont utilisées et comment elles sont protégées.</p>
+  </div>
+
+  <div class="card">
+    <h2>2. Données collectées</h2>
+    <p>L'application collecte uniquement les données nécessaires à son fonctionnement :</p>
+    <ul>
+      <li><strong>Données d'authentification</strong> : matricule et code PIN des collaborateurs, stockés dans Google Sheets.</li>
+      <li><strong>Données de ventes</strong> : produits vendus, quantités, prix, date, nom du vendeur.</li>
+      <li><strong>Données de CA journalier</strong> : montants CB, espèces, autres, magasin, employé, date.</li>
+      <li><strong>Photos</strong> : tickets de caisse uploadés dans Google Drive.</li>
+      <li><strong>Disponibilités planning</strong> : jours déclarés par les collaborateurs.</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>3. Utilisation des données</h2>
+    <p>Les données collectées sont utilisées exclusivement pour :</p>
+    <ul>
+      <li>Le suivi des performances commerciales par magasin</li>
+      <li>La gestion du planning hebdomadaire des collaborateurs</li>
+      <li>La consolidation des données dans le tableau de bord manager</li>
+    </ul>
+    <p>Aucune donnée n'est vendue, partagée ou transmise à des tiers extérieurs à l'entreprise.</p>
+  </div>
+
+  <div class="card">
+    <h2>4. Services Google utilisés</h2>
+    <p>L'application utilise les API Google suivantes, après consentement explicite de l'utilisateur :</p>
+    <ul>
+      <li><strong>Google Sheets API</strong> : lecture et écriture des données de ventes, CA, planning et collaborateurs.</li>
+      <li><strong>Google Drive API</strong> : upload des photos de tickets dans un dossier dédié.</li>
+    </ul>
+    <p>L'accès OAuth est limité aux scopes strictement nécessaires. Aucune autre donnée Google (Gmail, Agenda, etc.) n'est accessible.</p>
+  </div>
+
+  <div class="card">
+    <h2>5. Stockage et sécurité</h2>
+    <p>Les données sont stockées dans Google Workspace (Sheets et Drive) sous le contrôle de l'administrateur du réseau. L'application elle-même ne stocke aucune donnée sur ses propres serveurs.</p>
+    <p>La configuration locale (clés de session) est stockée dans le navigateur de l'utilisateur via <code>localStorage</code> et peut être effacée à tout moment en se déconnectant.</p>
+  </div>
+
+  <div class="card">
+    <h2>6. Droits des utilisateurs</h2>
+    <p>Conformément au RGPD, chaque collaborateur peut :</p>
+    <ul>
+      <li>Accéder aux données le concernant en contactant l'administrateur</li>
+      <li>Demander la rectification ou la suppression de ses données</li>
+      <li>S'opposer au traitement de ses données</li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <h2>7. Contact</h2>
+    <p>Pour toute question relative à cette politique de confidentialité, contactez l'administrateur de l'application à l'adresse : <a href="mailto:raphael.perrone@hotmail.fr">raphael.perrone@hotmail.fr</a></p>
+  </div>
+</div>
+</body>
+</html>
