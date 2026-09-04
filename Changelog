@@ -1,3 +1,7 @@
+v1.73
+🔒 Correction de la faille XSS stocké (Cross-Site Scripting)
+Le problème
+Toutes les données provenant du Google Sheet (noms de produits, collaborateurs, magasins, tickets) et des fichiers uploadés étaient injectées dans le DOM via innerHTML sans échappement.
 v1.72 — Purge automatique des disponibilités
 
 🐛 Correction — les demandes de disponibilité ne disparaissaient jamais
