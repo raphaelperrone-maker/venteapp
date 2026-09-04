@@ -1,0 +1,77 @@
+v1.72 — Purge automatique des disponibilités
+
+🐛 Correction — les demandes de disponibilité ne disparaissaient jamais
+
+Les dispos déclarées par les employés restaient affichées d'une semaine sur l'autre. Le code de purge existait mais nécessitait quatre conditions simultanées pour se déclencher :
+
+Condition requise	Conséquence si non remplie
+Être un lundi (getDay() === 1)	Personne n'ouvre l'app ce jour-là → raté jusqu'au lundi suivant
+Être connecté en manager	Aucun manager ne se connecte → rien ne se passe
+Avoir un planning S+1 rempli	return anticipé avant la ligne de purge
+Marqueur localStorage du bon appareil	Non partagé entre les devices
+
+Nouveau mécanisme indépendant de la rotation :
+
+Comparaison du numéro de semaine ISO (2026-S23) avec un marqueur stocké dans le Sheet (Planning!AJ1)
+Se déclenche n'importe quel jour, pas seulement le lundi
+Déclenché par n'importe quel utilisateur, pas seulement un manager
+Marqueur centralisé dans le Sheet → purge exécutée une seule fois même avec 15 employés qui ouvrent l'app
+Nouvelle fonction cleSemaineCourante() conforme à la norme ISO 8601 (bascule le lundi)
+La rotation manuelle du planning met aussi le marqueur à jour → pas de double purge
+
+⚠️ Action requise : vérifier que la cellule Planning!AJ1 est vide dans le Sheet (désormais réservée au marqueur).
+
+v1.71 — Correction du bug d'affichage des montants en modification
+
+🐛 Correction — champs CB/Espèces/Autres parfois vides dans Gestion → Suivi
+
+Symptôme : au clic sur "Modifier", les montants s'affichaient ou non selon la personne ayant saisi le CA.
+
+Cause : les champs sont des <input type="number">, un élément HTML qui n'accepte que le point décimal. Une valeur stockée 1234,56 (virgule française) était silencieusement rejetée par le navigateur → champ vide. Selon la personne, son appareil ou le chemin de saisie, Google Sheets enregistrait tantôt un point, tantôt une virgule.
+
+Trois correctifs :
+
+À l'ouverture — normalisation via parseFR() (gère virgule, point, espaces, symbole €) avant injection dans les inputs
+Fallback intelligent — si une ligne a un CA total mais aucun détail CB/Esp/Autre, le CA est pré-rempli en CB. Il y a toujours quelque chose à modifier
+À la sauvegarde — écriture en nombres purs (jamais de chaîne avec virgule) → le problème ne peut plus se reproduire
+
+Amélioration : le total se recalcule désormais en direct même quand un champ est vidé (avant, la fonction sortait prématurément si les trois champs étaient vides).
+
+v1.71 (annexe) — Audit de sécurité
+
+Un audit complet a été réalisé sur le front et l'API. Deux failles majeures identifiées, non encore corrigées :
+
+🔴 Front — XSS stocké. Données du Sheet (noms produits, collaborateurs, magasins, file.name) injectées dans innerHTML sans échappement. Un nom malveillant exécute du code dans la session du manager qui consulte la page.
+
+🔴 API — aucune autorisation. api/sheets.js vérifie que le token est valide, puis exécute n'importe quelle opération sur n'importe quel spreadsheetId et range envoyé par le client. Un employé lambda peut lire les salaires ou effacer toute la base via la console navigateur.
+
+Un fichier sheets.js corrigé a été livré (allowlist documents + onglets, vérification de rôle serveur, valueInputOption: RAW, messages d'erreur génériques). Reste à déployer.
+
+v1.70 — Barre de filtres horizontale (refonte layout POS)
+
+✨ Nouveau layout paysage/tablette — passage de 3 à 2 colonnes
+
+	Avant (v1.69)	Après (v1.70)
+Catalogue	50%	75%
+Filtres	25% (colonne verticale)	supprimée → barre horizontale
+Panier	25%	25%
+
+Comportement de la barre de filtres :
+
+Au départ — ligne horizontale de chips Types ("Tous" + chaque type avec compteur), scrollable si nombreux
+Après sélection d'un Type — la ligne se replie en badge vert cliquable affichant le type choisi ; la ligne des Catégories de ce type apparaît
+Réouverture — un clic sur le badge ré-affiche la ligne complète des types
+
+Détails techniques :
+
+Nouvelle variable d'état _typesReplies
+Nouvelle fonction rouvrirFiltresType()
+buildFiltresPaysage() réécrite pour la disposition horizontale
+Repli automatique dans appliquerFiltreType() (_typesReplies = !!type)
+Suppression complète de #vente-col-filtres (HTML + CSS résiduel)
+Le mode portrait reste inchangé
+Points restés en suspens
+Correctif XSS front (v1.73 proposée, pas encore appliquée)
+Déploiement du sheets.js sécurisé — nécessite d'adapter les noms d'onglets réels et le champ de rôle du JWT
+Panier en mode "listing simplifié" sur tablette — mentionné mais non spécifié précisément
+Archivage mensuel des données — recommandé avant ~3 mois d'usage pour éviter le ralentissement des lectures
