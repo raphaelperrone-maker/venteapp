@@ -1,3 +1,6 @@
+v1.82
+Réparation du filtre par manager avec fonctionnement
+Rajout d'un pavé numérique automatique pour moins de prise de page sur tablette et portable
 v1.78
 mise en place de manager différencié possibilité de donner des rôles différents et que des managers ne voient que certains magasins 
 rajoute une colonne v dans le Google sheet qui permet de faire cette sélection 
