@@ -60,22 +60,109 @@ Catalogue	50%	75%
 Filtres	25% (colonne verticale)	supprimée → barre horizontale
 Panier	25%	25%
 
-Comportement de la barre de filtres :
+v1.05 — 14/04/2026 (17:37, complétée 21:17)
+Suppression des comptes Google : les utilisateurs n'ont plus besoin d'un compte Google, seulement de leur identifiant (les anciens comptes Google restent fonctionnels).
+Correction bug planning : modification possible du planning en cours ou S+1 sans problème.
+Retrait du prix HT dans le défilement des produits, mise en place du TTC.
+Contrôle de saisie des horaires : message d'erreur si l'horaire saisi est supérieur à l'horaire actuel.
+Notifications dynamiques directement sur le portable (au lieu de seulement à l'ouverture de l'app), avec gestion des notifications ponctuelles/hebdomadaires depuis la base de données.
+15/04/2026 (12:52) — sans n° de version
+Renouvellement automatique de la connexion (corrige l'expiration au bout de 12h).
+Update surprise (non détaillée par écrit).
+15/04/2026 (17:58) — Maj de l'après-midi
+Vision simplifiée de l'historique de CA pour les collaborateurs (données essentielles uniquement).
+Alerte stock critique (ex. : sous 5 unités → notification manager).
+Correction d'un bug sur les plannings.
+Accès des collaborateurs à l'onglet vente.
+16/04/2026 (06:31) — matin
+Mise en place de l'onglet Gestion (collaborateurs, magasins, produits, notifications).
+Correction de la vision collaborateur sur l'onglet vente.
+Retrait du bouton "faire glisser le planning" (source de suppression de données) ; la bascule planning n+1 → planning actuel se fait désormais automatiquement le lundi à minuit.
+16/04/2026 (16:12) — Maj de l'après-midi
+Onglet vente : correction d'affichage, ajout de la fenêtre "type de paiement" (CB / espèces avec calcul automatique du rendu monnaie).
+Onglet gestion : calcul automatique du HT à l'ajout d'un produit.
+Incrémentation automatique de l'onglet vente vers le CA journalier.
+17/04/2026 (09:27)
+Correction bug de cache (ancienne version conservée localement) + mécanisme de "forçage" de reboot pour forcer les mises à jour côté utilisateur.
+17/04/2026 (10:49) — dernière avant vacances
+Mise en place du mode "hors ligne" niveau 1 : alerte quand aucune saisie n'est possible + proposition de reconnexion.
+22/04/2026 (07:21) — plusieurs correctifs
+Sécurité : verrouillage 5 min après 5 mots de passe erronés.
+Nouvelle vision du tableau de bord manager.
+Alerte de confirmation si un collaborateur oublie de saisir CA, heures ou photo.
+05/05/2026 (19:17) — grosse MAJ
+Refonte de la base de données : suppression des onglets en doublon.
+Onglet gestion/suivi : affichage du magasin associé.
+Export pour la secrétaire (ventes détaillées par jour/magasin).
+Visibilité des heures des salariés.
+06/05/2026
+Nouvelle interface + correction bug de retour aux éléments principaux après une vente (16:15).
+Maj onglet vente (16:15).
+Maj onglet gestion / suivi des collaborateurs (16:20).
+Grosse maj de journée (19:31) — modification possible de tout le suivi à partir de 21h une fois les journées saisies (19:36).
+Maj de la gestion (20:40).
+07/05/2026 (16:41) — matin
+Correction des erreurs de saisie historiques (CA sans détail CB/espèces réparti 50/50 par défaut pour fiabiliser les données).
+Restauration des saisies liées aux magasins perdues lors d'une précédente migration de données.
+08/05/2026 (17:25)
+Correction bug historique : les ventes n'apparaissaient plus après une maj de données.
+Ajout du numéro de version visible dans l'application (pour suivre les nouveautés).
+11/05/2026 (18:13) — Cybersécurité
+Chiffrement des données de connexion (matricules/mots de passe) : passage en clé de 256 caractères illisible (jwt_token, session_user chiffrés).
+11/05/2026 (19:02)
+Annonce : mise en place d'un système de mise à jour automatique via les cookies.
+15/05/2026 (18:02) — grosse maj
+Export Excel des données pour comptable/secrétaire.
+Gestion des logs (suivi des actions utilisateurs).
+v1.17 à v1.24 — 16/05/2026 (mise à jour de la semaine)
 
-Au départ — ligne horizontale de chips Types ("Tous" + chaque type avec compteur), scrollable si nombreux
-Après sélection d'un Type — la ligne se replie en badge vert cliquable affichant le type choisi ; la ligne des Catégories de ce type apparaît
-Réouverture — un clic sur le badge ré-affiche la ligne complète des types
+Onglet Vente
 
-Détails techniques :
+v1.17 : bannière de confirmation après envoi du CA (récap complet, disparition auto après 12s, réinitialisation du formulaire).
+v1.21 : flèche d'échange rapide CB ↔ Espèces dans la fenêtre de paiement.
+v1.22 : filtres en cascade en mode paysage (Type → Catégorie → chips → menu déroulant, réinitialisation auto).
+v1.23 : tous les produits visibles (plus de limite à 10) et tri automatique par meilleures ventes (classement + volume affichés).
 
-Nouvelle variable d'état _typesReplies
-Nouvelle fonction rouvrirFiltresType()
-buildFiltresPaysage() réécrite pour la disposition horizontale
-Repli automatique dans appliquerFiltreType() (_typesReplies = !!type)
-Suppression complète de #vente-col-filtres (HTML + CSS résiduel)
-Le mode portrait reste inchangé
-Points restés en suspens
-Correctif XSS front (v1.73 proposée, pas encore appliquée)
-Déploiement du sheets.js sécurisé — nécessite d'adapter les noms d'onglets réels et le champ de rôle du JWT
-Panier en mode "listing simplifié" sur tablette — mentionné mais non spécifié précisément
-Archivage mensuel des données — recommandé avant ~3 mois d'usage pour éviter le ralentissement des lectures
+Onglet CA / Suivi
+
+v1.18 : affichage des heures au format 7h10 (au lieu de 7,10h), aperçu en temps réel, formats 7h10/7:10/7.25 acceptés.
+
+Onglet Stocks
+
+v1.19 : état des stocks pré-rempli avec les quantités actuelles (indicateur visuel de modification).
+
+Onglet Gestion
+
+v1.20 : champ Catégorie ajouté aux produits (alimente les filtres du mode paysage).
+v1.24 : filtres rapides (Type puis Catégorie) et bouton de suppression définitive (avec confirmation) dans la liste des produits.
+18/05/2026 (08:27) — matin
+Historique/vente : modification et suppression des erreurs de saisie par le manager (modification seule pour les collaborateurs), affichage sous forme de ticket.
+Correction de la saisie décimale des articles au kg (pas de 100g).
+18/05/2026 (20:44)
+Écran vente : champ "Promo %" par ligne produit (calcul auto sur le prix TTC catalogue, réinitialisation au changement de produit).
+Historique ventes : ajout des champs CB/Espèces/Autre en modification (facultatifs).
+Historique ventes : tri du plus récent au plus ancien.
+Corrections de bugs mineurs et nettoyage.
+19/05/2026 (08:43)
+Modification du type de produit avec suggestion des types existants (évite les doublons dus à la casse).
+19/05/2026 (11:28)
+Saisie du CA en fin de journée simplifiée/automatisée.
+20/05/2026 (08:32)
+Ajout du prix au kg ou à l'unité par produit → calcul automatique de la marge en direct.
+v1.46 — 25/05/2026
+Numéro de version visible en haut à gauche de l'application.
+26/05/2026 (16:35) — annoncée pour le lendemain
+Gestion : retour à la page de base après modification (au lieu de revenir en arrière).
+État des stocks : les éléments actuellement en stock apparaissent en premier.
+v1.51 — 26/05/2026 (20:56)
+Recherche de produits dans l'onglet gestion.
+Retrait des explications de fonctionnement (interface plus lisible).
+Mise à jour des tooltips (infobulles "i").
+v1.53 — 27/05/2026 (06:07)
+Onglet vente : le panier reste accessible en entier même en filtrant.
+Refonte de l'onglet vente pour plus de fluidité.
+v1.63 — 29/05/2026
+Correction bug promotions : la promo pouvait ne pas être retirée automatiquement en fin de journée.
+v1.68 — 03/06/2026 (v1.66 mentionnée juste avant)
+Tri des dates de la plus récente à la plus ancienne.
+Bouton de suppression dans le suivi collaborateur pour corriger les erreurs de saisie.
