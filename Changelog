@@ -1,3 +1,7 @@
+v1.78
+mise en place de manager différencié possibilité de donner des rôles différents et que des managers ne voient que certains magasins 
+rajoute une colonne v dans le Google sheet qui permet de faire cette sélection 
+rajout de magasin TOUS POUR SÉLECTIONNER DIRECTEMENT TOUS LES MAGASINS
 v1.73
 🔒 Correction de la faille XSS stocké (Cross-Site Scripting)
 Le problème
