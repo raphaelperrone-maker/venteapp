@@ -4,6 +4,8 @@ const OFFLINE_URL = '/venteapp/offline.html';
 const PRECACHE = [
   '/venteapp/',
   '/venteapp/index.html',
+  '/venteapp/style.css?v=1.97',
+  '/venteapp/app.js?v=1.97',
   '/venteapp/offline.html',
 ];
 

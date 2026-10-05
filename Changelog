@@ -1,3 +1,8 @@
+v1.97
+Découpage de index.html en 3 fichiers : index.html (structure), style.css (apparence), app.js (logique)
+Aucun changement de fonctionnement
+APP_VERSION remis à jour (bloqué à 1.69) → vidage du cache et rechargement automatique une fois chez chaque utilisateur
+sw.js : style.css et app.js ajoutés au cache hors-ligne
 v1.96
 clavier directement dans l'application au niveai des onglets ventes, saisie du ca et cose PIN fonctionnel 
 correctif de sécurité 
