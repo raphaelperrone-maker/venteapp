@@ -5883,7 +5883,25 @@ function pjAjouter(files,section) {
     const idx=pjFiles[section].length;
     const thumbEl=document.createElement('div');
     thumbEl.className='pj-thumb'; thumbEl.id=`pj-${section}-${idx}`;
-    thumbEl.innerHTML=`<img src="${objectUrl}" alt=""><div class="pj-name">${esc(file.name)}</div><button class="pj-remove" data-kbd-action="pjSuppr" data-valeur="${esc(section)}" data-row="${idx}">✕</button>`;
+
+    const imgEl=document.createElement('img');
+    imgEl.src=objectUrl;
+    imgEl.alt='';
+
+    const nameEl=document.createElement('div');
+    nameEl.className='pj-name';
+    nameEl.textContent=file.name;
+
+    const removeBtn=document.createElement('button');
+    removeBtn.className='pj-remove';
+    removeBtn.setAttribute('data-kbd-action','pjSuppr');
+    removeBtn.setAttribute('data-valeur',section);
+    removeBtn.setAttribute('data-row',String(idx));
+    removeBtn.textContent='✕';
+
+    thumbEl.appendChild(imgEl);
+    thumbEl.appendChild(nameEl);
+    thumbEl.appendChild(removeBtn);
     grid.appendChild(thumbEl);
     pjFiles[section].push({file,objectUrl,status:'pending',thumbEl});
   });
