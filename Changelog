@@ -1,3 +1,7 @@
+v1.97.1
+Sécurité : renforcement de la protection des données des collaborateurs côté serveur (allinone-server)
+Sécurité : 2 alertes CodeQL corrigées (affichage des photos jointes, récap CA du jour)
+Aucun changement de fonctionnement
 v1.97
 Découpage de index.html en 3 fichiers : index.html (structure), style.css (apparence), app.js (logique)
 Aucun changement de fonctionnement
