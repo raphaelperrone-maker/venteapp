@@ -5660,7 +5660,7 @@ async function chargerRecapJour() {
         div.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:.82rem">📭 Aucune vente enregistrée ce jour.</div>';
       } else {
         div.innerHTML = `<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">
-          ${ticketList.length} ticket(s) — <strong style="color:var(--text)">${dateFR}</strong>
+          ${ticketList.length} ticket(s) — <strong style="color:var(--text)">${esc(dateFR)}</strong>
           · ${totalCA.toLocaleString('fr-FR',{minimumFractionDigits:2})} € TTC
         </div>` + ticketList.map(t => `
           <div style="background:var(--surface);border-radius:8px;padding:9px 11px;margin-bottom:7px;border:1px solid var(--border)">
