@@ -1,11 +1,18 @@
-const CACHE_NAME = 'allinone-v1';
+// APP_VERSION vient de version.js (source unique, partagée avec index.html).
+// Le navigateur compare aussi les scripts importés octet par octet : changer
+// version.js suffit à déclencher l'installation du nouveau Service Worker.
+importScripts('./version.js');
+
+// Nom du cache dérivé de la version → l'ancien cache est supprimé à l'activation
+const CACHE_NAME = 'allinone-v' + APP_VERSION;
 const OFFLINE_URL = '/venteapp/offline.html';
 
 const PRECACHE = [
   '/venteapp/',
   '/venteapp/index.html',
-  '/venteapp/style.css?v=1.97',
-  '/venteapp/app.js?v=1.97',
+  '/venteapp/version.js',
+  '/venteapp/style.css?v=' + APP_VERSION,
+  '/venteapp/app.js?v=' + APP_VERSION,
   '/venteapp/offline.html',
 ];
 

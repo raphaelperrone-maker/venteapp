@@ -1,3 +1,8 @@
+V2.0.0
+Passage au format de version SemVer (MAJEUR.MINEUR.CORRECTIF), affiché "V2.0.0" dans l'app
+Version centralisée dans version.js (source unique pour index.html et sw.js)
+Nom du cache du Service Worker dérivé de la version → mise à jour fiable sur tous les appareils
+Aucun changement de fonctionnement
 v1.97.1
 Sécurité : renforcement de la protection des données des collaborateurs côté serveur (allinone-server)
 Sécurité : 2 alertes CodeQL corrigées (affichage des photos jointes, récap CA du jour)

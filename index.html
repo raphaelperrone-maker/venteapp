@@ -21,9 +21,10 @@
      2. On recharge la page avec un paramètre de cache-busting
      Ce script s'exécute AVANT tout le reste pour bloquer un cache périmé.
 -->
+<script src="./version.js"></script>
 <script>
 (function() {
-  var APP_VERSION = '1.97';
+  // APP_VERSION vient de version.js (source unique, partagée avec sw.js)
   var COOKIE_NAME = 'app_version';
 
   // Lire le cookie
@@ -112,7 +113,11 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="./style.css?v=1.97">
+<script>
+// Feuille de style versionnée depuis APP_VERSION (cache-busting à chaque version).
+// document.write pendant le parsing = insertion synchrone, même comportement qu'un <link> statique.
+document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">');
+</script>
 
 </head>
 <body>
@@ -170,7 +175,7 @@
 
 <!-- ══════ HEADER ══════ -->
 <div class="header" id="main-header" style="display:none">
-  <div class="header-title">Allin<span>One</span><span style="font-size:.55rem;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:.02em">v1.97</span></div>
+  <div class="header-title">Allin<span>One</span><span style="font-size:.55rem;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:.02em" id="app-version-label"></span></div>
   <div style="display:flex;align-items:center;gap:8px">
     <!-- Bouton thème -->
     <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Changer le thème"
@@ -1246,7 +1251,13 @@
 </div>
 
 <div id="toast"></div>
-<script src="./app.js?v=1.97"></script>
+<script>
+// Version affichée dans l'en-tête, au format SemVer "V2.0.0"
+document.getElementById('app-version-label').textContent = 'V' + APP_VERSION;
+// app.js versionné depuis APP_VERSION ; document.write garde l'ordre d'exécution
+// (app.js s'exécute avant les scripts CDN qui suivent, comme avant).
+document.write('<script src="./app.js?v=' + APP_VERSION + '"><\/script>');
+</script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js" defer crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer crossorigin="anonymous" referrerpolicy="no-referrer"></script>
