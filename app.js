@@ -3596,8 +3596,11 @@ function switchPaiementMode() {
   const total = _paiementVenteCtx.totalTTC;
   const cbVal  = parseFloat(cbEl.value)  || 0;
   const espVal = parseFloat(espEl.value) || 0;
-  // Si le total est en CB → tout passer en espèces
-  if (cbVal >= total && espVal < 0.01) {
+  // Aucun mode choisi (plus de présélection à l'ouverture) → premier clic = tout en CB
+  if (cbVal < 0.01 && espVal < 0.01) {
+    cbEl.value = total.toFixed(2);
+  } else if (cbVal >= total && espVal < 0.01) {
+    // Si le total est en CB → tout passer en espèces
     cbEl.value  = '0';
     espEl.value = total.toFixed(2);
   } else if (espVal >= total && cbVal < 0.01) {
@@ -3628,11 +3631,14 @@ function ouvrirPaiementModal(date, vendeur, magasin, produitLignes, numVente, li
   _paiementVenteCtx = { date, vendeur, magasin, totalTTC, numVente, ligneSheet };
 
   document.getElementById('pm-total-affiche').textContent = totalTTC.toLocaleString('fr-FR', {minimumFractionDigits:2}) + ' €';
-  document.getElementById('pm-cb').value = totalTTC.toFixed(2);
-  document.getElementById('pm-esp-recues').value = '0';
-  document.getElementById('pm-autre').value = '0';
+  // Aucun mode présélectionné : les trois montants démarrent vides,
+  // le bouton « Enregistrer le CA » reste désactivé tant que rien n'est saisi.
+  document.getElementById('pm-cb').value = '';
+  document.getElementById('pm-esp-recues').value = '';
+  document.getElementById('pm-autre').value = '';
   document.getElementById('pm-monnaie-zone').style.display = 'none';
   document.getElementById('pm-reste-zone').style.display = 'none';
+  majBoutonPaiement();
   document.getElementById('paiement-modal').style.display = 'flex';
 
   // Proposer le ticket PDF en même temps (avant la modale)
@@ -3645,8 +3651,26 @@ function fermerPaiementModal() {
   _paiementVenteCtx = null;
 }
 
+// Un mode de paiement est « choisi » dès qu'un montant > 0 est saisi (CB, espèces ou autre)
+function modePaiementChoisi() {
+  const cb    = parseFloat(document.getElementById('pm-cb')?.value) || 0;
+  const esp   = parseFloat(document.getElementById('pm-esp-recues')?.value) || 0;
+  const autre = parseFloat(document.getElementById('pm-autre')?.value) || 0;
+  return cb + esp + autre > 0.005;
+}
+
+// Active « Enregistrer le CA » et masque l'indication seulement quand un mode est choisi
+function majBoutonPaiement() {
+  const choisi = modePaiementChoisi();
+  const btn  = document.getElementById('pm-valider');
+  const hint = document.getElementById('pm-mode-hint');
+  if (btn)  btn.disabled = !choisi;
+  if (hint) hint.style.display = choisi ? 'none' : 'block';
+}
+
 function calcPMEspeces() {
   if (!_paiementVenteCtx) return;
+  majBoutonPaiement();
   const total = _paiementVenteCtx.totalTTC;
   const cb    = parseFloat(document.getElementById('pm-cb').value) || 0;
   const esp   = parseFloat(document.getElementById('pm-esp-recues').value) || 0;
@@ -3686,6 +3710,14 @@ async function validerPaiementVente() {
   const totalRecu = cb + espRecues + autre;
   const monnaie   = Math.max(0, totalRecu - totalTTC);
   const espNet    = Math.max(0, espRecues - monnaie);
+
+  // Garde-fou logique : même si le bouton était réactivé à la main (console, DOM),
+  // un paiement sans aucun mode n'est jamais enregistré.
+  if (totalRecu <= 0.005) {
+    majBoutonPaiement();
+    showToast('Choisissez un mode de paiement', 'error');
+    return;
+  }
 
   fermerPaiementModal();
 
