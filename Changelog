@@ -1,3 +1,8 @@
+V2.0.1
+Paiement : plus aucun mode (CB / espèces / autre) présélectionné à l'ouverture
+Le bouton « Enregistrer le CA » reste désactivé tant qu'aucun montant n'est saisi, avec l'indication « Choisissez un mode de paiement »
+Un paiement sans mode est refusé dans tous les cas, même si le bouton est forcé
+Le bouton ⇄ met tout en CB au premier clic, puis bascule CB ↔ espèces comme avant
 V2.0.0
 Passage au format de version SemVer (MAJEUR.MINEUR.CORRECTIF), affiché "V2.0.0" dans l'app
 Version centralisée dans version.js (source unique pour index.html et sw.js)
