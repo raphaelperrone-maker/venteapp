@@ -1,3 +1,10 @@
+V2.0.2
+Plannings : les disponibilités de la semaine passée ne sont plus reprises. Une nouvelle semaine démarre vide, chacun ressaisit ses dispos
+Correction : la remise à zéro hebdomadaire (v1.72) ne fonctionnait pas, son marqueur Planning!AJ1 était hors de la grille (32 colonnes). Marqueur déplacé en Planning!F1
+Les dispos affichées et prises en compte sont désormais filtrées sur la semaine en cours, même si la remise à zéro n'a pas encore tourné
+Si la remise à zéro échoue, les managers voient un message au lieu d'un échec silencieux
+Aucune donnée de planning supprimée (seules les lignes de disponibilités A2:D sont remises à zéro, comme prévu depuis la v1.72)
+⚠️ Action requise : vérifier que la cellule Planning!F1 est vide dans le Google Sheet (réservée au marqueur)
 V2.0.1
 Paiement : plus aucun mode (CB / espèces / autre) présélectionné à l'ouverture
 Le bouton « Enregistrer le CA » reste désactivé tant qu'aucun montant n'est saisi, avec l'indication « Choisissez un mode de paiement »

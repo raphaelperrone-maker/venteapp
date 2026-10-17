@@ -1331,7 +1331,10 @@ async function chargerDisponibilites() {
   const container = document.getElementById('dispo-recues');
   container.innerHTML = '<div class="spinner" style="color:var(--accent)"></div>';
   try {
-    const rows = (await sheetsGet(tdbId, 'Planning!A2:D500')).filter(r=>r[1]);
+    // Nouvelle semaine ? On remet à zéro avant de lire (appareil resté ouvert depuis dimanche…)
+    await purgerDisposSiNouvelleSemaine();
+    // Et on ne prend en compte que les dispos déclarées cette semaine
+    const rows = filtrerDisposSemaineCourante(await sheetsGet(tdbId, 'Planning!A2:D500')).filter(r=>r[1]);
 
     // Garder TOUTES les lignes (une personne peut avoir plusieurs magasins)
     // Mais on déduplique par personne+magasin (garder la plus récente)
@@ -1609,9 +1612,37 @@ function cleSemaineCourante(d = new Date()) {
 // ── Purge automatique des disponibilités à chaque nouvelle semaine ──
 // Indépendante de la rotation du planning : fonctionne pour TOUS les utilisateurs,
 // n'importe quel jour, et le marqueur est stocké dans le Sheet (partagé entre appareils).
-const CELLULE_MARQUEUR_SEMAINE = 'Planning!AJ1';
+// ⚠️ L'onglet Planning n'a que 32 colonnes (A→AF) : l'ancien marqueur AJ1 était hors
+//    grille, Google refusait la lecture et la purge n'a jamais eu lieu (dispos de la
+//    semaine passée reprises). F1 est une colonne libre entre les dispos (A:D) et le
+//    planning en cours (G:N).
+const CELLULE_MARQUEUR_SEMAINE = 'Planning!F1';
 
+// Semaine ISO d'une ligne de dispo, d'après son horodatage en colonne A
+// ("17/10/2026 10:15:30", format fr-FR). null si illisible.
+function semaineDeLaDispo(row) {
+  const m = String(row?.[0] || '').match(/(\d{2})\/(\d{2})\/(\d{4})/);
+  if (!m) return null;
+  return cleSemaineCourante(new Date(+m[3], +m[2] - 1, +m[1]));
+}
+
+// Ne garde que les dispos déclarées cette semaine : même si la purge n'a pas encore
+// tourné (appareil resté ouvert, erreur Sheet…), une semaine passée n'est jamais
+// affichée ni prise en compte. Les lignes sans date lisible sont conservées.
+function filtrerDisposSemaineCourante(rows) {
+  const semaine = cleSemaineCourante();
+  return (rows || []).filter(r => { const s = semaineDeLaDispo(r); return !s || s === semaine; });
+}
+
+let _purgeDisposEnCours = null;
 async function purgerDisposSiNouvelleSemaine() {
+  // Un seul passage à la fois (chargerPlanning et envoyerDisponibilites peuvent se croiser)
+  if (_purgeDisposEnCours) return _purgeDisposEnCours;
+  _purgeDisposEnCours = _purgerDisposSiNouvelleSemaine().finally(() => { _purgeDisposEnCours = null; });
+  return _purgeDisposEnCours;
+}
+
+async function _purgerDisposSiNouvelleSemaine() {
   const tdbId = getConfig('cfg-tdb-id');
   if (!tdbId) return;
 
@@ -1642,6 +1673,8 @@ async function purgerDisposSiNouvelleSemaine() {
     }
   } catch(e) {
     console.warn('purgerDisposSiNouvelleSemaine:', e);
+    // Jamais en silence : un manager doit savoir que les dispos n'ont pas été remises à zéro
+    if (isManager()) showToast('⚠️ Remise à zéro des disponibilités impossible : ' + e.message, 'error');
   }
 }
 
@@ -8078,8 +8111,11 @@ async function envoyerDisponibilites() {
     try {
       const tdbId = getConfig('cfg-tdb-id');
 
-      // 1. Lire toutes les dispo existantes
-      const existantes = await sheetsGet(tdbId, 'Planning!A2:D500');
+      // 0. Nouvelle semaine ? Purge d'abord, pour ne pas réécrire d'anciennes dispos
+      await purgerDisposSiNouvelleSemaine();
+
+      // 1. Lire les dispo existantes de cette semaine (les anciennes ne sont jamais recopiées)
+      const existantes = filtrerDisposSemaineCourante(await sheetsGet(tdbId, 'Planning!A2:D500'));
 
       // 2. Supprimer les lignes de ce collaborateur (garder les autres)
       const nomNormU = normNom(u.nomComplet);
