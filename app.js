@@ -213,12 +213,32 @@ async function refreshJWT() {
   }
 }
 
+// Délai maximum d'un appel API : au-delà, on abandonne au lieu de laisser l'app figée
+// (réseau mobile dégradé, Vercel qui ne répond pas…). `var` → modifiable en test.
+var API_TIMEOUT_MS = 15000;
+
 async function apiCall(endpoint, body, _retry = false) {
-  const res = await fetch(VERCEL_URL + endpoint, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwtToken },
-    body: JSON.stringify(body)
-  });
+  const controller = new AbortController();
+  const tId = setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+  let res;
+  try {
+    res = await fetch(VERCEL_URL + endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + jwtToken },
+      body: JSON.stringify(body),
+      signal: controller.signal
+    });
+  } catch(e) {
+    if (e.name === 'AbortError') throw new Error('Le serveur ne répond pas — réessaie dans un instant');
+    throw new Error('Pas de connexion — vérifie ton réseau');
+  } finally {
+    clearTimeout(tId);
+  }
+  // Hors ligne : le Service Worker répond 503 {error:'OFFLINE'} → message clair
+  if (res.status === 503) {
+    const err = await res.json().catch(()=>({}));
+    if (err.error === 'OFFLINE') throw new Error('Pas de connexion — vérifie ton réseau');
+  }
   // 401 = token expiré ou absent → tenter un refresh silencieux une seule fois
   if (res.status === 401 && !_retry && utilisateurConnecte) {
     try {
@@ -539,6 +559,9 @@ async function chargerSocietes() {
     const loaded = rows.filter(r => r[0] && r[0].trim());
     if (!loaded.length) {
       console.warn('Sociétés : onglet vide ou introuvable — fallback sur données locales');
+      // Repli jamais silencieux : les managers doivent savoir que les tickets
+      // utilisent les sociétés par défaut du code, pas celles du Sheet
+      if (isManager()) showToast('⚠️ Onglet Sociétés vide dans le Sheet — données par défaut utilisées', 'error');
       return;
     }
     SOCIETES = {};
@@ -570,6 +593,7 @@ async function chargerSocietes() {
     console.log(`✅ ${Object.keys(SOCIETES).length} société(s) chargée(s) :`, Object.keys(SOCIETES));
   } catch(e) {
     console.warn('Chargement sociétés:', e.message, '— fallback sur données locales');
+    if (isManager()) showToast('⚠️ Onglet Sociétés introuvable dans le Sheet — données par défaut utilisées', 'error');
   }
 }
 
@@ -1209,15 +1233,8 @@ function switchPlanningTab(tab) {
   if (tab==='next' && !planningNextData) chargerPlanningTab('next');
 }
 
-function toggleDispoForm() {
-  const f = document.getElementById('dispo-form');
-  f.style.display = f.style.display==='none' ? 'block' : 'none';
-  if (f.style.display==='block') {
-    // Pré-remplir le select magasin
-    const sel = document.getElementById('dispo-magasin');
-    sel.innerHTML = '<option value="">— Choisir —</option>' + magasinsList.map(m=>`<option value="${m}">${m}</option>`).join('');
-  }
-}
+// NOTE : l'ancienne version de toggleDispoForm (select unique #dispo-magasin, qui
+// n'existe plus) a été supprimée (V2.0.3) ; la version multi-lignes est plus bas.
 
 // ── Chargement principal ──
 async function chargerPlanning() {
@@ -7682,6 +7699,16 @@ function toggleTransfert() {
     document.getElementById('transfert-lignes').innerHTML = '';
     ajouterLigneTransfert();
   }
+}
+
+// Changement de magasin source : les lignes déjà saisies ne sont plus pertinentes,
+// on repart d'une ligne vide. (Appelée par onchange de #transfert-source ; la
+// fonction n'existait pas jusqu'en V2.0.3 → erreur console à chaque changement.)
+function remplirProduitsTransfert() {
+  const lignes = document.getElementById('transfert-lignes');
+  if (!lignes) return;
+  lignes.innerHTML = '';
+  ajouterLigneTransfert();
 }
 
 let transfertLigneId = 0;
