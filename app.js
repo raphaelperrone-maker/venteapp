@@ -1242,8 +1242,8 @@ async function chargerPlanning() {
   const dates = getDatesSeamaine(lundi);
   // Purge des dispos si on a changé de semaine (tous les jours, tous les utilisateurs)
   await purgerDisposSiNouvelleSemaine();
-  // Rotation du planning : le lundi, pour les managers uniquement
-  if (new Date().getDay() === 1) verifierRotation();
+  // Rotation du planning si la semaine a changé (n'importe quel jour, écriture par un manager)
+  await verifierRotation();
   document.getElementById('planning-semaine-label').textContent =
     `Semaine du ${formatDateCourt(dates[0])} au ${formatDateCourt(dates[6])}`;
   await chargerPlanningTab('current');
@@ -1257,11 +1257,10 @@ async function chargerPlanningTab(tab) {
   const container = document.getElementById(containerId);
   container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px"><div class="spinner" style="color:var(--accent)"></div></div>';
 
-  // G1:N13 = semaine en cours, Y1:AF13 = semaine suivante
-  const rangeStr = tab==='current' ? 'Planning!G1:N50' : 'Planning!Y1:AF50';
-
   try {
-    const allRows = await sheetsGet(tdbId, rangeStr);
+    // G1:N50 = semaine en cours, Y1:AF50 = semaine suivante — seulement si l'en-tête
+    // de la grille correspond bien à la semaine affichée (sinon : semaine vide)
+    const allRows = await lireGrilleSemaine(tdbId, tab);
 
     // Calcul dates de la semaine affichée
     const offset = tab==='current' ? 0 : 1;
@@ -1445,7 +1444,6 @@ async function editerPlanningExistant(tab) {
 
 async function _editerPlanningExistant(tab) {
   const tdbId = getConfig('cfg-tdb-id');
-  const rangeSheet = tab === 'current' ? 'Planning!G1:N50' : 'Planning!Y1:AF50';
 
   try {
     showToast('⏳ Chargement…','info');
@@ -1454,7 +1452,8 @@ async function _editerPlanningExistant(tab) {
     if (!collaborateurs.length) await chargerCollaborateurs();
 
     // 2. Lire le planning depuis le sheet
-    const vals = await sheetsGet(tdbId, rangeSheet);
+    // Grille d'une autre semaine (périmée) → ignorée : l'éditeur part d'une grille vierge
+    const vals = await lireGrilleSemaine(tdbId, tab);
 
     // 3. Reconstruire la grille
     const grille = {};
@@ -1695,45 +1694,94 @@ async function _purgerDisposSiNouvelleSemaine() {
   }
 }
 
-// ── Rotation automatique le lundi ──
+// ── Semaine d'une grille de planning ──
+// Les grilles G1:N50 (en cours), P1:W50 (S-1) et Y1:AF50 (S+1) ne stockent pas leur semaine,
+// mais publierPlanning écrit un en-tête daté : ['Magasin/Jour', 'Lun 26/10', 'Mar 27/10', …].
+// On en déduit la semaine ISO (année = celle qui place la date au plus près d'aujourd'hui).
+// null si l'en-tête n'est pas daté (grille ancienne ou saisie à la main).
+function semaineDeLaGrille(rows, ref = new Date()) {
+  const m = String(rows?.[0]?.[1] || '').match(/(\d{1,2})\/(\d{1,2})/);
+  if (!m) return null;
+  const jour = +m[1], mois = +m[2] - 1;
+  let meilleure = null;
+  for (const annee of [ref.getFullYear() - 1, ref.getFullYear(), ref.getFullYear() + 1]) {
+    const d = new Date(annee, mois, jour);
+    if (!meilleure || Math.abs(d - ref) < Math.abs(meilleure - ref)) meilleure = d;
+  }
+  return cleSemaineCourante(meilleure);
+}
+
+// Lit la grille de la semaine affichée par l'onglet ('current' = S, 'next' = S+1).
+// Une grille dont l'en-tête désigne une AUTRE semaine est ignorée → une nouvelle semaine
+// démarre toujours vide, même si la rotation n'a pas encore eu lieu (bug du 25/10/2026 :
+// l'ancienne S+1 s'affichait sous les dates de la nouvelle semaine).
+// Grille sans en-tête daté : renvoyée telle quelle (comportement historique).
+async function lireGrilleSemaine(tdbId, tab) {
+  const attendue = cleSemaineCourante(getLundiSemaine(tab === 'current' ? 0 : 1));
+  const rows = await sheetsGet(tdbId, tab === 'current' ? 'Planning!G1:N50' : 'Planning!Y1:AF50');
+  const semaine = semaineDeLaGrille(rows);
+  if (!semaine || semaine === attendue) return rows;
+  if (tab === 'current') {
+    // Rotation pas encore faite : la grille de la semaine en cours est encore en S+1
+    const next = await sheetsGet(tdbId, 'Planning!Y1:AF50');
+    if (semaineDeLaGrille(next) === attendue) return next;
+  }
+  return [];
+}
+
+// ── Rotation automatique dès que la semaine a changé ──
+// Avant (≤ V2.0.2) : seulement le lundi, par un manager, une fois par appareil (localStorage)
+// → si aucun manager n'ouvrait le planning ce lundi-là, la rotation était ratée pour la semaine.
+// Maintenant : n'importe quel jour, dès qu'un manager ouvre le planning, si la grille S+1
+// est celle de la semaine en cours (et que G n'a pas déjà été republiée pour cette semaine).
+// Idempotent : après rotation, Y1:AF50 est vide, la condition ne se reproduit pas.
 async function verifierRotation() {
   const tdbId = getConfig('cfg-tdb-id');
   if (!tdbId || !isManager()) return;
-  // Vérifier si déjà fait aujourd'hui
-  const today = new Date().toDateString();
-  if (localStorage.getItem('rotation_done') === today) return;
   try {
-    await rotatePlanning(true); // silencieux
-    localStorage.setItem('rotation_done', today);
-  } catch(e) { console.warn('Rotation auto échouée:', e); }
+    const semaine = cleSemaineCourante();
+    const next = await sheetsGet(tdbId, 'Planning!Y1:AF50');
+    if (semaineDeLaGrille(next) !== semaine) return;          // rien à faire glisser
+    const current = await sheetsGet(tdbId, 'Planning!G1:N50');
+    if (semaineDeLaGrille(current) === semaine) return;       // semaine en cours déjà en place
+    await _rotatePlanning(true);
+  } catch(e) {
+    console.warn('Rotation auto échouée:', e);
+    showToast('⚠️ Passage à la nouvelle semaine impossible : ' + e.message, 'error');
+  }
 }
 
-async function rotatePlanning(silencieux=false) {
+function rotatePlanning(silencieux=false) {
+  demanderToken(() => _rotatePlanning(silencieux));
+}
+
+async function _rotatePlanning(silencieux=false) {
   const tdbId = getConfig('cfg-tdb-id');
-  demanderToken(async () => {
-    try {
-      if (!silencieux) showToast('⏳ Rotation des plannings…','info');
-      const currentVals = await sheetsGet(tdbId, 'Planning!G1:N50');
-      const nextVals = await sheetsGet(tdbId, 'Planning!Y1:AF50');
+  try {
+    if (!silencieux) showToast('⏳ Rotation des plannings…','info');
+    const currentVals = await sheetsGet(tdbId, 'Planning!G1:N50');
+    const nextVals = await sheetsGet(tdbId, 'Planning!Y1:AF50');
 
-      if (!nextVals.length) { if (!silencieux) showToast('ℹ️ Aucun planning S+1 à faire glisser','info'); return; }
+    if (!nextVals.length) { if (!silencieux) showToast('ℹ️ Aucun planning S+1 à faire glisser','info'); return; }
 
-      // S-1 (P1:W13) ← ce qui était en cours (G1:N13)
-      if (currentVals.length) await sheetsPut(tdbId, 'Planning!P1:W50', currentVals);
-      await sheetsPut(tdbId, 'Planning!G1:N50', nextVals);
-      await sheetsClear(tdbId, 'Planning!Y1:AF50');
+    // S-1 (P1:W50) ← ce qui était en cours (G1:N50)
+    if (currentVals.length) await sheetsPut(tdbId, 'Planning!P1:W50', currentVals);
+    await sheetsPut(tdbId, 'Planning!G1:N50', nextVals);
+    await sheetsClear(tdbId, 'Planning!Y1:AF50');
 
-      // Vider les disponibilités + marquer la semaine comme purgée
-      await sheetsClear(tdbId, 'Planning!A2:D500');
-      await sheetsPut(tdbId, CELLULE_MARQUEUR_SEMAINE, [[cleSemaineCourante()]]);
-      window._dispos = [];
+    // Dispos : purge UNIQUEMENT si la semaine a changé (marqueur F1). Avant, la rotation
+    // vidait toujours A2:D500 : faite un mercredi, elle aurait effacé les dispos déjà
+    // saisies cette semaine pour la semaine suivante.
+    await purgerDisposSiNouvelleSemaine();
 
-      if (!silencieux) showToast('✅ Rotation effectuée !','success');
-      if (!silencieux) logAction('edit', `Rotation planning effectuée`, `Semaine suivante → semaine courante`);
-      planningCurrentData=null; planningNextData=null;
-      chargerPlanningTab('current');
-    } catch(e) { if (!silencieux) showToast('❌ '+e.message,'error'); }
-  });
+    if (!silencieux) showToast('✅ Rotation effectuée !','success');
+    if (!silencieux) logAction('edit', `Rotation planning effectuée`, `Semaine suivante → semaine courante`);
+    planningCurrentData=null; planningNextData=null;
+    chargerPlanningTab('current');
+  } catch(e) {
+    if (!silencieux) showToast('❌ '+e.message,'error');
+    else throw e;
+  }
 }
 
 // ══════════════════════════════════════════════════════════════
