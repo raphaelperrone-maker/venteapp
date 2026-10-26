@@ -1,3 +1,11 @@
+V2.0.3
+Plannings : une nouvelle semaine s'affiche toujours vide tant qu'aucun planning n'a été publié pour elle, même avant le lundi (bug du 25/10 : la semaine du 26/10 apparaissait remplie avec l'ancien planning)
+Plannings : le passage à la nouvelle semaine se fait n'importe quel jour, dès qu'un manager ouvre le planning (avant : uniquement le lundi, et raté si aucun manager ne se connectait ce jour-là)
+Plannings : « Modifier le planning S+1 » part d'une grille vierge au lieu de reprendre l'ancien planning
+Plannings : les employés voient la bonne semaine en cours dès le lundi, même avant le passage effectué par un manager
+Disponibilités : le passage de semaine n'efface plus les dispos déjà saisies pour la semaine suivante
+Aucune donnée supprimée : les plannings des semaines passées et les dispos de la semaine en cours sont conservés
+Ajout d'un test automatique (tests/planning-hebdo.test.js)
 V2.0.2
 Plannings : les disponibilités de la semaine passée ne sont plus reprises. Une nouvelle semaine démarre vide, chacun ressaisit ses dispos
 Correction : la remise à zéro hebdomadaire (v1.72) ne fonctionnait pas, son marqueur Planning!AJ1 était hors de la grille (32 colonnes). Marqueur déplacé en Planning!F1
