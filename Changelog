@@ -1,3 +1,10 @@
+V2.0.4
+Réseau : un appel au serveur qui ne répond pas est abandonné après 15 s avec un message clair, au lieu de laisser l'app figée
+Hors-ligne : message « Pas de connexion — vérifie ton réseau » à la place de « OFFLINE »
+Stocks : le changement de magasin source dans un transfert ne provoque plus d'erreur (fonction manquante) et remet les lignes à zéro
+Tickets : si l'onglet Sociétés du Sheet est vide ou introuvable, les managers sont prévenus (plus de repli silencieux)
+Nettoyage : suppression d'une ancienne version morte de toggleDispoForm
+Ajout d'un fichier CLAUDE.md décrivant l'architecture et les conventions du projet
 V2.0.3
 Plannings : une nouvelle semaine s'affiche toujours vide tant qu'aucun planning n'a été publié pour elle, même avant le lundi (bug du 25/10 : la semaine du 26/10 apparaissait remplie avec l'ancien planning)
 Plannings : le passage à la nouvelle semaine se fait n'importe quel jour, dès qu'un manager ouvre le planning (avant : uniquement le lundi, et raté si aucun manager ne se connectait ce jour-là)
