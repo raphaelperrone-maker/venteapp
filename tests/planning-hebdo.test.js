@@ -216,6 +216,57 @@ const G = 6, P = 15, Y = 24; // colonnes G, P, Y (index 0)
   check('Dimanche 25/10 : planning S+1 généré depuis les dispos puis publié → en-tête « Lun 26/10 » et affiché',
     r.z1 === 'Lun 26/10' && r.html.includes('Alice M.') && r.html.includes('Bob D.') && !r.html.includes('Ancienne'), { z1: r.z1, html: r.html.replace(/\s+/g, ' ').slice(0, 200) });
 
+  // ══ V2.1.0 — Magasins sans personne : masqués en consultation, visibles dans l'éditeur ══
+  // Grille S+1 (semaine du 02/11) : Grasse affecté, Nice vide ; Antibes connu mais absent de la grille
+  const grilleNovembre = () => page.evaluate(() => {
+    const ecrire = (r, vals) => vals.forEach((v, k) => { window.__sheet[r + ',' + (24 + k)] = v; });
+    ecrire(1, ['Magasin/Jour', 'Lun 02/11', 'Mar 03/11', 'Mer 04/11', 'Jeu 05/11', 'Ven 06/11', 'Sam 07/11', 'Dim 08/11']);
+    ecrire(2, ['Grasse', 'Alice Martin', '', '', '', '', '', '']);
+    ecrire(3, ['Nice', '', '', '', '', '', '', '']);
+    magasinsList = ['Grasse', 'Nice', 'Antibes'];
+  });
+  const magasinsAffiches = id => page.evaluate(id => [...document.querySelectorAll(`#${id} .planning-magasin`)].map(e => e.textContent.replace('🏪', '').trim()), id);
+
+  // ── 11. Consultation : magasin vide masqué, pour un employé comme pour un manager ──
+  await aLHeure('2026-10-26T10:00:00+01:00');
+  for (const role of ['employe', 'manager']) {
+    await reinit(role); await grilleNovembre();
+    await page.evaluate(() => { utilisateurConnecte.autorisationMagasins = MOT_CLE_TOUS; });
+    await page.evaluate(() => chargerPlanningTab('next'));
+    r = await magasinsAffiches('planning-container-next');
+    check(`Consultation (${role}) : Grasse affiché, Nice (personne) masqué`, r.join() === 'Grasse', r);
+  }
+  r = await page.evaluate(() => (planningNextData || []).map(p => p.magasin));
+  check('Export PDF : les données exportées excluent aussi le magasin vide', r.join() === 'Grasse', r);
+
+  // ── 12. Aucun magasin affecté → message clair, aucune ligne ──
+  await reinit('employe'); await grilleNovembre();
+  await page.evaluate(() => { window.__sheet['2,25'] = ''; });
+  await page.evaluate(() => chargerPlanningTab('next'));
+  r = await page.evaluate(() => ({ txt: document.getElementById('planning-container-next').textContent.trim(), n: document.querySelectorAll('#planning-container-next .planning-magasin').length }));
+  check('Grille sans aucune affectation : « Aucun collaborateur planifié cette semaine »', r.n === 0 && r.txt.includes('Aucun collaborateur planifié'), r);
+
+  // ── 13. « Modifier le planning S+1 » : TOUS les magasins réapparaissent ──
+  await reinit('manager'); await grilleNovembre();
+  await page.evaluate(() => { utilisateurConnecte.autorisationMagasins = MOT_CLE_TOUS; collaborateurs = [{ nomComplet: 'Alice Martin' }, { nomComplet: 'Bob Durand' }]; });
+  await page.evaluate(() => _editerPlanningExistant('next'));
+  await page.waitForTimeout(300);
+  r = await page.evaluate(() => ({ grille: Object.keys(planningEditData), dom: [...document.querySelectorAll('#planning-edit-container .planning-edit-magasin')].map(e => e.textContent.replace('🏪', '').trim()), alice: planningEditData.Grasse?.[0] }));
+  check('Éditeur : Grasse, Nice (vide) et Antibes (absent de la grille) sont tous éditables', ['Grasse', 'Nice', 'Antibes'].every(m => r.grille.includes(m) && r.dom.includes(m)), r);
+  check('Éditeur : les affectations existantes sont conservées (Grasse lundi = Alice)', r.alice === 'Alice Martin', r);
+
+  // ── 14. Publication : Antibes affecté, Nice laissé vide → Nice de nouveau masqué, mais conservé dans le Sheet ──
+  await page.evaluate(async () => {
+    planningEditData.Antibes[2] = 'Bob Durand';
+    planningEditTab = 'next';
+    await new Promise(res => { publierPlanning(); setTimeout(res, 300); });
+    planningNextData = null;
+    await chargerPlanningTab('next');
+  });
+  r = { vus: await magasinsAffiches('planning-container-next'), sheet: await page.evaluate(() => [2, 3, 4, 5].map(l => window.__sheet[l + ',24']).filter(Boolean)) };
+  check('Après publication : Grasse et Antibes affichés, Nice (toujours vide) masqué', r.vus.join() === 'Grasse,Antibes', r);
+  check('Après publication : Nice reste enregistré dans le Sheet (aucune donnée perdue)', r.sheet.includes('Nice') && r.sheet.includes('Antibes'), r);
+
   check('Aucune erreur JS', erreurs.length === 0, erreurs);
 
   await browser.close(); srv.close();

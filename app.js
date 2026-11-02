@@ -1283,10 +1283,19 @@ async function chargerPlanningTab(tab) {
       .map(r => ({
         magasin: (r[0]||'').trim(),
         jours: Array.from({length:7},(_,i) => (r[i+1]||'').trim())
-      }));
+      }))
+      // Magasin sans personne sur toute la semaine : masqué en consultation (et dans
+      // l'export PDF) pour tout le monde. Il reste dans le Sheet et réapparaît dans
+      // l'éditeur (« Modifier le planning ») pour que le manager puisse l'affecter.
+      .filter(p => p.jours.some(j => j));
 
     if (tab==='current') planningCurrentData = planning;
     else planningNextData = planning;
+
+    if (!planning.length) {
+      container.innerHTML = '<div style="text-align:center;color:var(--muted);padding:30px">Aucun collaborateur planifié cette semaine</div>';
+      return;
+    }
 
     // 🔐 Restreindre au périmètre autorisé (les managers restreints ne voient
     //    que leurs magasins ; les non-managers gardent la vue complète pour
@@ -1466,14 +1475,16 @@ async function _editerPlanningExistant(tab) {
       magasins.push(mag);
     });
 
-    // Si le planning est vide, créer une grille avec tous les magasins connus
-    if (!magasins.length) {
-      showToast('ℹ️ Planning vide — grille vierge créée','info');
-      magasinsList.forEach(m => {
-        grille[m] = Array(7).fill('');
-        magasins.push(m);
-      });
-    }
+    // Planning vide → grille vierge (message), puis dans tous les cas : ajouter les
+    // magasins connus absents de la grille, pour que le manager voie TOUS les magasins
+    // (y compris ceux masqués en consultation faute de personne affectée).
+    if (!magasins.length) showToast('ℹ️ Planning vide — grille vierge créée','info');
+    if (!magasinsList.length) await chargerMagasins();
+    magasinsList.forEach(m => {
+      if (grille[m]) return;
+      grille[m] = Array(7).fill('');
+      magasins.push(m);
+    });
 
     planningEditData = grille;
 
