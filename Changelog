@@ -1,3 +1,7 @@
+V2.1.0
+Plannings : les magasins où personne n'est planifié de la semaine ne sont plus affichés en consultation (ni dans l'export PDF), pour tout le monde
+Plannings : dans « Modifier le planning », tous les magasins réapparaissent, y compris ceux sans personne, pour pouvoir les affecter
+Plannings : après publication, un magasin resté sans personne est de nouveau masqué en consultation (il reste enregistré dans le Sheet)
 V2.0.4
 Réseau : un appel au serveur qui ne répond pas est abandonné après 15 s avec un message clair, au lieu de laisser l'app figée
 Hors-ligne : message « Pas de connexion — vérifie ton réseau » à la place de « OFFLINE »
