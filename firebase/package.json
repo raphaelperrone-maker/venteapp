@@ -1,0 +1,13 @@
+{
+  "name": "allinone-firebase",
+  "private": true,
+  "description": "AllinOne sur Firebase — règles Firestore et tests (preuve de concept)",
+  "scripts": {
+    "test": "firebase emulators:exec --project demo-allinone --only firestore \"node tests/regles.test.js\""
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.2",
+    "firebase": "^12.19.0",
+    "firebase-tools": "^15.36.0"
+  }
+}

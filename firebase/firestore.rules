@@ -1,0 +1,94 @@
+rules_version = '2';
+
+// AllinOne — règles de sécurité Firestore (preuve de concept : Planning + dispos).
+// Vérifiées par Google côté serveur, à chaque lecture/écriture : un navigateur modifié
+// ne peut pas les contourner. Voir MODELE.md.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ── Identité ─────────────────────────────────────────────────────────────
+    function connecte()   { return request.auth != null; }
+    function role()       { return request.auth.token.role; }
+    function estManager() { return connecte() && role() in ['manager', 'admin']; }
+    function estAdmin()   { return connecte() && role() == 'admin'; }
+    function estMoi(matricule) { return connecte() && request.auth.uid == matricule; }
+    // Manager ayant ce magasin dans son périmètre (ou tous : ["*"])
+    function gereMagasin(m) {
+      return estManager() && request.auth.token.magasins is list
+        && request.auth.token.magasins.hasAny(['*', m]);
+    }
+
+    // ── Validation ───────────────────────────────────────────────────────────
+    function cleSemaineValide(s) { return s.matches('^[0-9]{4}-S[0-9]{2}$'); }
+    function semaine(s) { return get(/databases/$(database)/documents/semaines/$(s)).data; }
+    function semaineOuverte(s) {
+      // Semaine existante, pas encore commencée, pas encore publiée
+      return exists(/databases/$(database)/documents/semaines/$(s))
+        && semaine(s).statut == 'brouillon'
+        && semaine(s).lundi > request.time;
+    }
+    // Un jour : absent, ou liste de 0 à 2 matricules
+    function jourOk(jours, k) {
+      return !(k in jours) || (jours[k] is list && jours[k].size() <= 2);
+    }
+    function joursOk(jours) {
+      return jours is map
+        && jours.keys().hasOnly(['0', '1', '2', '3', '4', '5', '6'])
+        && jourOk(jours, '0') && jourOk(jours, '1') && jourOk(jours, '2') && jourOk(jours, '3')
+        && jourOk(jours, '4') && jourOk(jours, '5') && jourOk(jours, '6');
+    }
+
+    // ── Référentiels ─────────────────────────────────────────────────────────
+    match /magasins/{magasinId} {
+      allow read: if connecte();
+      allow write: if estAdmin();
+    }
+
+    match /collaborateurs/{matricule} {
+      allow read: if estMoi(matricule) || estManager();
+      allow write: if estAdmin();               // personne ne peut changer son propre rôle
+    }
+
+    match /collaborateursPrive/{matricule} {
+      allow read, write: if estAdmin();         // taux horaire, données RH
+    }
+
+    // ── Planning ─────────────────────────────────────────────────────────────
+    match /semaines/{s} {
+      allow read: if connecte();
+      // Tout connecté peut ouvrir une semaine FUTURE en brouillon (pour y déclarer ses dispos)
+      allow create: if connecte() && cleSemaineValide(s)
+        && request.resource.data.keys().hasOnly(['lundi', 'statut', 'majPar', 'majLe'])
+        && request.resource.data.lundi is timestamp
+        && request.resource.data.lundi > request.time
+        && (request.resource.data.statut == 'brouillon' || estManager());
+      // Publier / modifier : managers uniquement
+      allow update: if estManager()
+        && request.resource.data.keys().hasOnly(['lundi', 'statut', 'majPar', 'majLe'])
+        && request.resource.data.statut in ['brouillon', 'publie']
+        && request.resource.data.lundi == resource.data.lundi;
+      allow delete: if estAdmin();
+
+      match /affectations/{magasinId} {
+        // Les employés ne voient un planning qu'une fois publié
+        allow read: if estManager() || (connecte() && semaine(s).statut == 'publie');
+        allow write: if gereMagasin(magasinId)
+          && request.resource.data.keys().hasOnly(['jours', 'majPar', 'majLe'])
+          && joursOk(request.resource.data.jours);
+      }
+
+      match /dispos/{matricule} {
+        allow read: if estMoi(matricule) || estManager();
+        allow create, update: if estMoi(matricule) && semaineOuverte(s)
+          && request.resource.data.keys().hasOnly(['magasins', 'jours', 'declareLe'])
+          && request.resource.data.magasins is list
+          && request.resource.data.magasins.size() >= 1 && request.resource.data.magasins.size() <= 10
+          && request.resource.data.jours is list
+          && request.resource.data.jours.size() >= 1 && request.resource.data.jours.size() <= 7;
+        allow delete: if (estMoi(matricule) && semaineOuverte(s)) || estManager();
+      }
+    }
+
+    // Tout le reste : refusé par défaut
+  }
+}
