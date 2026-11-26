@@ -671,7 +671,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="chargerTdb()">Actualiser</button>
-      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">Export PDF</button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">PDF</button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterGestionExcel()">Excel</button>
     </div>
     <div class="section-title">Entrées CA</div>
     <div class="table-wrap">
@@ -754,8 +755,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="btn btn-primary" style="flex:1;justify-content:center;gap:7px" onclick="exporterGestionExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export Excel
+        Excel
       </button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:7px" onclick="exporterGestionPDF()">PDF</button>
       <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:7px" onclick="chargerGestion()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Actualiser
@@ -801,6 +803,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div style="display:flex;gap:6px;margin-bottom:14px">
       <button class="pill active" id="rentab-tab-analyse" onclick="switchRentabTab('analyse')">Analyse</button>
       <button class="pill" id="rentab-tab-couts" onclick="switchRentabTab('couts')">Coûts fixes</button>
+      <button class="pill" id="rentab-tab-ponctuels" onclick="switchRentabTab('ponctuels')">Coûts ponctuels</button>
     </div>
 
     <!-- ── SOUS-ONGLET ANALYSE (existant) ── -->
@@ -827,6 +830,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <div class="chart-title">CA vs Coûts par magasin</div>
       <div style="position:relative;height:220px"><canvas id="chart-rentabilite"></canvas></div>
     </div>
+    <div id="rent-avert-ponctuels" style="display:none;border:1px solid var(--accent2);color:var(--accent2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:.78rem"></div>
     <!-- Tableau détail -->
     <div class="gestion-table-wrap">
       <table>
@@ -866,6 +870,24 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <div style="text-align:center;color:var(--muted);padding:32px;font-size:.8rem">Cliquer sur "Actualiser" pour charger les coûts</div>
       </div>
     </div><!-- /rentab-section-couts -->
+
+    <!-- ── SOUS-ONGLET COÛTS PONCTUELS ── -->
+    <div id="rentab-section-ponctuels" style="display:none">
+      <div class="card" style="padding:16px;margin-bottom:12px">
+        <div class="chart-title">Ajouter un coût ponctuel</div>
+        <div class="ponct-form">
+          <div class="field"><label for="ponct-date">Date</label><input type="date" id="ponct-date"></div>
+          <div class="field"><label for="ponct-magasin">Magasin</label><select id="ponct-magasin"><option value="">— Magasin —</option></select></div>
+          <div class="field ponct-large"><label for="ponct-libelle">Libellé</label><input type="text" id="ponct-libelle" maxlength="80" placeholder="ex : achat du chalet du marché de Noël"></div>
+          <div class="field"><label for="ponct-montant">Montant (€)</label><input type="number" id="ponct-montant" step="0.01" min="0" inputmode="decimal" placeholder="0,00"></div>
+          <button class="btn btn-primary" id="ponct-btn" style="justify-content:center" onclick="ajouterCoutPonctuel()">Ajouter</button>
+        </div>
+        <div style="font-size:.76rem;color:var(--muted);line-height:1.5;margin-top:10px">
+          Une dépense unique, comptée <strong style="color:var(--text)">en entier</strong> dans la rentabilité du magasin dès que sa date tombe dans la période analysée. Les coûts fixes, eux, sont mensuels.
+        </div>
+      </div>
+      <div class="gestion-table-wrap" id="ponct-liste"></div>
+    </div><!-- /rentab-section-ponctuels -->
 
   </div>
   <div id="tdbtab-content-logs" style="display:none">

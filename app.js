@@ -1018,6 +1018,8 @@ function icone(nom) {
 }
 // Icône « en ligne », à la taille du texte qui l'entoure (boutons, libellés)
 function ic(nom) { return `<span class="ic">${icone(nom)}</span>`; }
+// N'accepte que les liens http(s) : une valeur du Sheet ne doit jamais devenir un lien « javascript: »
+function urlSure(u) { const v = String(u ?? '').trim(); return /^https?:\/\//i.test(v) ? v : '#'; }
 // Retire les emojis d'un texte (les anciens messages et certaines valeurs du Sheet en contiennent)
 const RE_EMOJI = /(?![✓✕])[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FF}]\uFE0F?/gu;
 function sansEmoji(s) { return String(s ?? '').replace(RE_EMOJI, '').replace(/ {2,}/g, ' ').trim(); }
@@ -1622,11 +1624,10 @@ async function publierPlanning() {
       const values = [headerRow, ...dataRows];
 
       // Plage cible selon l'onglet : current=G1:N13, next=Y1:AF13
-      const plage = isCurrentTab
-        ? `Planning!G1:N${1+values.length}`
-        : `Planning!Y1:AF${1+values.length}`;
+      // Toute la plage (50 lignes) est réécrite : les lignes d'un magasin retiré sont effacées
+      const plage = isCurrentTab ? 'Planning!G1:N50' : 'Planning!Y1:AF50';
 
-      await sheetsPut(tdbId, plage, values);
+      await sheetsPut(tdbId, plage, grillePleine(values));
 
       const msg = isCurrentTab ? 'Planning en cours mis à jour !' : 'Planning S+1 publié !';
       showToast(msg,'success');
@@ -1789,6 +1790,15 @@ async function verifierRotation() {
   }
 }
 
+// Complète une grille à 50 lignes × 8 colonnes avec des cellules vides.
+// Indispensable avant un sheetsPut : l'API n'écrase QUE les cellules envoyées, et sheetsGet
+// supprime les cellules vides en fin de ligne. Sans ça, un magasin fermé (ligne vide ou plus
+// courte) gardait dans le Sheet les noms de la semaine précédente.
+function grillePleine(vals, lignes = 50, colonnes = 8) {
+  return Array.from({length: lignes}, (_, i) =>
+    Array.from({length: colonnes}, (_, j) => (vals[i] && vals[i][j] != null) ? vals[i][j] : ''));
+}
+
 function rotatePlanning(silencieux=false) {
   demanderToken(() => _rotatePlanning(silencieux));
 }
@@ -1803,8 +1813,8 @@ async function _rotatePlanning(silencieux=false) {
     if (!nextVals.length) { if (!silencieux) showToast('ℹ️ Aucun planning S+1 à faire glisser','info'); return; }
 
     // S-1 (P1:W50) ← ce qui était en cours (G1:N50)
-    if (currentVals.length) await sheetsPut(tdbId, 'Planning!P1:W50', currentVals);
-    await sheetsPut(tdbId, 'Planning!G1:N50', nextVals);
+    if (currentVals.length) await sheetsPut(tdbId, 'Planning!P1:W50', grillePleine(currentVals));
+    await sheetsPut(tdbId, 'Planning!G1:N50', grillePleine(nextVals));
     await sheetsClear(tdbId, 'Planning!Y1:AF50');
 
     // Dispos : purge UNIQUEMENT si la semaine a changé (marqueur F1). Avant, la rotation
@@ -1976,16 +1986,38 @@ async function chargerRentabilite() {
       };
     });
 
-    // ── 4. Fusionner CA + coûts fixes + salaires réels ──
+    // ── 3 bis. Coûts ponctuels (dépense datée : achat d'un chalet, d'un stand…) ──
+    // Comptés en entier si leur date tombe dans la période, contrairement aux coûts fixes (mensuels).
+    const ponctuelsParMag = {};
+    window._rentabPonctuels = [];
+    const avert = document.getElementById('rent-avert-ponctuels');
+    try {
+      (await lireCoutsPonctuels(dbId)).forEach(c => {
+        if (filtMag && normNom(c.magasin) !== normNom(filtMag)) return;
+        if (!aAccesTousMagasins() && !peutVoirMagasin(c.magasin)) return;
+        if ((dMin && c.date < dMin) || (dMax && c.date > dMax)) return;
+        ponctuelsParMag[normNom(c.magasin)] = (ponctuelsParMag[normNom(c.magasin)] || 0) + c.montant;
+        window._rentabPonctuels.push(c);
+      });
+      if (avert) avert.style.display = 'none';
+    } catch(e) {
+      // Pas de repli silencieux : la marge affichée ne tient alors pas compte de ces coûts
+      console.warn('Coûts ponctuels:', e);
+      if (avert && isManager()) { avert.style.display = ''; avert.textContent = `Coûts ponctuels non comptés : onglet « ${ONGLET_COUTS_PONCTUELS} » illisible (${e.message}).`; }
+    }
+
+    // ── 4. Fusionner CA + coûts fixes + coûts ponctuels + salaires réels ──
+    const nomsConnus = [...Object.keys(caParMag), ...Object.keys(coutsFixesParMag), ...Object.keys(heuresParMag)];
     const allMags = [...new Set([
-      ...Object.keys(caParMag),
-      ...Object.keys(coutsFixesParMag),
-      ...Object.keys(heuresParMag),
+      ...nomsConnus,
+      // magasin qui n'a QUE des coûts ponctuels sur la période
+      ...window._rentabPonctuels.map(c => c.magasin).filter(m => !nomsConnus.some(n => normNom(n) === normNom(m))),
     ])].sort((a,b)=>a.localeCompare(b,'fr'));
 
     const data = allMags.map(mag => {
       const ca        = caParMag[mag]              || 0;
       const coutsFixe = coutsFixesParMag[mag]?.total || 0;
+      const coutsPonct = ponctuelsParMag[normNom(mag)] || 0;
       const salaires  = heuresParMag[mag]?.coutSal  || 0;
       const heuresMag = heuresParMag[mag]?.heures   || 0;
       const pctDed    = coutsFixesParMag[mag]?.pctDed || 0; // col I
@@ -1995,10 +2027,10 @@ async function chargerRentabilite() {
       // 2. Convertir TTC → HT selon TVA moy
       const caBrutHT  = tvaMoy > 0 ? caApresDeduction / (1 + tvaMoy / 100) : caApresDeduction;
       const deductions = ca - caBrutHT;
-      const couts     = coutsFixe + salaires;
+      const couts     = coutsFixe + coutsPonct + salaires;
       const marge     = caBrutHT - couts;
       const pct       = caBrutHT > 0 ? (marge / caBrutHT * 100) : 0;
-      return { mag, ca, caBrutHT, deductions, pctDed, tvaMoy, coutsFixe, salaires, heuresMag, couts, marge, pct };
+      return { mag, ca, caBrutHT, deductions, pctDed, tvaMoy, coutsFixe, coutsPonct, salaires, heuresMag, couts, marge, pct };
     });
 
     const fmtE = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
@@ -2029,6 +2061,7 @@ async function chargerRentabilite() {
       <th class="text-right">CA brut HT</th>
       <th class="text-right">Déductions</th>
       <th class="text-right">Coûts fixes</th>
+      <th class="text-right">Ponctuels</th>
       <th class="text-right">Salaires</th>
       <th class="text-right">Total coûts</th>
       <th class="text-right">Marge</th>
@@ -2043,12 +2076,13 @@ async function chargerRentabilite() {
         <td class="mono text-right green" style="font-weight:700">${fmtE(d.caBrutHT)}</td>
         <td class="mono text-right" style="color:var(--danger);font-size:.72rem">${d.deductions>0?'−'+fmtE(d.deductions):'—'}</td>
         <td class="mono text-right" style="color:var(--muted)">${fmtE(d.coutsFixe)}</td>
+        <td class="mono text-right" style="color:var(--muted)">${d.coutsPonct>0?fmtE(d.coutsPonct):'—'}</td>
         <td class="mono text-right amber" title="${d.heuresMag.toFixed(1)}h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toFixed(1)}h</span></td>
         <td class="mono text-right amber" style="font-weight:700">${fmtE(d.couts)}</td>
         <td class="mono text-right" style="color:${couleur(d.marge)};font-weight:700">${fmtE(d.marge)}</td>
         <td class="mono text-right" style="color:${couleur(d.pct)};font-weight:700">${fmtP(d.pct)}</td>
       </tr>`).join('') :
-      '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
+      '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
 
     // ── Graphique ──
     if (data.length) {
@@ -2057,7 +2091,7 @@ async function chargerRentabilite() {
         data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
         [
           { label:'CA déclaré',     data:data.map(d => d.caBrutHT),  backgroundColor:CHART_COLORS[0] }, // CA brut HT après déductions
-          { label:'Coûts fixes',    data:data.map(d => d.coutsFixe), backgroundColor:CHART_COLORS[2] },
+          { label:'Coûts fixes et ponctuels', data:data.map(d => d.coutsFixe + d.coutsPonct), backgroundColor:CHART_COLORS[2] },
           { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[5] },
           { label:'Marge',          data:data.map(d => d.marge),     backgroundColor:data.map(d => d.marge >= 0 ? marge : perte) }
         ],
@@ -2083,7 +2117,7 @@ function calculerNbMois(dMin, dMax) {
 
 // ─── Sous-onglets Rentabilité ───
 function switchRentabTab(tab) {
-  ['analyse', 'couts'].forEach(t => {
+  ['analyse', 'couts', 'ponctuels'].forEach(t => {
     document.getElementById(`rentab-section-${t}`)?.style.setProperty('display', t === tab ? '' : 'none');
     const btn = document.getElementById(`rentab-tab-${t}`);
     if (btn) {
@@ -2091,6 +2125,83 @@ function switchRentabTab(tab) {
     }
   });
   if (tab === 'couts') chargerCoutsFixes();
+  if (tab === 'ponctuels') chargerCoutsPonctuels();
+}
+
+// ══════════════════════════════════════════════════════════════
+// COÛTS PONCTUELS — dépenses datées rattachées à un magasin
+// Onglet « Coûts ponctuels » de la base : A=Date B=Magasin C=Libellé D=Montant (€) E=Saisi par F=Saisi le
+// ══════════════════════════════════════════════════════════════
+const ONGLET_COUTS_PONCTUELS = 'Coûts ponctuels';
+
+async function lireCoutsPonctuels(dbId) {
+  const rows = await sheetsGet(dbId, `${ONGLET_COUTS_PONCTUELS}!A2:F1000`);
+  return rows.map((r, i) => ({
+    ligne: i + 2,                              // n° de ligne dans le Sheet (pour la suppression)
+    date: serialToDate(r[0]), magasin: (r[1]||'').trim(), libelle: (r[2]||'').trim(),
+    montant: parseFR(r[3]) || 0, par: (r[4]||'').trim(),
+  })).filter(c => c.date && c.magasin && c.montant > 0);
+}
+
+async function chargerCoutsPonctuels() {
+  const dbId = getConfig('cfg-db-id'), liste = document.getElementById('ponct-liste');
+  if (!dbId || !liste) return;
+  if (!magasinsList.length) { try { await chargerMagasinsPromise(); } catch(e) { console.warn(e); } }
+  const sel = document.getElementById('ponct-magasin');
+  if (sel && sel.options.length <= 1) {
+    sel.innerHTML = '<option value="">— Magasin —</option>' + magasinsAutorises().map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  }
+  const champDate = document.getElementById('ponct-date');
+  if (champDate && !champDate.value) champDate.value = todayLocal();
+  liste.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="color:var(--accent);margin:0 auto"></div></div>';
+  try {
+    const couts = (await lireCoutsPonctuels(dbId))
+      .filter(c => aAccesTousMagasins() || peutVoirMagasin(c.magasin))
+      .sort((a,b) => b.date - a.date);
+    const fmt = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+    liste.innerHTML = couts.length ? `<table>
+      <thead><tr><th>Date</th><th>Magasin</th><th>Libellé</th><th class="text-right">Montant</th><th></th></tr></thead>
+      <tbody>${couts.map(c => `<tr>
+        <td class="mono">${c.date.toLocaleDateString('fr-FR')}</td>
+        <td>${esc(c.magasin)}</td>
+        <td>${esc(c.libelle) || '—'}</td>
+        <td class="mono text-right" style="font-weight:600">${fmt(c.montant)}</td>
+        <td class="text-right"><button onclick="supprimerCoutPonctuel(${c.ligne})" title="Supprimer" aria-label="Supprimer" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:6px">${ic('supprimer')}</button></td>
+      </tr>`).join('')}</tbody></table>`
+      : '<div style="text-align:center;color:var(--muted);padding:24px;font-size:.8rem">Aucun coût ponctuel enregistré</div>';
+  } catch(e) {
+    liste.innerHTML = `<div style="color:var(--danger);padding:16px;font-size:.8rem">Impossible de lire l'onglet « ${ONGLET_COUTS_PONCTUELS} » de la base : ${esc(e.message)}<br><span style="color:var(--muted)">Il doit exister avec les colonnes Date, Magasin, Libellé, Montant, Saisi par, Saisi le.</span></div>`;
+  }
+}
+
+async function ajouterCoutPonctuel() {
+  const dbId = getConfig('cfg-db-id');
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const date = v('ponct-date'), magasin = v('ponct-magasin'), libelle = v('ponct-libelle'), montant = parseFR(v('ponct-montant'));
+  if (!date || !magasin || !libelle || !(montant > 0)) { showToast('⚠️ Date, magasin, libellé et montant sont obligatoires','error'); return; }
+  const btn = document.getElementById('ponct-btn');
+  try {
+    if (btn) btn.disabled = true;
+    const [a, m, j] = date.split('-');
+    await sheetsAppend(dbId, `${ONGLET_COUTS_PONCTUELS}!A2:F2`, [[`${j}/${m}/${a}`, magasin, libelle, arrondi2(montant),
+      utilisateurConnecte?.nomComplet || '', new Date().toLocaleString('fr-FR')]]);
+    logAction('edit', 'Coût ponctuel ajouté', `${magasin} | ${libelle} | ${arrondi2(montant)} € | ${j}/${m}/${a}`);
+    showToast('✅ Coût ponctuel enregistré','success');
+    document.getElementById('ponct-libelle').value = ''; document.getElementById('ponct-montant').value = '';
+    await chargerCoutsPonctuels();
+  } catch(e) { showToast('❌ Enregistrement impossible : ' + e.message, 'error'); }
+  finally { if (btn) btn.disabled = false; }
+}
+
+async function supprimerCoutPonctuel(ligne) {
+  if (!confirm('Supprimer ce coût ponctuel ?')) return;
+  try {
+    // La ligne est vidée (pas décalée) : les numéros des autres lignes ne bougent pas
+    await sheetsClear(getConfig('cfg-db-id'), `${ONGLET_COUTS_PONCTUELS}!A${ligne}:F${ligne}`);
+    logAction('delete', 'Coût ponctuel supprimé', `Ligne ${ligne}`);
+    showToast('✅ Coût ponctuel supprimé','success');
+    await chargerCoutsPonctuels();
+  } catch(e) { showToast('❌ Suppression impossible : ' + e.message, 'error'); }
 }
 
 // ─── Noms possibles de l'onglet Coût magasin ───
@@ -2329,6 +2440,7 @@ async function chargerGestion() {
       ca:       parseFR(r[6])||0,
       cb:       parseFR(r[8])||0,
       esp:      parseFR(r[9])||0,
+      autre:    parseFR(r[10])||0,
       magasin:  r[11]||'',
     }));
 
@@ -2355,14 +2467,16 @@ function parseDateFR(s) {
 }
 
 function renderGestion(du, au, mag, emp) {
-  const dateDu = du ? new Date(du) : null;
-  const dateAu = au ? new Date(au) : null;
+  // Heure LOCALE : new Date('2026-11-01') serait minuit UTC, soit 1 h en France,
+  // et le premier jour de la période était exclu.
+  const dateDu = du ? new Date(du + 'T00:00:00') : null;
+  const dateAu = au ? new Date(au + 'T23:59:59.999') : null;
 
   // Filtrer ventes
   const ventes = gestionVentesData.filter(r => {
     const d = parseDateFR(r.date);
     if (dateDu && d && d < dateDu) return false;
-    if (dateAu && d && d > new Date(dateAu.getTime() + 86399999)) return false;
+    if (dateAu && d && d > dateAu) return false;
     if (mag && normNom(r.magasin) !== normNom(mag)) return false;
     if (emp && !normNom(r.collab).includes(normNom(emp))) return false;
     return true;
@@ -2372,7 +2486,7 @@ function renderGestion(du, au, mag, emp) {
   const heures = gestionHeuresData.filter(r => {
     const d = parseDateFR(r.date);
     if (dateDu && d && d < dateDu) return false;
-    if (dateAu && d && d > new Date(dateAu.getTime() + 86399999)) return false;
+    if (dateAu && d && d > dateAu) return false;
     if (mag && normNom(r.magasin) !== normNom(mag)) return false;
     // Comparer en format "Prénom Nom" (cohérent avec l.employe du select)
     const nomCompletR = normNom((r.prenom+' '+r.nom).trim());
@@ -2457,56 +2571,213 @@ function mettreAJourTotauxGestion(ventes, heures) {
   }
 }
 
-function exporterGestionExcel() {
-  if (typeof XLSX === 'undefined') {
-    showToast('Librairie Excel non chargée — recharger la page','error');
-    return;
-  }
-  const du  = document.getElementById('tdb-filtre-du')?.value || 'tout';
-  const au  = document.getElementById('tdb-filtre-au')?.value || 'tout';
-  const mag = document.getElementById('tdb-filtre-magasin')?.value || 'tous';
-  const wb  = XLSX.utils.book_new();
+// ══════════════════════════════════════════════════════════════
+// REPORTING COMPTABLE — synthèse + export Excel (brut) et PDF
+// Deux sources : les tickets de vente (HT / TVA / TTC) et les fins de journée
+// (CA déclaré, CB, espèces, autres, heures). L'écart entre les deux est affiché.
+// ══════════════════════════════════════════════════════════════
+const arrondi2 = n => Math.round((Number(n) || 0) * 100) / 100;
+// Taux de TVA : le Sheet contient 0.2, 20 ou « 20 % » selon les lignes → toujours une fraction
+function tauxTVA(v) { let n = parseFR(String(v).replace('%','')) || 0; if (n > 1) n /= 100; return n; }
+// Date locale en AAAA-MM-JJ (toISOString passerait en UTC et reculerait d'un jour en France)
+const isoLocal = d => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+function dateTri(s) { const d = parseDateFR(s); return d && !isNaN(d) ? d : null; }
 
-  // Feuille Ventes
-  const ventes = window._gestionVentesFiltrees || [];
-  const dataV = [
-    ['N°','Date','Collaborateur','Magasin','N° Ticket','Produit','Type','Quantité','HT (€)','TVA','TTC (€)'],
-    ...ventes.map(r => [r.num, r.date, r.collab, r.magasin, r.ticket, r.produit, r.type, r.qte, r.ht, r.tva, r.ttc])
-  ];
-  // Ligne totaux en bas
-  if (ventes.length) {
-    const totHT  = ventes.reduce((s,r) => s+r.ht, 0);
-    const totTTC = ventes.reduce((s,r) => s+r.ttc, 0);
-    dataV.push(['','','','','','','','TOTAL', +totHT.toFixed(2), '', +totTTC.toFixed(2)]);
-  }
-  const wsV = XLSX.utils.aoa_to_sheet(dataV);
-  // Largeurs colonnes
-  wsV['!cols'] = [5,12,18,22,16,22,12,8,10,8,10].map(w => ({wch:w}));
-  XLSX.utils.book_append_sheet(wb, wsV, 'Ventes');
+// Recharge si besoin et applique les filtres du tableau de bord (période, magasin, employé)
+async function preparerCompta() {
+  if (!gestionVentesData.length && !gestionHeuresData.length) await chargerGestion();
+  const v = id => document.getElementById(id)?.value || '';
+  renderGestion(v('tdb-filtre-du'), v('tdb-filtre-au'), v('tdb-filtre-magasin'), v('tdb-filtre-employe'));
+  return { ventes: window._gestionVentesFiltrees || [], heures: window._gestionHeuresFiltrees || [],
+           du: v('tdb-filtre-du'), au: v('tdb-filtre-au'), mag: v('tdb-filtre-magasin') };
+}
 
-  // Feuille Heures
-  const heures = window._gestionHeuresFiltrees || [];
-  const dataH = [
-    ['Nom','Prénom','Matricule','Date','Magasin','Horaires','Heures','CA (€)','CB (€)','Espèces (€)'],
-    ...heures.map(r => [r.nom, r.prenom, r.matricule, r.date, r.magasin, r.horaires,
-      r.heures > 0 ? +r.heures.toFixed(4) : '',  // valeur décimale propre pour Excel
-      r.ca||'', r.cb||'', r.esp||''])
-  ];
-  if (heures.length) {
-    const totH = heures.reduce((s,r) => s+r.heures, 0);
-    const totCA = heures.reduce((s,r) => s+r.ca, 0);
-    dataH.push(['','','','','','TOTAL', +totH.toFixed(2), +totCA.toFixed(2), '', '']);
-  }
-  const wsH = XLSX.utils.aoa_to_sheet(dataH);
-  wsH['!cols'] = [14,14,10,12,20,14,8,10,10,10].map(w => ({wch:w}));
-  XLSX.utils.book_append_sheet(wb, wsH, 'Heures');
+function syntheseCompta(ventes, heures) {
+  const vide = () => ({ ht:0, tva:0, ttc:0, tickets:new Set(), declare:0, cb:0, esp:0, autre:0, heures:0 });
+  const tot = vide(), parTVA = {}, parMag = {}, parJour = {};
+  const cle = (o, k) => (o[k] = o[k] || vide());
+  ventes.forEach(r => {
+    const tva = r.ttc - r.ht, t = tauxTVA(r.tva), d = dateTri(r.date);
+    const jour = d ? isoLocal(d) + '|' + r.magasin : '?|' + r.magasin;
+    const kT = (parTVA[t] = parTVA[t] || { taux:t, ht:0, tva:0, ttc:0 });
+    kT.ht += r.ht; kT.tva += tva; kT.ttc += r.ttc;
+    [tot, cle(parMag, r.magasin), cle(parJour, jour)].forEach(o => { o.ht += r.ht; o.tva += tva; o.ttc += r.ttc; if (r.ticket) o.tickets.add(r.ticket); });
+  });
+  heures.forEach(r => {
+    const d = dateTri(r.date);
+    const jour = d ? isoLocal(d) + '|' + r.magasin : '?|' + r.magasin;
+    [tot, cle(parMag, r.magasin), cle(parJour, jour)].forEach(o => {
+      o.declare += r.ca; o.cb += r.cb; o.esp += r.esp; o.autre += r.autre || 0; o.heures += r.heures;
+    });
+  });
+  return {
+    tot,
+    tva: Object.values(parTVA).sort((x,y) => x.taux - y.taux),
+    magasins: Object.keys(parMag).sort((x,y) => x.localeCompare(y,'fr')).map(m => ({ magasin:m, ...parMag[m] })),
+    jours: Object.keys(parJour).sort().map(k => { const [iso, magasin] = k.split('|'); return { iso, magasin, ...parJour[k] }; })
+  };
+}
 
-  // Nom du fichier
-  const dateExport = todayLocal();
-  const nomMag = mag !== 'tous' ? '_'+mag.replace(/[^a-z0-9]/gi,'').slice(0,12) : '';
-  XLSX.writeFile(wb, `AllinOne_Export_${du}_${au}${nomMag}_${dateExport}.xlsx`);
-  showToast('✅ Export Excel généré','success');
-  logAction('system', 'Export Excel téléchargé', `Ventes: ${ventes.length} lignes | Heures: ${heures.length} lignes`);
+async function exporterGestionExcel() {
+  if (typeof XLSX === 'undefined') { showToast('Librairie Excel non chargée — recharger la page','error'); return; }
+  try {
+    const { ventes, heures, du, au, mag } = await preparerCompta();
+    if (!ventes.length && !heures.length) { showToast('Aucune donnée sur cette période','error'); return; }
+    const S = syntheseCompta(ventes, heures), T = S.tot, r2 = arrondi2;
+    const wb = XLSX.utils.book_new();
+    // Les dates partent comme de vraies dates Excel et les montants comme des nombres :
+    // le comptable peut trier, filtrer et faire ses formules sans retraitement.
+    const feuille = (nom, lignes, largeurs) => {
+      const ws = XLSX.utils.aoa_to_sheet(lignes, { cellDates:true, dateNF:'dd/mm/yyyy' });
+      ws['!cols'] = largeurs.map(w => ({ wch:w }));
+      XLSX.utils.book_append_sheet(wb, ws, nom);
+    };
+    const jourFR = iso => iso === '?' ? '' : new Date(iso + 'T12:00:00');
+
+    feuille('Synthèse', [
+      ['Reporting comptable AllinOne'],
+      ['Période', (du || 'début') + ' → ' + (au || 'fin')],
+      ['Magasin', mag || 'Tous'],
+      ['Généré le', new Date()],
+      [],
+      ['Ventes (tickets)', 'Montant (€)'],
+      ['Total HT', r2(T.ht)], ['Total TVA', r2(T.tva)], ['Total TTC', r2(T.ttc)], ['Nombre de tickets', T.tickets.size],
+      [],
+      ['Fins de journée (déclaré)', 'Montant (€)'],
+      ['CA déclaré', r2(T.declare)], ['dont CB', r2(T.cb)], ['dont espèces', r2(T.esp)], ['dont autres', r2(T.autre)],
+      ['Écart déclaré − tickets TTC', r2(T.declare - T.ttc)],
+      ['Heures travaillées', r2(T.heures)],
+    ], [32, 18]);
+
+    feuille('TVA', [['Taux de TVA', 'Base HT (€)', 'TVA (€)', 'TTC (€)'],
+      ...S.tva.map(t => [(t.taux*100).toLocaleString('fr-FR') + ' %', r2(t.ht), r2(t.tva), r2(t.ttc)]),
+      ['TOTAL', r2(T.ht), r2(T.tva), r2(T.ttc)]], [14, 14, 14, 14]);
+
+    const enteteAgg = ['Tickets', 'HT (€)', 'TVA (€)', 'TTC (€)', 'CA déclaré (€)', 'CB (€)', 'Espèces (€)', 'Autres (€)', 'Écart (€)', 'Heures'];
+    const ligneAgg = o => [o.tickets.size, r2(o.ht), r2(o.tva), r2(o.ttc), r2(o.declare), r2(o.cb), r2(o.esp), r2(o.autre), r2(o.declare - o.ttc), r2(o.heures)];
+    feuille('Par magasin', [['Magasin', ...enteteAgg], ...S.magasins.map(m => [m.magasin, ...ligneAgg(m)]), ['TOTAL', ...ligneAgg(T)]],
+      [24, 9, 12, 12, 12, 14, 12, 12, 12, 12, 9]);
+    feuille('Journal', [['Date', 'Magasin', ...enteteAgg], ...S.jours.map(j => [jourFR(j.iso), j.magasin, ...ligneAgg(j)])],
+      [12, 24, 9, 12, 12, 12, 14, 12, 12, 12, 12, 9]);
+
+    feuille('Ventes (brut)', [
+      ['N°','Date','Collaborateur','Magasin','N° Ticket','Produit','Type','Quantité','Taux TVA','HT (€)','TVA (€)','TTC (€)','CB (€)','Espèces (€)','Autres (€)'],
+      ...ventes.map(r => [r.num, dateTri(r.date) || r.date, r.collab, r.magasin, r.ticket, r.produit, r.type,
+        parseFR(r.qte) || r.qte, tauxTVA(r.tva), r2(r.ht), r2(r.ttc - r.ht), r2(r.ttc), r.cb || '', r.esp || '', r.autre || ''])
+    ], [6, 12, 20, 22, 18, 26, 12, 9, 9, 10, 10, 10, 10, 10, 10]);
+
+    feuille('Heures (brut)', [
+      ['Nom','Prénom','Matricule','Date','Magasin','Horaires','Heures','CA déclaré (€)','CB (€)','Espèces (€)','Autres (€)'],
+      ...heures.map(r => [r.nom, r.prenom, r.matricule, dateTri(r.date) || r.date, r.magasin, r.horaires,
+        r.heures > 0 ? +r.heures.toFixed(4) : '', r.ca || '', r.cb || '', r.esp || '', r.autre || ''])
+    ], [14, 14, 10, 12, 22, 14, 8, 14, 10, 12, 10]);
+
+    const nomMag = mag ? '_' + mag.replace(/[^a-z0-9]/gi,'').slice(0,12) : '';
+    XLSX.writeFile(wb, `AllinOne_Compta_${du || 'tout'}_${au || 'tout'}${nomMag}_${todayLocal()}.xlsx`);
+    showToast('✅ Export Excel généré','success');
+    logAction('system', 'Export Excel téléchargé', `Ventes: ${ventes.length} lignes | Heures: ${heures.length} lignes`);
+  } catch(e) { showToast('❌ Export Excel : ' + e.message, 'error'); console.error(e); }
+}
+
+// Rapport comptable PDF (A4 portrait, fond blanc : fait pour être imprimé ou transmis)
+async function exporterGestionPDF() {
+  if (!window.jspdf) { showToast('Librairie PDF non chargée — recharger la page','error'); return; }
+  try {
+    const { ventes, heures, du, au, mag } = await preparerCompta();
+    if (!ventes.length && !heures.length) { showToast('Aucune donnée sur cette période','error'); return; }
+    const S = syntheseCompta(ventes, heures), T = S.tot;
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
+    const L = 210, H = 297, M = 12, VERT = [5,150,105], GRIS = [100,116,139], NOIR = [17,24,39];
+    // Les polices standard du PDF ne connaissent pas l'espace fine insécable de toLocaleString('fr-FR')
+    const eur = n => arrondi2(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/[  ]/g,' ') + ' €';
+    const nb  = n => arrondi2(n).toLocaleString('fr-FR').replace(/[  ]/g,' ');
+    const jourFR = iso => iso === '?' ? '—' : iso.split('-').reverse().join('/');
+    let y = 0, page = 0;
+
+    const nouvellePage = () => {
+      if (page) pdf.addPage();
+      page++;
+      pdf.setFillColor(...VERT); pdf.rect(0, 0, L, 18, 'F');
+      pdf.setTextColor(255,255,255); pdf.setFont('helvetica','bold'); pdf.setFontSize(13);
+      pdf.text('Reporting comptable', M, 11.5);
+      pdf.setFont('helvetica','normal'); pdf.setFontSize(8.5);
+      const fr = d => d ? d.split('-').reverse().join('/') : '';
+      pdf.text(`Période : ${fr(du) || 'début'} au ${fr(au) || 'fin'}   |   Magasin : ${mag || 'Tous'}`, L - M, 8, { align:'right' });
+      pdf.text(`AllinOne — généré le ${new Date().toLocaleDateString('fr-FR')}`, L - M, 13.5, { align:'right' });
+      y = 26;
+    };
+    const titre = t => {
+      if (y > H - 40) nouvellePage();
+      pdf.setTextColor(...NOIR); pdf.setFont('helvetica','bold'); pdf.setFontSize(10.5);
+      pdf.text(t, M, y); y += 5;
+    };
+    // colonnes : [{t:'Titre', w:largeur mm, d:true si aligné à droite}] ; la dernière ligne peut être un total
+    const tableau = (cols, lignes, avecTotal) => {
+      const entete = () => {
+        pdf.setFillColor(241,245,249); pdf.rect(M, y, L - 2*M, 6.5, 'F');
+        pdf.setTextColor(...GRIS); pdf.setFont('helvetica','bold'); pdf.setFontSize(7.5);
+        let x = M; cols.forEach(c => { pdf.text(c.t, c.d ? x + c.w - 1.5 : x + 1.5, y + 4.4, { align: c.d ? 'right' : 'left' }); x += c.w; });
+        y += 6.5;
+      };
+      entete();
+      lignes.forEach((l, i) => {
+        if (y > H - 16) { nouvellePage(); entete(); }
+        const total = avecTotal && i === lignes.length - 1;
+        pdf.setTextColor(...NOIR); pdf.setFont('helvetica', total ? 'bold' : 'normal'); pdf.setFontSize(8);
+        let x = M;
+        cols.forEach((c, k) => {
+          let txt = String(l[k] ?? '');
+          while (txt.length > 3 && pdf.getTextWidth(txt) > c.w - 3) txt = txt.slice(0, -2) + '…';
+          pdf.text(txt, c.d ? x + c.w - 1.5 : x + 1.5, y + 4.2, { align: c.d ? 'right' : 'left' }); x += c.w;
+        });
+        pdf.setDrawColor(226,232,240); pdf.setLineWidth(total ? .4 : .15);
+        pdf.line(M, total ? y : y + 6, L - M, total ? y : y + 6);
+        y += 6;
+      });
+      y += 7;
+    };
+
+    nouvellePage();
+    // Indicateurs
+    const kpis = [['CA TTC (tickets)', eur(T.ttc)], ['CA HT', eur(T.ht)], ['TVA collectée', eur(T.tva)], ['CA déclaré', eur(T.declare)]];
+    const wK = (L - 2*M - 9) / 4;
+    kpis.forEach(([lbl, val], i) => {
+      const x = M + i * (wK + 3);
+      pdf.setDrawColor(226,232,240); pdf.setLineWidth(.3); pdf.roundedRect(x, y, wK, 17, 2, 2, 'S');
+      pdf.setTextColor(...GRIS); pdf.setFont('helvetica','normal'); pdf.setFontSize(7.5); pdf.text(lbl, x + 3, y + 6);
+      pdf.setTextColor(...NOIR); pdf.setFont('helvetica','bold'); pdf.setFontSize(11); pdf.text(val, x + 3, y + 13);
+    });
+    y += 25;
+
+    titre('TVA par taux');
+    tableau([{t:'Taux',w:40},{t:'Base HT',w:48.67,d:true},{t:'TVA',w:48.67,d:true},{t:'TTC',w:48.66,d:true}],
+      [...S.tva.map(t => [(t.taux*100).toLocaleString('fr-FR') + ' %', eur(t.ht), eur(t.tva), eur(t.ttc)]), ['Total', eur(T.ht), eur(T.tva), eur(T.ttc)]], true);
+
+    titre('Encaissements déclarés en fin de journée');
+    tableau([{t:'Mode',w:62},{t:'Montant',w:62,d:true},{t:'Part',w:62,d:true}],
+      [['Carte bancaire', T.cb], ['Espèces', T.esp], ['Autres', T.autre]].map(([m, v]) => [m, eur(v), T.declare ? (v / T.declare * 100).toFixed(1).replace('.', ',') + ' %' : '—'])
+        .concat([['Total déclaré', eur(T.declare), 'Écart avec les tickets : ' + eur(T.declare - T.ttc)]]), true);
+
+    const colsAgg = [{t:'Tickets',w:14,d:true},{t:'HT',w:23,d:true},{t:'TVA',w:20,d:true},{t:'TTC',w:23,d:true},{t:'Déclaré',w:23,d:true},{t:'Écart',w:20,d:true},{t:'Heures',w:15,d:true}];
+    const ligneAgg = o => [nb(o.tickets.size), eur(o.ht), eur(o.tva), eur(o.ttc), eur(o.declare), eur(o.declare - o.ttc), nb(o.heures)];
+    titre('Par magasin');
+    tableau([{t:'Magasin',w:48}, ...colsAgg], [...S.magasins.map(m => [m.magasin, ...ligneAgg(m)]), ['Total', ...ligneAgg(T)]], true);
+
+    titre('Journal quotidien');
+    tableau([{t:'Date',w:19},{t:'Magasin',w:29}, ...colsAgg], S.jours.map(j => [jourFR(j.iso), j.magasin, ...ligneAgg(j)]), false);
+
+    const n = pdf.getNumberOfPages();
+    for (let i = 1; i <= n; i++) {
+      pdf.setPage(i); pdf.setTextColor(...GRIS); pdf.setFont('helvetica','normal'); pdf.setFontSize(7.5);
+      pdf.text('HT, TVA et TTC : tickets de vente. CA déclaré, modes de paiement et heures : saisies de fin de journée.', M, H - 7);
+      pdf.text(`${i} / ${n}`, L - M, H - 7, { align:'right' });
+    }
+    const nomMag = mag ? '_' + mag.replace(/[^a-z0-9]/gi,'').slice(0,12) : '';
+    pdf.save(`AllinOne_Compta_${du || 'tout'}_${au || 'tout'}${nomMag}_${todayLocal()}.pdf`);
+    showToast('✅ Rapport PDF généré','success');
+    logAction('system', 'Rapport comptable PDF téléchargé', `Période: ${du}→${au} | Magasin: ${mag || 'Tous'}`);
+  } catch(e) { showToast('❌ Rapport PDF : ' + e.message, 'error'); console.error(e); }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -2535,6 +2806,7 @@ async function exporterRentabiliteExcel() {
     const totCA     = data.reduce((s,d) => s + d.ca,        0);
     const totBrutHT = data.reduce((s,d) => s + d.caBrutHT,  0);
     const totCF     = data.reduce((s,d) => s + d.coutsFixe, 0);
+    const totCP     = data.reduce((s,d) => s + (d.coutsPonct||0), 0);
     const totSal    = data.reduce((s,d) => s + d.salaires,  0);
     const totCouts  = data.reduce((s,d) => s + d.couts,     0);
     const totMarge  = data.reduce((s,d) => s + d.marge,     0);
@@ -2546,7 +2818,7 @@ async function exporterRentabiliteExcel() {
       ['Export Rentabilité — AllinOne'],
       ['Période : ' + periode, magLabel, '', 'Exporté le ' + dateExport],
       [],
-      ['Magasin','CA déclaré TTC (€)','CA brut HT (€)','Déductions (€)','% déduit CA','TVA moy (%)','Coûts fixes (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
+      ['Magasin','CA déclaré TTC (€)','CA brut HT (€)','Déductions (€)','% déduit CA','TVA moy (%)','Coûts fixes (€)','Coûts ponctuels (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
       ...data.map(d => [
         d.mag,
         +d.ca.toFixed(2),
@@ -2555,6 +2827,7 @@ async function exporterRentabiliteExcel() {
         d.pctDed > 0 ? d.pctDed : '',
         d.tvaMoy > 0 ? d.tvaMoy : '',
         +d.coutsFixe.toFixed(2),
+        +(d.coutsPonct||0).toFixed(2),
         +d.salaires.toFixed(2),
         +d.couts.toFixed(2),
         +d.marge.toFixed(2),
@@ -2562,12 +2835,20 @@ async function exporterRentabiliteExcel() {
       ]),
       [],
       ['TOTAL', +totCA.toFixed(2), +totBrutHT.toFixed(2), +(totCA-totBrutHT).toFixed(2),
-        '', '', +totCF.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
+        '', '', +totCF.toFixed(2), +totCP.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
         +totMarge.toFixed(2), +totPct.toFixed(1)],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(wsData);
-    ws1['!cols'] = [22,18,16,14,12,12,16,14,14,14,14].map(w => ({wch:w}));
+    ws1['!cols'] = [22,18,16,14,12,12,16,18,14,14,14,14].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, 'Synthèse');
+
+    // ── Feuille : Coûts ponctuels de la période ──
+    if ((window._rentabPonctuels || []).length) {
+      const wsP = XLSX.utils.aoa_to_sheet([['Date','Magasin','Libellé','Montant (€)','Saisi par'],
+        ...window._rentabPonctuels.map(c => [c.date, c.magasin, c.libelle, arrondi2(c.montant), c.par])], { cellDates:true, dateNF:'dd/mm/yyyy' });
+      wsP['!cols'] = [12,24,36,14,20].map(w => ({wch:w}));
+      XLSX.utils.book_append_sheet(wb, wsP, 'Coûts ponctuels');
+    }
 
     // ── Feuille 2 : Coûts fixes ──
     if (typeof _coutsRawData !== 'undefined' && _coutsRawData.length) {
@@ -3060,8 +3341,8 @@ function ouvrirModalTop10(nom) {
   if (infoEl) {
     const infoItems = [];
     if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">${prod.prixTTC.toFixed(2)} € TTC</span>`);
-    if (prod.type)    infoItems.push(`<span>${prod.type}</span>`);
-    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${prod.quotite}</span>`);
+    if (prod.type)    infoItems.push(`<span>${esc(prod.type)}</span>`);
+    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${esc(prod.quotite)}</span>`);
     if (stock !== null) {
       const col = stock <= 0 ? 'var(--danger)' : stock <= (prod.seuil||0) ? 'var(--accent2)' : 'var(--accent)';
       infoItems.push(`<span style="color:${col}">Stock : ${stock}</span>`);
@@ -4201,7 +4482,7 @@ function afficherCommandesFiltrees() {
 
   div.innerHTML = Object.entries(parMagasin).map(([mag, cmds]) => `
     <div style="background:var(--surface);border-radius:10px;padding:10px;margin-bottom:10px">
-      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">${mag}</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">${esc(mag)}</div>
       <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Par ${cmds[0].collab} — ${cmds[0].date}</div>
       ${cmds.map(c => `
         <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.78rem">
@@ -4332,7 +4613,7 @@ async function chargerCollabsGestion() {
           <div style="font-weight:600;font-size:.85rem">${esc((r[1]||'').trim())} ${esc((r[0]||'').trim())}</div>
           <div style="font-size:.72rem;color:var(--muted)">${esc((r[2]||'').trim())} — ${(r[14]||'NON').trim()==='OUI'?'Manager':'Vendeur'} — ${(r[15]||'').trim()||'Aucun magasin'}</div>
           ${_pinsVisibles ? `<div style="font-size:.72rem;color:var(--accent3);font-family:var(--font-num);display:flex;align-items:center;gap:6px;margin-top:2px">
-            PIN <span id="pin-val-${i}" style="display:none">${(r[4]||'—').trim()}</span>
+            PIN <span id="pin-val-${i}" style="display:none">${esc((r[4]||'—').trim())}</span>
             <span id="pin-mask-${i}">••••••</span>
             <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">${ic('oeil')}</button>
           </div>` : ''}
@@ -4962,14 +5243,14 @@ function afficherSuivi(rows) {
 
     // Photos
     const photoLinks = urls ? urls.split('|').map(u => u.trim()).filter(Boolean).map((u, pi) =>
-      `<a href="${u}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">Photo ${pi+1}</a>`
+      `<a href="${esc(urlSure(u))}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">Photo ${pi+1}</a>`
     ).join('') : '<span style="font-size:.72rem;color:var(--muted)">Aucune photo</span>';
 
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-weight:700;font-size:.9rem">${esc(prenom)} ${esc(nom)} <span style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc(mat)}</span></div>
-          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${date}${mag ? ' · '+mag : ''}</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${esc(date)}${mag ? ' · '+esc(mag) : ''}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button onclick="ouvrirModifSuivi(${rowIdx})" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);cursor:pointer">Modifier</button>
@@ -5135,7 +5416,7 @@ async function ouvrirModifSuivi(rowIdx) {
       <textarea id="suivi-edit-urls" rows="2" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.78rem;font-family:var(--font-num);outline:none;resize:vertical">${esc(urls)}</textarea>
     </div>
     ${urls ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${u.trim()}" target="_blank" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">Photo ${i+1}</a>` : '').join('')}
+      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${esc(urlSure(u))}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">Photo ${i+1}</a>` : '').join('')}
     </div>` : ''}
   `;
 
@@ -5806,7 +6087,7 @@ async function chargerRecapJour() {
       }
     }
   } catch(e) {
-    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">' + e.message + '</div>';
+    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">' + esc(e.message) + '</div>';
   }
 }
 

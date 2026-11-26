@@ -267,6 +267,38 @@ const G = 6, P = 15, Y = 24; // colonnes G, P, Y (index 0)
   check('Après publication : Grasse et Antibes affichés, Nice (toujours vide) masqué', r.vus.join() === 'Grasse,Antibes', r);
   check('Après publication : Nice reste enregistré dans le Sheet (aucune donnée perdue)', r.sheet.includes('Nice') && r.sheet.includes('Antibes'), r);
 
+  // ── 15. Magasin fermé la nouvelle semaine : la rotation ne doit laisser AUCUN nom de l'ancienne semaine ──
+  // (bug : sheetsPut n'écrase que les cellules fournies ; une ligne vide ou plus courte laissait les anciens noms)
+  await aLHeure('2026-10-28T09:00:00+01:00'); await reinit('manager');
+  await page.evaluate(() => {
+    window.__sheet['1,5'] = '2026-S44';
+    const ligne = (r, c0, vals) => vals.forEach((v, k) => { window.__sheet[r + ',' + (c0 + k)] = v; });
+    window.__grille(6, '19/10', 'Ancien Grasse');                                   // G : semaine passée
+    ligne(3, 6, ['Nice', 'Ancien Nice', 'Ancien Nice', 'Ancien Nice', 'Ancien Nice', 'Ancien Nice', 'Ancien Nice', 'Ancien Nice']);
+    ligne(4, 6, ['Antibes', '', '', '', '', '', '', 'Ancien Antibes']);
+    window.__grille(24, '26/10', 'Nouveau Grasse');                                 // Y : semaine en cours
+    ligne(3, 24, ['Nice']);                                                         // Nice fermé : personne
+  });
+  await page.evaluate(() => chargerPlanning());
+  await page.waitForTimeout(500);
+  r = await page.evaluate(() => { const o = []; for (let l = 1; l <= 50; l++) for (let c = 6; c <= 13; c++) { const v = window.__sheet[l + ',' + c]; if (v && String(v).includes('Ancien')) o.push(l + ':' + v); } return { restes: o, html: document.getElementById('planning-container-current').innerText }; });
+  check('Rotation : aucun nom de la semaine passée ne reste dans la semaine en cours (Sheet)', r.restes.length === 0, r.restes);
+  check('Rotation : magasin fermé non affiché, aucun ancien nom à l\'écran', !r.html.includes('Ancien') && !r.html.includes('Nice'), r.html.slice(0, 120));
+
+  // ── 16. Publication avec moins de magasins que la grille en place : les lignes en trop sont effacées ──
+  await reinit('manager');
+  await page.evaluate(async () => {
+    const ligne = (r, c0, vals) => vals.forEach((v, k) => { window.__sheet[r + ',' + (c0 + k)] = v; });
+    window.__grille(6, '26/10', 'Alice Martin');
+    ligne(3, 6, ['Nice', 'Ancien Nice', '', '', '', '', '', '']);
+    ligne(4, 6, ['Antibes', 'Ancien Antibes', '', '', '', '', '', '']);
+    planningEditData = { Grasse: ['Alice Martin', '', '', '', '', '', ''] };
+    planningEditTab = 'current';
+    await new Promise(res => { publierPlanning(); setTimeout(res, 300); });
+  });
+  r = await page.evaluate(() => [2, 3, 4].map(l => window.__sheet[l + ',6'] || '').join('|'));
+  check('Publication : les lignes des magasins retirés sont effacées du Sheet', r === 'Grasse||', r);
+
   check('Aucune erreur JS', erreurs.length === 0, erreurs);
 
   await browser.close(); srv.close();
