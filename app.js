@@ -2035,7 +2035,7 @@ async function chargerRentabilite() {
 
     const fmtE = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
     const fmtP = v => (v>=0?'+':'') + v.toLocaleString('fr-FR',FR1) + ' %';
-    const couleur = v => v >= 0 ? 'var(--accent)' : 'var(--danger)';
+    const couleur = v => v >= 0 ? 'var(--success)' : 'var(--danger)';
 
     // Totaux
     const totCA       = data.reduce((s,d)=>s+d.ca,        0);
@@ -2087,13 +2087,13 @@ async function chargerRentabilite() {
 
     // ── Graphique ──
     if (data.length) {
-      const marge = CHART_COLORS[7], perte = CHART_COLORS[4];
+      const marge = CHART_COLORS[1], perte = CHART_COLORS[4];
       creerChart('chart-rentabilite', 'bar',
         data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
         [
           { label:'CA déclaré',     data:data.map(d => d.caBrutHT),  backgroundColor:CHART_COLORS[0] }, // CA brut HT après déductions
           { label:'Coûts fixes et ponctuels', data:data.map(d => d.coutsFixe + d.coutsPonct), backgroundColor:CHART_COLORS[2] },
-          { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[5] },
+          { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[7] },
           { label:'Marge',          data:data.map(d => d.marge),     backgroundColor:data.map(d => d.marge >= 0 ? marge : perte) }
         ],
         { legend:true, extra:{ plugins:{ legend:{ position:'top', align:'end' } } } }
@@ -2692,7 +2692,7 @@ async function exporterGestionPDF() {
     const S = syntheseCompta(ventes, heures), T = S.tot;
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const L = 210, H = 297, M = 12, VERT = [26,127,69], GRIS = [100,116,139], NOIR = [17,24,39];
+    const L = 210, H = 297, M = 12, VERT = [30,79,216], GRIS = [100,116,139], NOIR = [17,24,39];
     // Les polices standard du PDF ne connaissent pas l'espace fine insécable de toLocaleString('fr-FR')
     const eur = n => arrondi2(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/[  ]/g,' ') + ' €';
     const nb  = n => arrondi2(n).toLocaleString('fr-FR').replace(/[  ]/g,' ');
@@ -4621,7 +4621,7 @@ async function chargerCollabsGestion() {
             <span id="pin-mask-${i}">••••••</span>
             <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">${ic('oeil')}</button>
           </div>` : ''}
-          <div style="font-size:.7rem;color:${(r[18]||'OUI').trim()==='OUI'?'var(--accent)':'var(--danger)'}">Compte ${(r[18]||'OUI').trim()==='OUI'?'actif':'désactivé'}</div>
+          <div style="font-size:.7rem;color:${(r[18]||'OUI').trim()==='OUI'?'var(--success)':'var(--danger)'}">Compte ${(r[18]||'OUI').trim()==='OUI'?'actif':'désactivé'}</div>
         </div>
         <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0;margin-left:8px" onclick="ouvrirFormulaireCollab(${r._sheetRow})">${ic('modifier')}</button>
       </div>
@@ -4949,7 +4949,7 @@ function renderListeProduits() {
         <div style="display:flex;gap:10px;font-size:.72rem;margin-top:2px">
           <span style="color:var(--accent)">Vente: ${r[5]||'—'} € TTC</span>
           ${achat > 0 ? `<span style="color:var(--muted)">Achat: ${achat.toLocaleString('fr-FR',FR2)} € HT</span>` : ''}
-          ${marge !== null ? `<span style="color:${marge>=0?'var(--accent)':'var(--danger)'}">Marge: ${marge.toLocaleString('fr-FR',FR2)} € (${margeP.toLocaleString('fr-FR',FR0)} %)</span>` : ''}
+          ${marge !== null ? `<span style="color:${marge>=0?'var(--success)':'var(--danger)'}">Marge: ${marge.toLocaleString('fr-FR',FR2)} € (${margeP.toLocaleString('fr-FR',FR0)} %)</span>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
@@ -5654,7 +5654,7 @@ async function chargerNotifsGestion() {
               ${esc((r[0]||'').trim())} — ${esc((r[1]||'').trim())} à ${esc((r[2]||'').trim())}
               — <span style="color:${dest.toLowerCase()==='manager'?'var(--accent2)':'var(--accent)'}">${dest}</span>
             </div>
-            <div style="font-size:.7rem;color:${actif?'var(--accent)':'var(--danger)'};margin-top:2px">${actif?'Active':'Désactivée'}</div>
+            <div style="font-size:.7rem;color:${actif?'var(--success)':'var(--danger)'};margin-top:2px">${actif?'Active':'Désactivée'}</div>
           </div>
           <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0" onclick="ouvrirFormulaireNotif(${i+2})">${ic('modifier')}</button>
         </div>`;
@@ -5729,7 +5729,7 @@ function calcPrixHT() {
     if (achat > 0 && pht > 0) {
       const marge  = pht - achat;
       const margeP = achat > 0 ? (marge / achat * 100) : 0;
-      margeEl.innerHTML = `Marge brute : <strong style="color:${marge>=0?'var(--accent)':'var(--danger)'}">
+      margeEl.innerHTML = `Marge brute : <strong style="color:${marge>=0?'var(--success)':'var(--danger)'}">
         ${marge.toLocaleString('fr-FR',FR2)} € HT &nbsp;(${margeP.toLocaleString('fr-FR',FR1)} %)
       </strong>`;
     } else {
@@ -6331,7 +6331,7 @@ function dzDrop(e,section){e.preventDefault();dzDragLeave(`${section}-drop-zone`
 // GRAPHIQUES — instances
 // ══════════════════════════════════════════════════════════════
 const charts = {};
-const CHART_COLORS = ['#2fb872','#3b82f6','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#f97316','#6366f1','#84cc16','#ec4899'];
+const CHART_COLORS = ['#4c7ef3','#2fb872','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#f97316','#64748b','#84cc16','#ec4899'];
 
 function detruireChart(id) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
@@ -6344,7 +6344,7 @@ function chartTheme() {
   return { text:v('--text'), text2:v('--text2'), muted:v('--muted'), border:v('--border'), card:v('--card'),
            accent:v('--accent'), font:cs.fontFamily };
 }
-// '#2fb872' + 0.4 → '#2fb87266' (couleur avec transparence)
+// '#4c7ef3' + 0.4 → '#4c7ef366' (couleur avec transparence)
 function hexAlpha(c, a) {
   return /^#[0-9a-f]{6}$/i.test(c) ? c + Math.round(a*255).toString(16).padStart(2,'0') : c;
 }
@@ -7812,7 +7812,7 @@ async function exporterTdb() {
     const {jsPDF} = window.jspdf;
     const pdf = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const pW=297, pH=210;
-    const C = {fond:[13,15,20],card:[30,34,48],vert:[45,162,95],blanc:[255,255,255],gris:[150,160,180],accent:[63,207,127],bleu:[96,165,250],amber:[245,158,11],ligne1:[22,25,35],ligne2:[30,34,48]};
+    const C = {fond:[13,15,20],card:[30,34,48],vert:[30,79,216],blanc:[255,255,255],gris:[150,160,180],accent:[91,143,249],bleu:[96,165,250],amber:[245,158,11],ligne1:[22,25,35],ligne2:[30,34,48]};
     const now = new Date();
     const dateStr = now.toLocaleDateString('fr-FR');
     const filtDu = document.getElementById('tdb-filtre-du')?.value || '';
@@ -8101,7 +8101,7 @@ function remplirEtatStocks() {
   tbody.innerHTML = prods.map(({ prod, i, stockActuel }) => {
     const valeurInput = stockActuel !== null ? stockActuel : '';
     const inputStyle  = stockActuel !== null
-      ? 'border-color:rgba(63,207,127,.4);background:rgba(63,207,127,.06)'
+      ? 'border-color:rgba(91,143,249,.4);background:rgba(91,143,249,.06)'
       : '';
     return `<tr>
       <td style="font-weight:600">${prod.nom}</td>
@@ -8408,8 +8408,8 @@ async function exporterHistorique() {
 
     // Couleurs
     const C = {
-      fond:[13,15,20], card:[30,34,48], vert:[45,162,95],
-      blanc:[255,255,255], gris:[150,160,180], accent:[63,207,127],
+      fond:[13,15,20], card:[30,34,48], vert:[30,79,216],
+      blanc:[255,255,255], gris:[150,160,180], accent:[91,143,249],
       bleu:[96,165,250], amber:[245,158,11], ligne1:[22,25,35], ligne2:[30,34,48]
     };
     const now = new Date();
@@ -8803,14 +8803,14 @@ function afficherBanniereInstall() {
 
   const banner = document.createElement('div');
   banner.id = 'install-banner';
-  banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;max-width:588px;margin:0 auto;background:#1e2230;border:1px solid #3fcf7f44;border-radius:14px;padding:14px 16px;z-index:250;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0008';
+  banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;max-width:588px;margin:0 auto;background:#1e2230;border:1px solid #5b8ff944;border-radius:14px;padding:14px 16px;z-index:250;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0008';
   banner.innerHTML = `
     <img src="icon-192.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">
     <div style="flex:1;min-width:0">
       <div style="font-size:.88rem;font-weight:600;color:#e8eaf0">AllinOne App</div>
       <div style="font-size:.75rem;color:#6b7280">Ajouter a l'ecran d'accueil pour un acces rapide</div>
     </div>
-    <button onclick="installerPWA()" style="background:#3fcf7f;color:#06210f;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">Installer</button>
+    <button onclick="installerPWA()" style="background:#5b8ff9;color:#061229;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">Installer</button>
     <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.2rem;padding:0;flex-shrink:0">✕</button>
   `;
   document.body.appendChild(banner);
