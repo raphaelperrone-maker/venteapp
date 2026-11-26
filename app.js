@@ -837,6 +837,7 @@ function toggleTheme() {
   const isLight = document.body.classList.toggle('light-mode');
   localStorage.setItem('theme', isLight ? 'light' : 'dark');
   updateThemeIcons(isLight);
+  rethemerCharts();
 }
 
 function updateThemeIcons(isLight) {
@@ -1875,7 +1876,6 @@ function onMagasinChange() {
 // ══════════════════════════════════════════════════════════════
 // 💹 RENTABILITÉ PAR MAGASIN
 // ══════════════════════════════════════════════════════════════
-let _chartRentabilite = null;
 
 async function chargerRentabilite() {
   const tdbId = getConfig('cfg-tdb-id');
@@ -2042,63 +2042,18 @@ async function chargerRentabilite() {
       '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
 
     // ── Graphique ──
-    const ctx = document.getElementById('chart-rentabilite');
-    if (ctx && data.length) {
-      if (_chartRentabilite) _chartRentabilite.destroy();
-      _chartRentabilite = new Chart(ctx, {
-        type: 'bar',
-        data: {
-          labels: data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
-          datasets: [
-            {
-              label: 'CA déclaré (€)',
-              data: data.map(d => d.caBrutHT), // CA brut HT après déductions
-              backgroundColor: 'rgba(16,185,129,.65)',
-              borderColor: 'rgba(16,185,129,1)',
-              borderWidth: 1.5, borderRadius: 4,
-            },
-            {
-              label: 'Coûts fixes (€)',
-              data: data.map(d => d.coutsFixe),
-              backgroundColor: 'rgba(245,158,11,.4)',
-              borderColor: 'rgba(245,158,11,.8)',
-              borderWidth: 1.5, borderRadius: 4,
-            },
-            {
-              label: 'Salaires réels (€)',
-              data: data.map(d => d.salaires),
-              backgroundColor: 'rgba(248,113,113,.45)',
-              borderColor: 'rgba(248,113,113,.9)',
-              borderWidth: 1.5, borderRadius: 4,
-            },
-            {
-              label: 'Marge (€)',
-              data: data.map(d => d.marge),
-              backgroundColor: data.map(d => d.marge >= 0 ? 'rgba(129,140,248,.5)' : 'rgba(248,113,113,.6)'),
-              borderColor:     data.map(d => d.marge >= 0 ? 'rgba(129,140,248,1)'  : 'rgba(248,113,113,1)'),
-              borderWidth: 1.5, borderRadius: 4,
-            }
-          ]
-        },
-        options: {
-          responsive: true, maintainAspectRatio: false,
-          plugins: {
-            legend: { labels: { color: '#9aa3c2', font: { size: 11 } } },
-            tooltip: {
-              callbacks: {
-                label: c => ` ${c.dataset.label}: ${c.raw.toLocaleString('fr-FR',{minimumFractionDigits:2})} €`
-              }
-            }
-          },
-          scales: {
-            x: { ticks: { color: '#545c7a', font: { size: 10 } }, grid: { color: 'rgba(255,255,255,.04)' } },
-            y: {
-              ticks: { color: '#545c7a', font: { size: 10 }, callback: v => v.toLocaleString('fr-FR',{notation:'compact'})+'€' },
-              grid: { color: 'rgba(255,255,255,.07)' }
-            }
-          }
-        }
-      });
+    if (data.length) {
+      const marge = CHART_COLORS[7], perte = CHART_COLORS[4];
+      creerChart('chart-rentabilite', 'bar',
+        data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
+        [
+          { label:'CA déclaré',     data:data.map(d => d.caBrutHT),  backgroundColor:CHART_COLORS[0] }, // CA brut HT après déductions
+          { label:'Coûts fixes',    data:data.map(d => d.coutsFixe), backgroundColor:CHART_COLORS[2] },
+          { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[5] },
+          { label:'Marge',          data:data.map(d => d.marge),     backgroundColor:data.map(d => d.marge >= 0 ? marge : perte) }
+        ],
+        { legend:true, extra:{ plugins:{ legend:{ position:'top', align:'end' } } } }
+      );
     }
 
     const nbSansTaux = allMags.filter(m => heuresParMag[m]?.heures > 0 && !(heuresParMag[m]?.coutSal > 0)).length;
@@ -6082,12 +6037,64 @@ function dzDrop(e,section){e.preventDefault();dzDragLeave(`${section}-drop-zone`
 // GRAPHIQUES — instances
 // ══════════════════════════════════════════════════════════════
 const charts = {};
-const CHART_COLORS = ['#4ade80','#60a5fa','#f59e0b','#f87171','#a78bfa','#34d399','#fb923c','#38bdf8','#e879f9','#fbbf24'];
+const CHART_COLORS = ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#f97316','#6366f1','#84cc16','#ec4899'];
 
 function detruireChart(id) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
 }
 
+// ── Thème des graphiques ──
+// Les couleurs viennent des variables CSS : un seul endroit à modifier, et le mode clair suit tout seul.
+function chartTheme() {
+  const cs = getComputedStyle(document.body), v = n => cs.getPropertyValue(n).trim();
+  return { text:v('--text'), text2:v('--text2'), muted:v('--muted'), border:v('--border'), card:v('--card'),
+           accent:v('--accent'), font:cs.fontFamily };
+}
+// '#10b981' + 0.4 → '#10b98166' (couleur avec transparence)
+function hexAlpha(c, a) {
+  return /^#[0-9a-f]{6}$/i.test(c) ? c + Math.round(a*255).toString(16).padStart(2,'0') : c;
+}
+function fmtEuroCourt(v) {
+  const n = Number(v) || 0;
+  return Math.abs(n) >= 1000 ? (n/1000).toLocaleString('fr-FR',{maximumFractionDigits:1})+' k€' : Math.round(n)+' €';
+}
+function fmtValeurChart(v, unite) {
+  return unite === '€' ? Number(v).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €'
+                       : Number(v).toLocaleString('fr-FR');
+}
+// Met en avant la meilleure valeur, atténue les autres
+function couleursMax(vals, base) {
+  const max = Math.max(...vals);
+  return vals.map(v => v === max && max > 0 ? base : hexAlpha(base, .4));
+}
+function fusionProfonde(cible, source) {
+  for (const k of Object.keys(source || {})) {
+    const s = source[k], estObjet = s && typeof s === 'object' && !Array.isArray(s);
+    if (estObjet && cible[k] && typeof cible[k] === 'object') fusionProfonde(cible[k], s);
+    else cible[k] = s;
+  }
+  return cible;
+}
+// Total affiché au centre des anneaux
+const pluginTotalCentre = {
+  id: 'totalCentre',
+  afterDraw(chart) {
+    if (chart.config.type !== 'doughnut') return;
+    const arc = chart.getDatasetMeta(0).data[0];
+    if (!arc || arc.innerRadius < 30) return;
+    const t = chartTheme(), ctx = chart.ctx;
+    const total = chart.data.datasets[0].data.reduce((s,v,i)=> s + (chart.getDataVisibility(i) ? (Number(v)||0) : 0), 0);
+    ctx.save();
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    ctx.fillStyle = t.muted; ctx.font = `500 10px ${t.font}`;
+    ctx.fillText('Total', arc.x, arc.y - 9);
+    ctx.fillStyle = t.text; ctx.font = `600 13px ${t.font}`;
+    ctx.fillText(fmtEuroCourt(total), arc.x, arc.y + 7);
+    ctx.restore();
+  }
+};
+
+// opts : { legend:bool, unite:'€' (défaut) ou '', extra:{options Chart.js propres au graphique} }
 function creerChart(canvasId, type, labels, datasets, opts={}) {
   detruireChart(canvasId);
   const ctx = document.getElementById(canvasId);
@@ -6095,21 +6102,81 @@ function creerChart(canvasId, type, labels, datasets, opts={}) {
   if (!window.Chart) { console.warn('Chart.js non chargé'); return; }
   if (!labels || !labels.length) { ctx.style.display='none'; return; }
   ctx.style.display='block';
-  const defaultOpts = {
+
+  const t = chartTheme(), unite = opts.unite ?? '€', police = { family:t.font, size:11 };
+  const anneau = type === 'doughnut', horiz = opts.extra?.indexAxis === 'y';
+
+  const options = {
     responsive: true, maintainAspectRatio: false,
     plugins: {
-      legend: { display: opts.legend ?? false, position: 'bottom', labels: { color:'#6b7280', font:{size:10}, padding:8, boxWidth:12 } },
-      tooltip: { callbacks: { label: ctx => {
-        const v = ctx.parsed.y ?? ctx.parsed;
-        return typeof v === 'number' ? v.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €' : ctx.label;
+      legend: { display: opts.legend ?? false, position: 'bottom' },
+      tooltip: { callbacks: { label: c => {
+        if (anneau) {
+          const tot = c.dataset.data.reduce((s,v)=>s+(Number(v)||0),0);
+          return ` ${c.label} : ${fmtValeurChart(c.parsed, unite)}` + (tot ? ` (${(c.parsed/tot*100).toFixed(1)} %)` : '');
+        }
+        const v = horiz ? c.parsed.x : c.parsed.y;
+        const nom = c.chart.data.datasets.length > 1 && c.dataset.label ? c.dataset.label + ' : ' : '';
+        return ' ' + nom + fmtValeurChart(v, unite);
       }}}
-    },
-    scales: type === 'line' || type === 'bar' ? {
-      x: { ticks:{color:'#6b7280',font:{size:9},maxRotation:45}, grid:{color:'#2a2f4255'} },
-      y: { ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'}, grid:{color:'#2a2f42'} }
-    } : {}
+    }
   };
-  charts[canvasId] = new Chart(ctx, { type, data:{labels,datasets}, options:{...defaultOpts,...(opts.extra||{})} });
+  if (anneau) options.cutout = '68%';
+  else {
+    options.interaction = { mode:'index', intersect:false, axis: horiz ? 'y' : 'x' };
+    options.scales = { x:{}, y:{} };
+  }
+  fusionProfonde(options, opts.extra);
+
+  // Le thème passe APRÈS la fusion : aucun graphique ne peut garder une couleur en dur.
+  Object.assign(options.plugins.legend.labels = options.plugins.legend.labels || {},
+    { color:t.text2, font:police, usePointStyle:true, pointStyle:'circle', boxWidth:7, boxHeight:7, padding:12 });
+  Object.assign(options.plugins.tooltip, {
+    backgroundColor:t.card, titleColor:t.text, bodyColor:t.text2, borderColor:t.border, borderWidth:1,
+    padding:10, cornerRadius:8, usePointStyle:true, boxPadding:4,
+    titleFont:{ family:t.font, size:12, weight:'600' }, bodyFont:police
+  });
+  if (!anneau) for (const axe of ['x','y']) {
+    const s = options.scales[axe], valeurs = (axe === 'y') !== horiz;   // axe des valeurs ou des catégories ?
+    s.ticks = Object.assign(s.ticks || {}, { color:t.muted, font:police });
+    s.border = { display:false, dash: valeurs ? [3,3] : [] };
+    s.grid = valeurs ? { color:t.border, drawTicks:false } : { display:false };
+    if (valeurs) {
+      s.beginAtZero = true;
+      Object.assign(s.ticks, { padding:8, maxTicksLimit:5, callback: unite === '€' ? fmtEuroCourt : v => v });
+    } else if (!horiz) Object.assign(s.ticks, { maxRotation:0, autoSkip:true, autoSkipPadding:12 });
+  }
+
+  const jeux = datasets.map(d => {
+    const ds = { ...d };
+    if (anneau) Object.assign(ds, { borderColor:t.card, borderWidth:2, hoverOffset:4,
+      backgroundColor: labels.map((_,i) => CHART_COLORS[i % CHART_COLORS.length]) });
+    else if (type === 'bar') { ds.borderRadius ??= 6; ds.maxBarThickness ??= 34; }
+    else if (type === 'line') {
+      if (ds.borderDash) Object.assign(ds, { borderColor:t.muted, borderWidth:1.5, pointRadius:0, pointHoverRadius:0 });
+      else Object.assign(ds, {
+        borderColor:t.accent, borderWidth:2, tension:.35, fill:true,
+        pointRadius: labels.length > 31 ? 0 : 2.5, pointHoverRadius:5,
+        pointBackgroundColor:t.card, pointBorderColor:t.accent, pointBorderWidth:2,
+        backgroundColor: c => {   // dégradé sous la courbe
+          const zone = c.chart.chartArea;
+          if (!zone) return 'transparent';
+          const g = c.chart.ctx.createLinearGradient(0, zone.top, 0, zone.bottom);
+          g.addColorStop(0, hexAlpha(t.accent, .28)); g.addColorStop(1, hexAlpha(t.accent, 0));
+          return g;
+        }
+      });
+    }
+    return ds;
+  });
+
+  charts[canvasId] = new Chart(ctx, { type, data:{labels,datasets:jeux}, options, plugins:[pluginTotalCentre] });
+  charts[canvasId].$args = [type, labels, datasets, opts];
+}
+
+// Changement de thème : on redessine les graphiques visibles avec les nouvelles couleurs
+function rethemerCharts() {
+  Object.entries(charts).forEach(([id, ch]) => { if (ch && ch.$args) creerChart(id, ...ch.$args); });
 }
 
 function serialToDate(s) {
@@ -6793,8 +6860,8 @@ async function chargerHistorique() {
     });
     creerChart('chart-evolution','line',
       evoEntries.map(e=>e[0]),
-      [{label:'CA (€)',data:evoEntries.map(e=>e[1]),borderColor:'#4ade80',backgroundColor:'rgba(74,222,128,0.1)',borderWidth:2,pointRadius:3,tension:0.3,fill:true}],
-      {extra:{scales:{y:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},x:{ticks:{color:'#6b7280',font:{size:9},maxRotation:45},grid:{color:'#2a2f4255'}}}}}
+      [{label:'CA',data:evoEntries.map(e=>e[1])}],
+      {}
     );
 
     } catch(e) { showToast('❌ CA: '+e.message,'error'); console.error(e); }
@@ -6943,13 +7010,10 @@ function creerChartEvo(f, mode) {
 
   creerChart('tdb-chart-evolution','line',labels,
     [
-      {label:'CA (€)',data:values,borderColor:'#4ade80',backgroundColor:'rgba(74,222,128,0.1)',borderWidth:2,pointRadius:3,tension:0.3,fill:true},
-      {label:'Moyenne',data:labels.map(()=>moy),borderColor:'rgba(251,191,36,0.5)',borderWidth:1.5,borderDash:[4,4],pointRadius:0,fill:false},
+      {label:'CA',data:values},
+      {label:'Moyenne',data:labels.map(()=>moy),borderDash:[4,4]},
     ],
-    {extra:{scales:{
-      y:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},
-      x:{ticks:{color:'#6b7280',font:{size:9},maxRotation:45},grid:{color:'#2a2f4255'}}
-    },plugins:{legend:{display:false}}}}
+    {}
   );
 }
 
@@ -7049,13 +7113,12 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
   const venMoyL = list.map(c=>c.nom.split(' ')[0]); // Prénom seulement pour lisibilité
   const venMoyV = list.map(c=>c.jours>0?c.ca/c.jours:0);
   creerChart('tdb-chart-moy-vendeur','bar',venMoyL,
-    [{label:'CA moy/jour',data:venMoyV,backgroundColor:CHART_COLORS.slice(0,venMoyL.length),borderRadius:6,borderWidth:0}],
-    {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+    [{label:'CA moy/jour',data:venMoyV,backgroundColor:couleursMax(venMoyV,CHART_COLORS[1]),borderRadius:6,borderWidth:0}],
+    {extra:{indexAxis:'y'}}
   );
   const venL = list.map(c=>c.nom), venV = list.map(c=>c.ca);
   creerChart('tdb-chart-vendeur','doughnut',venL,[{data:venV,backgroundColor:CHART_COLORS.slice(0,venL.length),borderWidth:0}],
-    {legend:true,extra:{plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{size:9},padding:5,boxWidth:10}},
-      tooltip:{callbacks:{label:ctx=>{const t=venV.reduce((a,b)=>a+b,0);return ctx.label+': '+(ctx.parsed/t*100).toFixed(1)+'%';}}}}}}
+    {legend:true,extra:{plugins:{legend:{position:'bottom'}}}}
   );
 }
 
@@ -7100,20 +7163,19 @@ function remplirOngletProduits(ventesRaw, dMin, dMax) {
   // Camembert
   if (prodL.length) {
     creerChart('tdb-chart-produits','doughnut',prodL,[{data:prodV,backgroundColor:CHART_COLORS.slice(0,prodL.length),borderWidth:0}],
-      {legend:true,extra:{plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{size:9},padding:4,boxWidth:8}},
-        tooltip:{callbacks:{label:ctx=>{const t=prodV.reduce((a,b)=>a+b,0);return ctx.label+': '+(ctx.parsed/t*100).toFixed(1)+'%';}}}}}}
+      {legend:true,extra:{plugins:{legend:{position:'bottom'}}}}
     );
     // Top CA
     const top10 = prodList.slice(0,10);
     creerChart('tdb-chart-top-ca','bar',top10.map(e=>e[0]),
-      [{data:top10.map(e=>e[1].ca),backgroundColor:CHART_COLORS.slice(0,10),borderRadius:6,borderWidth:0}],
-      {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:8}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+      [{data:top10.map(e=>e[1].ca),backgroundColor:CHART_COLORS[0],borderRadius:6,borderWidth:0}],
+      {extra:{indexAxis:'y'}}
     );
     // Top quantité
     const topQte = [...prodList].sort((a,b)=>b[1].qte-a[1].qte).slice(0,10);
     creerChart('tdb-chart-top-qte','bar',topQte.map(e=>e[0]),
-      [{data:topQte.map(e=>e[1].qte),backgroundColor:CHART_COLORS.slice(0,10).reverse(),borderRadius:6,borderWidth:0}],
-      {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:8}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+      [{data:topQte.map(e=>e[1].qte),backgroundColor:CHART_COLORS[1],borderRadius:6,borderWidth:0}],
+      {unite:'',extra:{indexAxis:'y'}}
     );
   }
 
@@ -7203,7 +7265,7 @@ async function chargerTdb() {
     const moyJour = nbJoursUniques > 0 ? tCA/nbJoursUniques : 0;
 
     document.getElementById('tdb-total').textContent = tCA.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
-    document.getElementById('tdb-moy-jour').textContent = moyJour.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
+    document.getElementById('tdb-moy-jour').textContent = moyJour.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2})+' €';
     document.getElementById('tdb-cb').textContent = tCB.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
     document.getElementById('tdb-esp').textContent = tEsp.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
     document.getElementById('tdb-saisies').textContent = f.length;
@@ -7223,23 +7285,21 @@ async function chargerTdb() {
     f.forEach(l=>{caParMag[l.magasin]=(caParMag[l.magasin]||0)+l.total;});
     const magL=Object.keys(caParMag), magV=Object.values(caParMag);
     creerChart('tdb-chart-magasin','doughnut',magL,[{data:magV,backgroundColor:CHART_COLORS.slice(0,magL.length),borderWidth:0}],
-      {legend:true,extra:{plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{size:9},padding:5,boxWidth:10}},
-        tooltip:{callbacks:{label:ctx=>{const t=magV.reduce((a,b)=>a+b,0);return ctx.label+': '+(ctx.parsed/t*100).toFixed(1)+'%';}}}}}}
+      {legend:true,extra:{plugins:{legend:{position:'bottom'}}}}
     );
 
     // Camembert collaborateurs
     const caParVen={};
     f.forEach(l=>{caParVen[l.employe]=(caParVen[l.employe]||0)+l.total;});
     const venL=Object.keys(caParVen), venV=Object.values(caParVen);
-    creerChart('tdb-chart-vendeur','doughnut',venL,[{data:venV,backgroundColor:CHART_COLORS.slice(0,venL.length).reverse(),borderWidth:0}],
-      {legend:true,extra:{plugins:{legend:{display:true,position:'bottom',labels:{color:'#6b7280',font:{size:9},padding:5,boxWidth:10}},
-        tooltip:{callbacks:{label:ctx=>{const t=venV.reduce((a,b)=>a+b,0);return ctx.label+': '+(ctx.parsed/t*100).toFixed(1)+'%';}}}}}}
+    creerChart('tdb-chart-vendeur','doughnut',venL,[{data:venV,backgroundColor:CHART_COLORS.slice(0,venL.length),borderWidth:0}],
+      {legend:true,extra:{plugins:{legend:{position:'bottom'}}}}
     );
 
     // Barres paiements
     const tAutres=f.reduce((s,l)=>s+l.autres,0);
     creerChart('tdb-chart-paiements','bar',['CB','Espèces','Autres'],
-      [{data:[tCB,tEsp,tAutres],backgroundColor:['#60a5fa','#f59e0b','#a78bfa'],borderRadius:6,borderWidth:0}]
+      [{data:[tCB,tEsp,tAutres],backgroundColor:[CHART_COLORS[1],CHART_COLORS[2],CHART_COLORS[3]],borderRadius:6,borderWidth:0}]
     );
 
     // CA moyen par jour de semaine (Lun=0..Dim=6)
@@ -7251,9 +7311,9 @@ async function chargerTdb() {
       countJourSem[j]++;
     });
     const moyJourSem = caJourSem.map((ca,i)=>countJourSem[i]>0?ca/countJourSem[i]:0);
-    creerChart('tdb-chart-joursem','bar',JOURS_SEM,
-      [{label:'CA moy (€)',data:moyJourSem,backgroundColor:CHART_COLORS.slice(0,7),borderRadius:6,borderWidth:0}],
-      {extra:{scales:{y:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},x:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+    creerChart('tdb-chart-joursem','bar',JOURS_SEM.map(j=>j.slice(0,3)),
+      [{label:'CA moy (€)',data:moyJourSem,backgroundColor:couleursMax(moyJourSem,CHART_COLORS[0]),borderRadius:6,borderWidth:0}],
+      {}
     );
 
     // CA moyen par collaborateur (CA / nb jours uniques travaillés)
@@ -7266,8 +7326,8 @@ async function chargerTdb() {
     const venMoyL = Object.keys(vendeurStats).sort();
     const venMoyV = venMoyL.map(v=>vendeurStats[v].ca/Math.max(vendeurStats[v].jours.size,1));
     creerChart('tdb-chart-moy-vendeur','bar',venMoyL,
-      [{label:'CA moy/jour (€)',data:venMoyV,backgroundColor:CHART_COLORS.slice(0,venMoyL.length),borderRadius:6,borderWidth:0}],
-      {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:9},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:9}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+      [{label:'CA moy/jour (€)',data:venMoyV,backgroundColor:couleursMax(venMoyV,CHART_COLORS[1]),borderRadius:6,borderWidth:0}],
+      {extra:{indexAxis:'y'}}
     );
 
     // Tableau CA
@@ -7378,24 +7438,23 @@ async function chargerTdb() {
     const prodV = prodL.map(p=>caParProduit[p]);
     creerChart('tdb-chart-produits','doughnut',prodL,
       [{data:prodV,backgroundColor:CHART_COLORS.slice(0,Math.min(prodL.length,10)),borderWidth:0}],
-      {legend:true,extra:{plugins:{legend:{display:true,position:'right',labels:{color:'#6b7280',font:{size:9},padding:5,boxWidth:10}},
-        tooltip:{callbacks:{label:ctx=>{const t=prodV.reduce((a,b)=>a+b,0);return ctx.label+': '+(ctx.parsed/t*100).toFixed(1)+'% — '+ctx.parsed.toLocaleString('fr-FR',{maximumFractionDigits:0})+'€';}}}}}}
+      {legend:true,extra:{plugins:{legend:{position:'right'}}}}
     );
 
     // Top 10 ventes en € (barres horizontales)
     const top10CA = prodL.slice(0,10);
     const top10CAV = top10CA.map(p=>caParProduit[p]);
     creerChart('tdb-chart-top-ca','bar',top10CA,
-      [{data:top10CAV,backgroundColor:CHART_COLORS.slice(0,top10CA.length),borderRadius:4,borderWidth:0}],
-      {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:8},callback:v=>v>=1000?(v/1000).toFixed(1)+'k€':v+'€'},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:8}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+      [{data:top10CAV,backgroundColor:CHART_COLORS[0],borderRadius:4,borderWidth:0}],
+      {extra:{indexAxis:'y'}}
     );
 
     // Top 10 ventes en quantité
     const prodQteL = Object.keys(qteParProduit).sort((a,b)=>qteParProduit[b]-qteParProduit[a]).slice(0,10);
     const prodQteV = prodQteL.map(p=>qteParProduit[p]);
     creerChart('tdb-chart-top-qte','bar',prodQteL,
-      [{data:prodQteV,backgroundColor:CHART_COLORS.slice(0,prodQteL.length).reverse(),borderRadius:4,borderWidth:0}],
-      {extra:{indexAxis:'y',scales:{x:{min:0,ticks:{color:'#6b7280',font:{size:8}},grid:{color:'#2a2f4255'}},y:{ticks:{color:'#6b7280',font:{size:8}},grid:{color:'#2a2f4255'}}},plugins:{legend:{display:false}}}}
+      [{data:prodQteV,backgroundColor:CHART_COLORS[1],borderRadius:4,borderWidth:0}],
+      {unite:'',extra:{indexAxis:'y'}}
     );
 
   } catch(e) { console.warn('Ventes TdB:', e.message); }

@@ -902,3 +902,18 @@ body.light-mode tbody tr:hover{background:#f8fafc}
 .planning-row.moi{box-shadow:var(--shadow-sm);border-color:color-mix(in srgb,var(--accent) 45%,var(--border))}
 .manager-zone{box-shadow:var(--shadow-sm)}
 @media (min-width:900px){.jour-staff{font-size:.78rem}}
+
+/* ── Tableaux de bord & graphiques ── */
+.kpi-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-bottom:12px}
+.kpi-grid > .stat-card{min-width:0}
+.kpi-grid > .stat-card:first-child:nth-last-child(odd){grid-column:span 2}   /* nombre impair : le 1er KPI prend la ligne */
+.kpi-grid .value{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-variant-numeric:tabular-nums}
+.chart-title{font-size:.82rem;font-weight:600;color:var(--text);margin-bottom:12px;letter-spacing:-.005em}
+.chart-grid{display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:12px}
+.chart-card{padding:16px;margin:0;min-width:0}
+#screen-tdb canvas{max-width:100%}
+@media (min-width:700px){
+  .kpi-grid{grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+  .kpi-grid > .stat-card:first-child:nth-last-child(odd){grid-column:auto}
+  .chart-grid{grid-template-columns:repeat(3,minmax(0,1fr))}
+}

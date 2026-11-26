@@ -618,7 +618,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 <div class="screen" id="screen-tdb">
   <div class="card" style="padding:14px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Filtres</div>
+      <div class="chart-title" style="margin:0">Filtres</div>
       <button class="info-btn" onclick="showTooltip('tdb')">i</button>
     </div>
     <div class="row2f" style="margin-bottom:10px">
@@ -643,18 +643,18 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- ═══ GLOBAL ═══ -->
   <div id="tdbtab-content-global">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:500px">
-        <div class="stat-card" style="flex:0 0 140px"><div class="label">CA Total</div><div class="value green mono" id="tdb-total">—</div></div>
-        <div class="stat-card" style="flex:0 0 130px"><div class="label">CA moy/jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">CB</div><div class="value mono" id="tdb-cb">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">Espèces</div><div class="value amber mono" id="tdb-esp">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">Nb saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="tdb-total">—</div></div>
+        <div class="stat-card"><div class="label">CA moy/jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
+        <div class="stat-card"><div class="label">CB</div><div class="value mono" id="tdb-cb">—</div></div>
+        <div class="stat-card"><div class="label">Espèces</div><div class="value amber mono" id="tdb-esp">—</div></div>
+        <div class="stat-card"><div class="label">Nb saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Évolution du CA</div>
+        <div class="chart-title" style="margin:0">Évolution du CA</div>
         <div style="display:flex;gap:4px">
           <button id="evo-btn-jour" onclick="setEvoMode('jour')" class="pill active" style="font-size:.62rem;padding:3px 9px">Jour</button>
           <button id="evo-btn-semaine" onclick="setEvoMode('semaine')" class="pill" style="font-size:.62rem;padding:3px 9px">Sem.</button>
@@ -662,14 +662,13 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
           <button id="evo-btn-annee" onclick="setEvoMode('annee')" class="pill" style="font-size:.62rem;padding:3px 9px">Année</button>
         </div>
       </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:300px"><canvas id="tdb-chart-evolution"></canvas></div></div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:300px"><canvas id="tdb-chart-evolution"></canvas></div></div>
     </div>
-    <div class="scroll-x-graphs" style="display:flex;gap:10px;margin-bottom:4px">
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">Par magasin</div><div style="position:relative;height:160px"><canvas id="tdb-chart-magasin"></canvas></div></div>
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">Paiements</div><div style="position:relative;height:160px"><canvas id="tdb-chart-paiements"></canvas></div></div>
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">CA moy/jour sem.</div><div style="position:relative;height:160px"><canvas id="tdb-chart-joursem"></canvas></div></div>
+    <div class="chart-grid">
+      <div class="card chart-card"><div class="chart-title">Par magasin</div><div style="position:relative;height:200px"><canvas id="tdb-chart-magasin"></canvas></div></div>
+      <div class="card chart-card"><div class="chart-title">Paiements</div><div style="position:relative;height:200px"><canvas id="tdb-chart-paiements"></canvas></div></div>
+      <div class="card chart-card"><div class="chart-title">CA moy/jour sem.</div><div style="position:relative;height:200px"><canvas id="tdb-chart-joursem"></canvas></div></div>
     </div>
-    <div class="scroll-hint" style="margin-bottom:12px">← Glisser →</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="chargerTdb()">Actualiser</button>
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">Export PDF</button>
@@ -683,16 +682,16 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- ═══ COLLABORATEURS ═══ -->
   <div id="tdbtab-content-collabs" style="display:none">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:400px">
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Heures totales</div><div class="value blue mono" id="tdb-col-heures">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Meilleur CA/h</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">% Photos</div><div class="value mono" id="tdb-col-photos">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Collabs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">Heures totales</div><div class="value blue mono" id="tdb-col-heures">—</div></div>
+        <div class="stat-card"><div class="label">Meilleur CA/h</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
+        <div class="stat-card"><div class="label">% Photos</div><div class="value mono" id="tdb-col-photos">—</div></div>
+        <div class="stat-card"><div class="label">Collabs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">CA moyen / jour travaillé</div>
+      <div class="chart-title">CA moyen / jour travaillé</div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) var(--surface)">
         <div style="position:relative;height:200px;min-width:320px"><canvas id="tdb-chart-moy-vendeur"></canvas></div>
       </div>
@@ -705,23 +704,23 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <tbody id="tdb-tbody-horaires"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Charger…</td></tr></tbody></table>
     </div>
     <div class="card" style="padding:14px;margin-top:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center">Part de CA par collaborateur</div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:280px"><canvas id="tdb-chart-vendeur"></canvas></div></div>
+      <div class="chart-title">Part de CA par collaborateur</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:280px"><canvas id="tdb-chart-vendeur"></canvas></div></div>
     </div>
   </div>
 
   <!-- ═══ PRODUITS ═══ -->
   <div id="tdbtab-content-produits" style="display:none">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:400px">
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Produits vendus</div><div class="value blue mono" id="tdb-prod-nb">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Top produit</div><div class="value amber mono" id="tdb-prod-top">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">CA produits</div><div class="value green mono" id="tdb-prod-ca">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">Produits vendus</div><div class="value blue mono" id="tdb-prod-nb">—</div></div>
+        <div class="stat-card"><div class="label">Top produit</div><div class="value amber mono" id="tdb-prod-top">—</div></div>
+        <div class="stat-card"><div class="label">CA produits</div><div class="value green mono" id="tdb-prod-ca">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center">Top produits</div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:280px"><canvas id="tdb-chart-produits"></canvas></div></div>
+      <div class="chart-title">Top produits</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:280px"><canvas id="tdb-chart-produits"></canvas></div></div>
     </div>
     <div class="section-title">Classement produits</div>
     <div class="table-wrap">
@@ -817,15 +816,15 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       </button>
     </div>
     <!-- Totaux -->
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">CA Total</div><div class="value green mono" id="rent-tot-ca">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Coûts Total</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Marge nette</div><div class="value mono" id="rent-tot-marge">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Rentabilité</div><div class="value mono" id="rent-tot-pct">—</div></div>
+    <div class="kpi-grid">
+      <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="rent-tot-ca">—</div></div>
+      <div class="stat-card"><div class="label">Coûts Total</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
+      <div class="stat-card"><div class="label">Marge nette</div><div class="value mono" id="rent-tot-marge">—</div></div>
+      <div class="stat-card"><div class="label">Rentabilité</div><div class="value mono" id="rent-tot-pct">—</div></div>
     </div>
     <!-- Graphique -->
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">CA vs Coûts par magasin</div>
+      <div class="chart-title">CA vs Coûts par magasin</div>
       <div style="position:relative;height:220px"><canvas id="chart-rentabilite"></canvas></div>
     </div>
     <!-- Tableau détail -->

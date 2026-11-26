@@ -6,6 +6,9 @@ Accueil repensé : en-tête compact, tuiles avec icône ; 4 colonnes sur tablett
 Tablette et grand écran : les écrans utilisent toute la largeur utile
 Planning : onglets en contrôle segmenté, cases plus lisibles, zone manager sobre
 Mode clair retravaillé (cartes blanches, ombres légères) ; boutons et champs de 44 px minimum pour le tactile
+Tableaux de bord : indicateurs en grille (plus de défilement horizontal), graphiques « Par magasin / Paiements / Jour de semaine » côte à côte sur tablette
+Graphiques refaits : mêmes couleurs que l'app en mode sombre comme en mode clair, courbe du CA avec dégradé, total affiché au centre des anneaux, meilleure valeur mise en avant, info-bulles plus lisibles
+Correction : le « CA moy/jour » pouvait afficher 3 décimales ; les quantités du top produits n'affichent plus « € »
 V2.1.0
 Plannings : les magasins où personne n'est planifié de la semaine ne sont plus affichés en consultation (ni dans l'export PDF), pour tout le monde
 Plannings : dans « Modifier le planning », tous les magasins réapparaissent, y compris ceux sans personne, pour pouvoir les affecter
