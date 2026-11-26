@@ -1986,16 +1986,38 @@ async function chargerRentabilite() {
       };
     });
 
-    // ── 4. Fusionner CA + coûts fixes + salaires réels ──
+    // ── 3 bis. Coûts ponctuels (dépense datée : achat d'un chalet, d'un stand…) ──
+    // Comptés en entier si leur date tombe dans la période, contrairement aux coûts fixes (mensuels).
+    const ponctuelsParMag = {};
+    window._rentabPonctuels = [];
+    const avert = document.getElementById('rent-avert-ponctuels');
+    try {
+      (await lireCoutsPonctuels(dbId)).forEach(c => {
+        if (filtMag && normNom(c.magasin) !== normNom(filtMag)) return;
+        if (!aAccesTousMagasins() && !peutVoirMagasin(c.magasin)) return;
+        if ((dMin && c.date < dMin) || (dMax && c.date > dMax)) return;
+        ponctuelsParMag[normNom(c.magasin)] = (ponctuelsParMag[normNom(c.magasin)] || 0) + c.montant;
+        window._rentabPonctuels.push(c);
+      });
+      if (avert) avert.style.display = 'none';
+    } catch(e) {
+      // Pas de repli silencieux : la marge affichée ne tient alors pas compte de ces coûts
+      console.warn('Coûts ponctuels:', e);
+      if (avert && isManager()) { avert.style.display = ''; avert.textContent = `Coûts ponctuels non comptés : onglet « ${ONGLET_COUTS_PONCTUELS} » illisible (${e.message}).`; }
+    }
+
+    // ── 4. Fusionner CA + coûts fixes + coûts ponctuels + salaires réels ──
+    const nomsConnus = [...Object.keys(caParMag), ...Object.keys(coutsFixesParMag), ...Object.keys(heuresParMag)];
     const allMags = [...new Set([
-      ...Object.keys(caParMag),
-      ...Object.keys(coutsFixesParMag),
-      ...Object.keys(heuresParMag),
+      ...nomsConnus,
+      // magasin qui n'a QUE des coûts ponctuels sur la période
+      ...window._rentabPonctuels.map(c => c.magasin).filter(m => !nomsConnus.some(n => normNom(n) === normNom(m))),
     ])].sort((a,b)=>a.localeCompare(b,'fr'));
 
     const data = allMags.map(mag => {
       const ca        = caParMag[mag]              || 0;
       const coutsFixe = coutsFixesParMag[mag]?.total || 0;
+      const coutsPonct = ponctuelsParMag[normNom(mag)] || 0;
       const salaires  = heuresParMag[mag]?.coutSal  || 0;
       const heuresMag = heuresParMag[mag]?.heures   || 0;
       const pctDed    = coutsFixesParMag[mag]?.pctDed || 0; // col I
@@ -2005,10 +2027,10 @@ async function chargerRentabilite() {
       // 2. Convertir TTC → HT selon TVA moy
       const caBrutHT  = tvaMoy > 0 ? caApresDeduction / (1 + tvaMoy / 100) : caApresDeduction;
       const deductions = ca - caBrutHT;
-      const couts     = coutsFixe + salaires;
+      const couts     = coutsFixe + coutsPonct + salaires;
       const marge     = caBrutHT - couts;
       const pct       = caBrutHT > 0 ? (marge / caBrutHT * 100) : 0;
-      return { mag, ca, caBrutHT, deductions, pctDed, tvaMoy, coutsFixe, salaires, heuresMag, couts, marge, pct };
+      return { mag, ca, caBrutHT, deductions, pctDed, tvaMoy, coutsFixe, coutsPonct, salaires, heuresMag, couts, marge, pct };
     });
 
     const fmtE = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
@@ -2039,6 +2061,7 @@ async function chargerRentabilite() {
       <th class="text-right">CA brut HT</th>
       <th class="text-right">Déductions</th>
       <th class="text-right">Coûts fixes</th>
+      <th class="text-right">Ponctuels</th>
       <th class="text-right">Salaires</th>
       <th class="text-right">Total coûts</th>
       <th class="text-right">Marge</th>
@@ -2053,12 +2076,13 @@ async function chargerRentabilite() {
         <td class="mono text-right green" style="font-weight:700">${fmtE(d.caBrutHT)}</td>
         <td class="mono text-right" style="color:var(--danger);font-size:.72rem">${d.deductions>0?'−'+fmtE(d.deductions):'—'}</td>
         <td class="mono text-right" style="color:var(--muted)">${fmtE(d.coutsFixe)}</td>
+        <td class="mono text-right" style="color:var(--muted)">${d.coutsPonct>0?fmtE(d.coutsPonct):'—'}</td>
         <td class="mono text-right amber" title="${d.heuresMag.toFixed(1)}h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toFixed(1)}h</span></td>
         <td class="mono text-right amber" style="font-weight:700">${fmtE(d.couts)}</td>
         <td class="mono text-right" style="color:${couleur(d.marge)};font-weight:700">${fmtE(d.marge)}</td>
         <td class="mono text-right" style="color:${couleur(d.pct)};font-weight:700">${fmtP(d.pct)}</td>
       </tr>`).join('') :
-      '<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
+      '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
 
     // ── Graphique ──
     if (data.length) {
@@ -2067,7 +2091,7 @@ async function chargerRentabilite() {
         data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
         [
           { label:'CA déclaré',     data:data.map(d => d.caBrutHT),  backgroundColor:CHART_COLORS[0] }, // CA brut HT après déductions
-          { label:'Coûts fixes',    data:data.map(d => d.coutsFixe), backgroundColor:CHART_COLORS[2] },
+          { label:'Coûts fixes et ponctuels', data:data.map(d => d.coutsFixe + d.coutsPonct), backgroundColor:CHART_COLORS[2] },
           { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[5] },
           { label:'Marge',          data:data.map(d => d.marge),     backgroundColor:data.map(d => d.marge >= 0 ? marge : perte) }
         ],
@@ -2093,7 +2117,7 @@ function calculerNbMois(dMin, dMax) {
 
 // ─── Sous-onglets Rentabilité ───
 function switchRentabTab(tab) {
-  ['analyse', 'couts'].forEach(t => {
+  ['analyse', 'couts', 'ponctuels'].forEach(t => {
     document.getElementById(`rentab-section-${t}`)?.style.setProperty('display', t === tab ? '' : 'none');
     const btn = document.getElementById(`rentab-tab-${t}`);
     if (btn) {
@@ -2101,6 +2125,83 @@ function switchRentabTab(tab) {
     }
   });
   if (tab === 'couts') chargerCoutsFixes();
+  if (tab === 'ponctuels') chargerCoutsPonctuels();
+}
+
+// ══════════════════════════════════════════════════════════════
+// COÛTS PONCTUELS — dépenses datées rattachées à un magasin
+// Onglet « Coûts ponctuels » de la base : A=Date B=Magasin C=Libellé D=Montant (€) E=Saisi par F=Saisi le
+// ══════════════════════════════════════════════════════════════
+const ONGLET_COUTS_PONCTUELS = 'Coûts ponctuels';
+
+async function lireCoutsPonctuels(dbId) {
+  const rows = await sheetsGet(dbId, `${ONGLET_COUTS_PONCTUELS}!A2:F1000`);
+  return rows.map((r, i) => ({
+    ligne: i + 2,                              // n° de ligne dans le Sheet (pour la suppression)
+    date: serialToDate(r[0]), magasin: (r[1]||'').trim(), libelle: (r[2]||'').trim(),
+    montant: parseFR(r[3]) || 0, par: (r[4]||'').trim(),
+  })).filter(c => c.date && c.magasin && c.montant > 0);
+}
+
+async function chargerCoutsPonctuels() {
+  const dbId = getConfig('cfg-db-id'), liste = document.getElementById('ponct-liste');
+  if (!dbId || !liste) return;
+  if (!magasinsList.length) { try { await chargerMagasinsPromise(); } catch(e) { console.warn(e); } }
+  const sel = document.getElementById('ponct-magasin');
+  if (sel && sel.options.length <= 1) {
+    sel.innerHTML = '<option value="">— Magasin —</option>' + magasinsAutorises().map(m => `<option value="${esc(m)}">${esc(m)}</option>`).join('');
+  }
+  const champDate = document.getElementById('ponct-date');
+  if (champDate && !champDate.value) champDate.value = todayLocal();
+  liste.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="color:var(--accent);margin:0 auto"></div></div>';
+  try {
+    const couts = (await lireCoutsPonctuels(dbId))
+      .filter(c => aAccesTousMagasins() || peutVoirMagasin(c.magasin))
+      .sort((a,b) => b.date - a.date);
+    const fmt = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}) + ' €';
+    liste.innerHTML = couts.length ? `<table>
+      <thead><tr><th>Date</th><th>Magasin</th><th>Libellé</th><th class="text-right">Montant</th><th></th></tr></thead>
+      <tbody>${couts.map(c => `<tr>
+        <td class="mono">${c.date.toLocaleDateString('fr-FR')}</td>
+        <td>${esc(c.magasin)}</td>
+        <td>${esc(c.libelle) || '—'}</td>
+        <td class="mono text-right" style="font-weight:600">${fmt(c.montant)}</td>
+        <td class="text-right"><button onclick="supprimerCoutPonctuel(${c.ligne})" title="Supprimer" aria-label="Supprimer" style="background:none;border:none;color:var(--danger);cursor:pointer;padding:6px">${ic('supprimer')}</button></td>
+      </tr>`).join('')}</tbody></table>`
+      : '<div style="text-align:center;color:var(--muted);padding:24px;font-size:.8rem">Aucun coût ponctuel enregistré</div>';
+  } catch(e) {
+    liste.innerHTML = `<div style="color:var(--danger);padding:16px;font-size:.8rem">Impossible de lire l'onglet « ${ONGLET_COUTS_PONCTUELS} » de la base : ${esc(e.message)}<br><span style="color:var(--muted)">Il doit exister avec les colonnes Date, Magasin, Libellé, Montant, Saisi par, Saisi le.</span></div>`;
+  }
+}
+
+async function ajouterCoutPonctuel() {
+  const dbId = getConfig('cfg-db-id');
+  const v = id => (document.getElementById(id)?.value || '').trim();
+  const date = v('ponct-date'), magasin = v('ponct-magasin'), libelle = v('ponct-libelle'), montant = parseFR(v('ponct-montant'));
+  if (!date || !magasin || !libelle || !(montant > 0)) { showToast('⚠️ Date, magasin, libellé et montant sont obligatoires','error'); return; }
+  const btn = document.getElementById('ponct-btn');
+  try {
+    if (btn) btn.disabled = true;
+    const [a, m, j] = date.split('-');
+    await sheetsAppend(dbId, `${ONGLET_COUTS_PONCTUELS}!A2:F2`, [[`${j}/${m}/${a}`, magasin, libelle, arrondi2(montant),
+      utilisateurConnecte?.nomComplet || '', new Date().toLocaleString('fr-FR')]]);
+    logAction('edit', 'Coût ponctuel ajouté', `${magasin} | ${libelle} | ${arrondi2(montant)} € | ${j}/${m}/${a}`);
+    showToast('✅ Coût ponctuel enregistré','success');
+    document.getElementById('ponct-libelle').value = ''; document.getElementById('ponct-montant').value = '';
+    await chargerCoutsPonctuels();
+  } catch(e) { showToast('❌ Enregistrement impossible : ' + e.message, 'error'); }
+  finally { if (btn) btn.disabled = false; }
+}
+
+async function supprimerCoutPonctuel(ligne) {
+  if (!confirm('Supprimer ce coût ponctuel ?')) return;
+  try {
+    // La ligne est vidée (pas décalée) : les numéros des autres lignes ne bougent pas
+    await sheetsClear(getConfig('cfg-db-id'), `${ONGLET_COUTS_PONCTUELS}!A${ligne}:F${ligne}`);
+    logAction('delete', 'Coût ponctuel supprimé', `Ligne ${ligne}`);
+    showToast('✅ Coût ponctuel supprimé','success');
+    await chargerCoutsPonctuels();
+  } catch(e) { showToast('❌ Suppression impossible : ' + e.message, 'error'); }
 }
 
 // ─── Noms possibles de l'onglet Coût magasin ───
@@ -2705,6 +2806,7 @@ async function exporterRentabiliteExcel() {
     const totCA     = data.reduce((s,d) => s + d.ca,        0);
     const totBrutHT = data.reduce((s,d) => s + d.caBrutHT,  0);
     const totCF     = data.reduce((s,d) => s + d.coutsFixe, 0);
+    const totCP     = data.reduce((s,d) => s + (d.coutsPonct||0), 0);
     const totSal    = data.reduce((s,d) => s + d.salaires,  0);
     const totCouts  = data.reduce((s,d) => s + d.couts,     0);
     const totMarge  = data.reduce((s,d) => s + d.marge,     0);
@@ -2716,7 +2818,7 @@ async function exporterRentabiliteExcel() {
       ['Export Rentabilité — AllinOne'],
       ['Période : ' + periode, magLabel, '', 'Exporté le ' + dateExport],
       [],
-      ['Magasin','CA déclaré TTC (€)','CA brut HT (€)','Déductions (€)','% déduit CA','TVA moy (%)','Coûts fixes (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
+      ['Magasin','CA déclaré TTC (€)','CA brut HT (€)','Déductions (€)','% déduit CA','TVA moy (%)','Coûts fixes (€)','Coûts ponctuels (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
       ...data.map(d => [
         d.mag,
         +d.ca.toFixed(2),
@@ -2725,6 +2827,7 @@ async function exporterRentabiliteExcel() {
         d.pctDed > 0 ? d.pctDed : '',
         d.tvaMoy > 0 ? d.tvaMoy : '',
         +d.coutsFixe.toFixed(2),
+        +(d.coutsPonct||0).toFixed(2),
         +d.salaires.toFixed(2),
         +d.couts.toFixed(2),
         +d.marge.toFixed(2),
@@ -2732,12 +2835,20 @@ async function exporterRentabiliteExcel() {
       ]),
       [],
       ['TOTAL', +totCA.toFixed(2), +totBrutHT.toFixed(2), +(totCA-totBrutHT).toFixed(2),
-        '', '', +totCF.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
+        '', '', +totCF.toFixed(2), +totCP.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
         +totMarge.toFixed(2), +totPct.toFixed(1)],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(wsData);
-    ws1['!cols'] = [22,18,16,14,12,12,16,14,14,14,14].map(w => ({wch:w}));
+    ws1['!cols'] = [22,18,16,14,12,12,16,18,14,14,14,14].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, 'Synthèse');
+
+    // ── Feuille : Coûts ponctuels de la période ──
+    if ((window._rentabPonctuels || []).length) {
+      const wsP = XLSX.utils.aoa_to_sheet([['Date','Magasin','Libellé','Montant (€)','Saisi par'],
+        ...window._rentabPonctuels.map(c => [c.date, c.magasin, c.libelle, arrondi2(c.montant), c.par])], { cellDates:true, dateNF:'dd/mm/yyyy' });
+      wsP['!cols'] = [12,24,36,14,20].map(w => ({wch:w}));
+      XLSX.utils.book_append_sheet(wb, wsP, 'Coûts ponctuels');
+    }
 
     // ── Feuille 2 : Coûts fixes ──
     if (typeof _coutsRawData !== 'undefined' && _coutsRawData.length) {

@@ -931,3 +931,12 @@ body.light-mode tbody tr:hover{background:#f8fafc}
 #toast[data-etat="warn"]::before{background:var(--accent2)}
 #toast[data-etat="wait"]::before{background:transparent;border:2px solid var(--muted);border-top-color:var(--text);width:10px;height:10px;box-sizing:border-box;animation:toast-tourne .8s linear infinite;vertical-align:-.08em}
 @keyframes toast-tourne{to{transform:rotate(360deg)}}
+
+/* ── Coûts ponctuels ── */
+.ponct-form{display:grid;grid-template-columns:1fr 1fr;gap:10px;align-items:end}
+.ponct-form .field{margin:0;min-width:0}
+.ponct-form .ponct-large,.ponct-form .btn{grid-column:1 / -1}
+@media (min-width:700px){
+  .ponct-form{grid-template-columns:150px 1fr 2fr 130px auto}
+  .ponct-form .ponct-large,.ponct-form .btn{grid-column:auto}
+}
