@@ -2692,7 +2692,7 @@ async function exporterGestionPDF() {
     const S = syntheseCompta(ventes, heures), T = S.tot;
     const { jsPDF } = window.jspdf;
     const pdf = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const L = 210, H = 297, M = 12, VERT = [5,150,105], GRIS = [100,116,139], NOIR = [17,24,39];
+    const L = 210, H = 297, M = 12, VERT = [26,127,69], GRIS = [100,116,139], NOIR = [17,24,39];
     // Les polices standard du PDF ne connaissent pas l'espace fine insécable de toLocaleString('fr-FR')
     const eur = n => arrondi2(n).toLocaleString('fr-FR',{minimumFractionDigits:2,maximumFractionDigits:2}).replace(/[  ]/g,' ') + ' €';
     const nb  = n => arrondi2(n).toLocaleString('fr-FR').replace(/[  ]/g,' ');
@@ -6331,7 +6331,7 @@ function dzDrop(e,section){e.preventDefault();dzDragLeave(`${section}-drop-zone`
 // GRAPHIQUES — instances
 // ══════════════════════════════════════════════════════════════
 const charts = {};
-const CHART_COLORS = ['#10b981','#3b82f6','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#f97316','#6366f1','#84cc16','#ec4899'];
+const CHART_COLORS = ['#2fb872','#3b82f6','#f59e0b','#8b5cf6','#f43f5e','#06b6d4','#f97316','#6366f1','#84cc16','#ec4899'];
 
 function detruireChart(id) {
   if (charts[id]) { charts[id].destroy(); delete charts[id]; }
@@ -6344,7 +6344,7 @@ function chartTheme() {
   return { text:v('--text'), text2:v('--text2'), muted:v('--muted'), border:v('--border'), card:v('--card'),
            accent:v('--accent'), font:cs.fontFamily };
 }
-// '#10b981' + 0.4 → '#10b98166' (couleur avec transparence)
+// '#2fb872' + 0.4 → '#2fb87266' (couleur avec transparence)
 function hexAlpha(c, a) {
   return /^#[0-9a-f]{6}$/i.test(c) ? c + Math.round(a*255).toString(16).padStart(2,'0') : c;
 }
@@ -7251,8 +7251,8 @@ function afficherEvolution(id, actuel, precedent) {
   if (!carte) return;
   let el = carte.querySelector('.kpi-delta');
   if (!el) { el = document.createElement('div'); el.className = 'kpi-delta'; carte.appendChild(el); }
-  if (precedent == null) { el.textContent = ''; el.className = 'kpi-delta'; return; }
-  if (!(precedent > 0)) { el.textContent = 'Pas de donnée sur la période précédente'; el.className = 'kpi-delta'; return; }
+  // Rien à comparer (pas de période, ou aucune donnée avant) : on n'affiche rien plutôt qu'un chiffre trompeur
+  if (!(precedent > 0)) { el.textContent = ''; el.className = 'kpi-delta'; return; }
   const pct = (actuel - precedent) / precedent * 100;
   el.className = 'kpi-delta ' + (pct > 0.05 ? 'hausse' : pct < -0.05 ? 'baisse' : '');
   el.textContent = (pct > 0 ? '+' : '') + pct.toLocaleString('fr-FR', FR1) + ' % vs période précédente';
@@ -7392,7 +7392,7 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
     const cah   = c.heures>0 ? (c.ca/c.heures).toLocaleString('fr-FR',FR2) : '—';
     const pct   = c.total>0  ? Math.round(c.avecPhoto/c.total*100) : 0;
     const pctCA = totalCA>0  ? (c.ca/totalCA*100).toLocaleString('fr-FR',FR1) : '0';
-    const pctColor = pct>=80?'#4ade80':pct>=50?'#f59e0b':'#f87171';
+    const pctColor = pct>=80?'#3fcf7f':pct>=50?'#f59e0b':'#f87171';
     return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:8px">'
@@ -7812,7 +7812,7 @@ async function exporterTdb() {
     const {jsPDF} = window.jspdf;
     const pdf = new jsPDF({orientation:'landscape',unit:'mm',format:'a4'});
     const pW=297, pH=210;
-    const C = {fond:[13,15,20],card:[30,34,48],vert:[45,162,95],blanc:[255,255,255],gris:[150,160,180],accent:[74,222,128],bleu:[96,165,250],amber:[245,158,11],ligne1:[22,25,35],ligne2:[30,34,48]};
+    const C = {fond:[13,15,20],card:[30,34,48],vert:[45,162,95],blanc:[255,255,255],gris:[150,160,180],accent:[63,207,127],bleu:[96,165,250],amber:[245,158,11],ligne1:[22,25,35],ligne2:[30,34,48]};
     const now = new Date();
     const dateStr = now.toLocaleDateString('fr-FR');
     const filtDu = document.getElementById('tdb-filtre-du')?.value || '';
@@ -8101,7 +8101,7 @@ function remplirEtatStocks() {
   tbody.innerHTML = prods.map(({ prod, i, stockActuel }) => {
     const valeurInput = stockActuel !== null ? stockActuel : '';
     const inputStyle  = stockActuel !== null
-      ? 'border-color:rgba(16,185,129,.4);background:rgba(16,185,129,.06)'
+      ? 'border-color:rgba(63,207,127,.4);background:rgba(63,207,127,.06)'
       : '';
     return `<tr>
       <td style="font-weight:600">${prod.nom}</td>
@@ -8409,7 +8409,7 @@ async function exporterHistorique() {
     // Couleurs
     const C = {
       fond:[13,15,20], card:[30,34,48], vert:[45,162,95],
-      blanc:[255,255,255], gris:[150,160,180], accent:[74,222,128],
+      blanc:[255,255,255], gris:[150,160,180], accent:[63,207,127],
       bleu:[96,165,250], amber:[245,158,11], ligne1:[22,25,35], ligne2:[30,34,48]
     };
     const now = new Date();
@@ -8803,14 +8803,14 @@ function afficherBanniereInstall() {
 
   const banner = document.createElement('div');
   banner.id = 'install-banner';
-  banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;max-width:588px;margin:0 auto;background:#1e2230;border:1px solid #4ade8044;border-radius:14px;padding:14px 16px;z-index:250;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0008';
+  banner.style.cssText = 'position:fixed;bottom:80px;left:16px;right:16px;max-width:588px;margin:0 auto;background:#1e2230;border:1px solid #3fcf7f44;border-radius:14px;padding:14px 16px;z-index:250;display:flex;align-items:center;gap:12px;box-shadow:0 8px 32px #0008';
   banner.innerHTML = `
     <img src="icon-192.png" style="width:44px;height:44px;border-radius:10px;flex-shrink:0">
     <div style="flex:1;min-width:0">
       <div style="font-size:.88rem;font-weight:600;color:#e8eaf0">AllinOne App</div>
       <div style="font-size:.75rem;color:#6b7280">Ajouter a l'ecran d'accueil pour un acces rapide</div>
     </div>
-    <button onclick="installerPWA()" style="background:#4ade80;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">Installer</button>
+    <button onclick="installerPWA()" style="background:#3fcf7f;color:#06210f;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">Installer</button>
     <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.2rem;padding:0;flex-shrink:0">✕</button>
   `;
   document.body.appendChild(banner);
