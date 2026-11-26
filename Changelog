@@ -1,3 +1,13 @@
+V2.4.0
+Nouvelle identité : bleu comme couleur de marque et nouveau logo assorti (anneau bleu et « A »), fond bleu nuit ; le vert est réservé au positif (réussite, hausse, montants), le rouge et l'orange aux alertes
+Nombres au format français partout : virgule décimale, espace avant € et % (« 133,29 €/h », « 413,0 h »)
+Vouvoiement dans toute l'application et libellés écrits en entier (« CA moyen par jour », « Collaborateurs actifs », « Espèces »)
+Messages d'erreur compréhensibles : ils disent ce qui s'est passé et quoi faire, au lieu du texte technique ; les messages longs ne sont plus coupés
+Tableau de bord : raccourcis de période (Cette semaine, Ce mois, Mois dernier, Cette année) ; sur téléphone, les listes Magasin et Employé prennent toute la largeur
+Tableau de bord : chaque indicateur affiche son évolution par rapport à la période précédente de même durée
+Rentabilité : un magasin sans coût saisi affiche « Coûts non renseignés » au lieu de « +100 % »
+Correction : dans l'onglet Collaborateurs, les colonnes du tableau « Détail horaires » pouvaient être décalées par rapport à leurs titres
+Confirmations : les fenêtres du navigateur sont remplacées par des fenêtres au style de l'application, avec un bouton rouge pour les suppressions
 V2.3.0
 Reporting comptable : l'export Excel contient maintenant une synthèse, la TVA par taux, les totaux par magasin, un journal quotidien et les données brutes (ventes et heures), avec de vraies dates et de vrais nombres
 Reporting comptable : nouveau « Rapport PDF » (TVA par taux, encaissements CB / espèces / autres, par magasin, journal quotidien), prêt à transmettre au comptable
