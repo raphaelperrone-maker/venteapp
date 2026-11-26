@@ -1018,6 +1018,8 @@ function icone(nom) {
 }
 // Icône « en ligne », à la taille du texte qui l'entoure (boutons, libellés)
 function ic(nom) { return `<span class="ic">${icone(nom)}</span>`; }
+// N'accepte que les liens http(s) : une valeur du Sheet ne doit jamais devenir un lien « javascript: »
+function urlSure(u) { const v = String(u ?? '').trim(); return /^https?:\/\//i.test(v) ? v : '#'; }
 // Retire les emojis d'un texte (les anciens messages et certaines valeurs du Sheet en contiennent)
 const RE_EMOJI = /(?![✓✕])[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FF}]\uFE0F?/gu;
 function sansEmoji(s) { return String(s ?? '').replace(RE_EMOJI, '').replace(/ {2,}/g, ' ').trim(); }
@@ -3060,8 +3062,8 @@ function ouvrirModalTop10(nom) {
   if (infoEl) {
     const infoItems = [];
     if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">${prod.prixTTC.toFixed(2)} € TTC</span>`);
-    if (prod.type)    infoItems.push(`<span>${prod.type}</span>`);
-    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${prod.quotite}</span>`);
+    if (prod.type)    infoItems.push(`<span>${esc(prod.type)}</span>`);
+    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${esc(prod.quotite)}</span>`);
     if (stock !== null) {
       const col = stock <= 0 ? 'var(--danger)' : stock <= (prod.seuil||0) ? 'var(--accent2)' : 'var(--accent)';
       infoItems.push(`<span style="color:${col}">Stock : ${stock}</span>`);
@@ -4201,7 +4203,7 @@ function afficherCommandesFiltrees() {
 
   div.innerHTML = Object.entries(parMagasin).map(([mag, cmds]) => `
     <div style="background:var(--surface);border-radius:10px;padding:10px;margin-bottom:10px">
-      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">${mag}</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">${esc(mag)}</div>
       <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Par ${cmds[0].collab} — ${cmds[0].date}</div>
       ${cmds.map(c => `
         <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.78rem">
@@ -4332,7 +4334,7 @@ async function chargerCollabsGestion() {
           <div style="font-weight:600;font-size:.85rem">${esc((r[1]||'').trim())} ${esc((r[0]||'').trim())}</div>
           <div style="font-size:.72rem;color:var(--muted)">${esc((r[2]||'').trim())} — ${(r[14]||'NON').trim()==='OUI'?'Manager':'Vendeur'} — ${(r[15]||'').trim()||'Aucun magasin'}</div>
           ${_pinsVisibles ? `<div style="font-size:.72rem;color:var(--accent3);font-family:var(--font-num);display:flex;align-items:center;gap:6px;margin-top:2px">
-            PIN <span id="pin-val-${i}" style="display:none">${(r[4]||'—').trim()}</span>
+            PIN <span id="pin-val-${i}" style="display:none">${esc((r[4]||'—').trim())}</span>
             <span id="pin-mask-${i}">••••••</span>
             <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">${ic('oeil')}</button>
           </div>` : ''}
@@ -4962,14 +4964,14 @@ function afficherSuivi(rows) {
 
     // Photos
     const photoLinks = urls ? urls.split('|').map(u => u.trim()).filter(Boolean).map((u, pi) =>
-      `<a href="${u}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">Photo ${pi+1}</a>`
+      `<a href="${esc(urlSure(u))}" target="_blank" rel="noopener" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">Photo ${pi+1}</a>`
     ).join('') : '<span style="font-size:.72rem;color:var(--muted)">Aucune photo</span>';
 
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-weight:700;font-size:.9rem">${esc(prenom)} ${esc(nom)} <span style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc(mat)}</span></div>
-          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${date}${mag ? ' · '+mag : ''}</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${esc(date)}${mag ? ' · '+esc(mag) : ''}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button onclick="ouvrirModifSuivi(${rowIdx})" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);cursor:pointer">Modifier</button>
@@ -5135,7 +5137,7 @@ async function ouvrirModifSuivi(rowIdx) {
       <textarea id="suivi-edit-urls" rows="2" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.78rem;font-family:var(--font-num);outline:none;resize:vertical">${esc(urls)}</textarea>
     </div>
     ${urls ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${u.trim()}" target="_blank" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">Photo ${i+1}</a>` : '').join('')}
+      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${esc(urlSure(u))}" target="_blank" rel="noopener" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">Photo ${i+1}</a>` : '').join('')}
     </div>` : ''}
   `;
 
@@ -5806,7 +5808,7 @@ async function chargerRecapJour() {
       }
     }
   } catch(e) {
-    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">' + e.message + '</div>';
+    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">' + esc(e.message) + '</div>';
   }
 }
 
