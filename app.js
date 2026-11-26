@@ -485,7 +485,7 @@ function ouvrirApp() {
   if (btnCmdMgr) btnCmdMgr.style.display = (u.isAdmin || u.isManager) ? 'flex' : 'none';
   // Filtres manager dans l'historique
   const histoFiltresMgr = document.getElementById('histo-filtres-manager');
-  if (histoFiltresMgr) histoFiltresMgr.style.display = (u.isAdmin || u.isManager) ? 'grid' : 'none';
+  if (histoFiltresMgr) histoFiltresMgr.style.display = (u.isAdmin || u.isManager) ? '' : 'none';   // '' = mise en page de la feuille de style
   const navGestion = document.getElementById('nav-gestion');
   if (navGestion) navGestion.style.display = (u.isAdmin || u.isManager) ? 'flex' : 'none';
   // Remplir les champs visibles admin
@@ -6637,6 +6637,8 @@ function switchHistoTab(tab) {
     const c = document.getElementById('histotab-content-'+t);
     if (c) c.style.display = t===tab ? 'block' : 'none';
   });
+  // Charger l'onglet affiché avec les filtres en cours (avant : il fallait appuyer sur « Appliquer »)
+  appliquerFiltresHisto();
 }
 
 function appliquerFiltresHisto() {
@@ -6666,20 +6668,23 @@ async function chargerVentesHisto() {
     const allRaw = await sheetsGet(tdbId, '📥 Données brutes vente produit!A5:P');
     _ventesHistoData = [];
     _ventesHistoSheetRows = [];
+    _ventesHistoLimite = VENTES_HISTO_TRANCHE;   // nouveau chargement : on repart de la première tranche
 
     allRaw.forEach((r, i) => {
       if (!r[1] && !r[2]) return; // ligne vide
       // 🔐 Périmètre magasins (col D = index 3)
-      if (!aAccesTousMagasins() && !peutVoirMagasin((r[3]||'').trim())) return;
-      const dateStr = (r[1]||'').trim();
-      const collab  = (r[2]||'').trim();
-      const magasin = (r[3]||'').trim();
-      const ticket  = (r[4]||'').trim();
-      const produit = (r[5]||'').trim();
-      const type    = (r[6]||'').trim();
+      if (!aAccesTousMagasins() && !peutVoirMagasin(String(r[3] ?? '').trim())) return;
+      // Une cellule peut arriver en nombre (ex. taux de TVA 0.2) : toujours la convertir en texte
+      const txt = v => String(v ?? '').trim();
+      const dateStr = txt(r[1]);
+      const collab  = txt(r[2]);
+      const magasin = txt(r[3]);
+      const ticket  = txt(r[4]);
+      const produit = txt(r[5]);
+      const type    = txt(r[6]);
       const qte     = parseFR(r[8]);
       const ht      = parseFR(r[11]);
-      const tva     = (r[10]||'').trim();
+      const tva     = txt(r[10]);
       const ttc     = parseFR(r[12]);
 
       const date = parseDateFR(dateStr);
@@ -6723,6 +6728,9 @@ async function chargerVentesHisto() {
   }
 }
 
+const VENTES_HISTO_TRANCHE = 30;
+let _ventesHistoLimite = VENTES_HISTO_TRANCHE;
+
 function renderVentesHisto() {
   const list = document.getElementById('histo-ventes-list');
   const u = utilisateurConnecte;
@@ -6749,17 +6757,19 @@ function renderVentesHisto() {
     byTicket[k].lignes.push({ ...r, _idx: i });
   });
 
-  list.innerHTML = Object.values(byTicket).map(t => {
+  // Affichage par tranches : des centaines de tickets d'un coup rendaient la page interminable et lente
+  const tickets = Object.values(byTicket), visibles = tickets.slice(0, _ventesHistoLimite), restants = tickets.length - visibles.length;
+  list.innerHTML = `<div class="liste-compte">${visibles.length} ticket${visibles.length>1?'s':''} affiché${visibles.length>1?'s':''} sur ${tickets.length}, du plus récent au plus ancien</div>` + visibles.map(t => {
     const totTicket = t.lignes.reduce((s,l)=>s+l.ttc,0);
     const lignesHTML = t.lignes.map(l => {
       const i = l._idx;
       return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.04);gap:8px">
         <div style="flex:1;min-width:0">
-          <div style="font-size:.8rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${l.produit}</div>
-          <div style="font-size:.68rem;color:var(--muted)">${l.type}${l.qte>0?' · '+l.qte+(normNom(l.type).includes('kilo')?'kg':'x'):''}</div>
+          <div style="font-size:.8rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc(l.produit)}</div>
+          <div style="font-size:.68rem;color:var(--muted)">${esc(l.type)}${l.qte>0?' · '+esc(l.qte)+(normNom(l.type).includes('kilo')?' kg':' ×'):''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:.78rem;font-weight:700;color:var(--accent);font-family:var(--font-num)">${l.ttc.toLocaleString('fr-FR',FR2)} €</div>
+          <div style="font-size:.78rem;font-weight:700;color:var(--success);font-family:var(--font-num)">${l.ttc.toLocaleString('fr-FR',FR2)} €</div>
           <div style="font-size:.65rem;color:var(--muted)">HT: ${l.ht.toLocaleString('fr-FR',FR2)} €</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
@@ -6774,18 +6784,20 @@ function renderVentesHisto() {
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${t.ticket ? 'N° '+t.ticket : ''}</div>
-          <div style="font-weight:700;font-size:.88rem">${t.dateStr} · ${t.collab}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${t.magasin}</div>
+          <div style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${t.ticket ? 'N° '+esc(t.ticket) : ''}</div>
+          <div style="font-weight:700;font-size:.88rem">${esc(t.dateStr)} · ${esc(t.collab)}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${esc(t.magasin)}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-weight:800;color:var(--accent);font-size:.92rem;font-family:var(--font-num)">${totTicket.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>
+          <div style="font-weight:700;color:var(--success);font-size:.92rem;font-family:var(--font-num)">${totTicket.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>
           <div style="font-size:.65rem;color:var(--muted)">${t.lignes.length} produit${t.lignes.length>1?'s':''}</div>
         </div>
       </div>
       ${lignesHTML}
     </div>`;
-  }).join('');
+  }).join('') + (restants > 0
+    ? `<button class="btn btn-secondary btn-full" style="justify-content:center;margin-bottom:12px" onclick="_ventesHistoLimite += VENTES_HISTO_TRANCHE; renderVentesHisto()">Afficher ${Math.min(restants, VENTES_HISTO_TRANCHE)} tickets de plus (${restants} restant${restants>1?'s':''})</button>`
+    : '');
 }
 
 // ── Modal modification vente ──
@@ -7035,6 +7047,22 @@ async function supprimerVente(idx) {
   }
 }
 
+// Tableau des saisies de CA, affiché par tranches. Avant : seules 30 lignes s'affichaient,
+// sans le dire, même si la période en contenait davantage.
+const HISTO_TRANCHE = 50;
+let _histoLignes = [], _histoLimite = HISTO_TRANCHE;
+function rendreTableauHisto(estManager = isManager()) {
+  const tbody = document.getElementById('histo-tbody'), pied = document.getElementById('histo-pied');
+  if (!tbody) return;
+  const visibles = _histoLignes.slice(0, _histoLimite), restants = _histoLignes.length - visibles.length;
+  tbody.innerHTML = visibles.length
+    ? visibles.map(l => `<tr><td class="mono">${l.date.toLocaleDateString('fr-FR')}</td><td>${esc(l.magasin)}</td>${estManager ? `<td>${esc(l.employe)}</td>` : ''}<td class="text-right mono text-accent">${l.total.toLocaleString('fr-FR',FR2)} €</td></tr>`).join('')
+    : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucune saisie sur cette période</td></tr>';
+  if (pied) pied.innerHTML = !_histoLignes.length ? '' :
+    `<div class="liste-compte">${visibles.length} saisie${visibles.length>1?'s':''} affichée${visibles.length>1?'s':''} sur ${_histoLignes.length}</div>` +
+    (restants > 0 ? `<button class="btn btn-secondary btn-full" style="justify-content:center;margin-bottom:12px" onclick="_histoLimite += HISTO_TRANCHE; rendreTableauHisto()">Afficher ${Math.min(restants, HISTO_TRANCHE)} saisies de plus (${restants} restante${restants>1?'s':''})</button>` : '');
+}
+
 async function chargerHistorique() {
   const tdbId = getConfig('cfg-tdb-id');
   if (!tdbId) { showToast('⚠️ ID TdB Manager manquant', 'error'); return; }
@@ -7129,16 +7157,10 @@ async function chargerHistorique() {
     if (thead) thead.innerHTML = estManager
       ? '<tr><th>Date</th><th>Magasin</th><th>Employé</th><th class="text-right">Total</th></tr>'
       : '<tr><th>Date</th><th>Magasin</th><th class="text-right">Total</th></tr>';
-    const display = [...filtrées].reverse().slice(0, 30);
-    if (tbody) tbody.innerHTML = display.length
-      ? display.map(l => {
-          const ds = l.date.toLocaleDateString('fr-FR');
-          const magEmpCol = estManager
-            ? `<td>${l.magasin}</td><td>${l.employe}</td>`
-            : `<td>${l.magasin}</td>`;
-          return `<tr><td>${ds}</td>${magEmpCol}<td class="text-right mono text-accent">${l.total.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td></tr>`;
-        }).join('')
-      : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée</td></tr>';
+    // Du plus récent au plus ancien (tri par date, et non plus selon l'ordre des lignes du Sheet)
+    _histoLignes = [...filtrées].sort((x, y) => y.date - x.date);
+    _histoLimite = HISTO_TRANCHE;
+    rendreTableauHisto(estManager);
 
     // Graphiques (attendre DOM)
     await new Promise(r => setTimeout(r, 60));
@@ -7229,20 +7251,31 @@ function switchTdbTab(tab) {
 
 // Bouton "Appliquer" — route vers le bon handler selon l'onglet visible
 // Raccourcis de période du tableau de bord : évitent de manipuler deux calendriers
-function periodeRapide(code) {
-  const auj = new Date(), a = auj.getFullYear(), m = auj.getMonth();
-  const lundi = new Date(a, m, auj.getDate() - ((auj.getDay() + 6) % 7));
+// ecran : 'tdb' (tableau de bord) ou 'histo' (historique) — mêmes raccourcis, mêmes règles
+const FILTRES_PERIODE = {
+  tdb:   { du:'tdb-filtre-du', au:'tdb-filtre-au', appliquer: () => appliquerFiltresTdb() },
+  histo: { du:'filtre-du',     au:'filtre-au',     appliquer: () => appliquerFiltresHisto() },
+};
+function periodeRapide(code, ecran = 'tdb') {
+  const auj = new Date(), a = auj.getFullYear(), m = auj.getMonth(), j = auj.getDate();
+  const lundi = new Date(a, m, j - ((auj.getDay() + 6) % 7));
   const bornes = {
-    semaine:  [lundi, auj],
-    mois:     [new Date(a, m, 1), auj],
-    moisprec: [new Date(a, m - 1, 1), new Date(a, m, 0)],
-    annee:    [new Date(a, 0, 1), auj],
+    semaine:     [lundi, auj],
+    semaineprec: [new Date(lundi.getFullYear(), lundi.getMonth(), lundi.getDate() - 7), new Date(lundi.getFullYear(), lundi.getMonth(), lundi.getDate() - 1)],
+    mois:        [new Date(a, m, 1), auj],
+    moisprec:    [new Date(a, m - 1, 1), new Date(a, m, 0)],
+    annee:       [new Date(a, 0, 1), auj],
   }[code];
-  if (!bornes) return;
-  document.getElementById('tdb-filtre-du').value = isoLocal(bornes[0]);
-  document.getElementById('tdb-filtre-au').value = isoLocal(bornes[1]);
-  document.querySelectorAll('.periode-rapide .pill').forEach(b => b.classList.toggle('active', b.dataset.p === code));
-  appliquerFiltresTdb();
+  const f = FILTRES_PERIODE[ecran];
+  if (!bornes || !f) return;
+  document.getElementById(f.du).value = isoLocal(bornes[0]);
+  document.getElementById(f.au).value = isoLocal(bornes[1]);
+  marquerPeriodeRapide(ecran, code);
+  f.appliquer();
+}
+// Met en avant le raccourci actif ; code vide = dates choisies à la main, aucun raccourci actif
+function marquerPeriodeRapide(ecran, code = '') {
+  document.querySelectorAll(`.periode-rapide[data-ecran="${ecran}"] .pill`).forEach(b => b.classList.toggle('active', b.dataset.p === code));
 }
 
 // Évolution d'un indicateur par rapport à la période précédente de même durée
