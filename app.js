@@ -6078,6 +6078,7 @@ function couleursMax(vals, base) {
 }
 function fusionProfonde(cible, source) {
   for (const k of Object.keys(source || {})) {
+    if (k === '__proto__' || k === 'constructor' || k === 'prototype') continue;   // ne jamais écrire dans le prototype
     const s = source[k], estObjet = s && typeof s === 'object' && !Array.isArray(s);
     if (estObjet && cible[k] && typeof cible[k] === 'object') fusionProfonde(cible[k], s);
     else cible[k] = s;
