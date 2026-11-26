@@ -945,9 +945,9 @@ function initHome() {
 
   // Avatar + couleur selon rôle
   const initiales = u.isAdmin ? 'A' : ((u.prenom?.[0]||'')+(u.nom?.[0]||'')).toUpperCase();
-  const couleur = u.isAdmin ? 'var(--accent2)' : u.isManager ? 'var(--accent3)' : 'var(--accent)';
-  const roleLabel = u.isAdmin ? '👑 Administrateur' : u.isManager ? '👔 Manager' : '🛒 Collaborateur';
-  const roleBg = u.isAdmin ? '#78350f' : u.isManager ? '#1e3a5f' : '#14532d';
+  // Rôle : le libellé seul ; les couleurs viennent du CSS ([data-role])
+  const roleCle = u.isAdmin ? 'admin' : u.isManager ? 'manager' : 'employe';
+  const roleLabel = u.isAdmin ? 'Administrateur' : u.isManager ? 'Manager' : 'Collaborateur';
 
   const av = document.getElementById('home-avatar');
   const nom = document.getElementById('home-nom');
@@ -955,9 +955,9 @@ function initHome() {
   const date = document.getElementById('home-date');
   const mat = document.getElementById('home-matricule');
 
-  if (av) { av.textContent = initiales; av.style.background = couleur; av.style.color = '#000'; }
+  if (av) { av.textContent = initiales; av.dataset.role = roleCle; }
   if (nom) nom.textContent = u.nomComplet || (u.prenom+' '+u.nom);
-  if (role) { role.textContent = roleLabel; role.style.background = roleBg+'55'; role.style.color = couleur; }
+  if (role) { role.textContent = roleLabel; role.dataset.role = roleCle; }
   if (mat) mat.textContent = 'Matricule : ' + u.matricule;
 
   // Date du jour
@@ -973,26 +973,43 @@ function initHome() {
   if (!grid) return;
 
   const cartes = [
-    { screen:'ca', icon:'📝', label:'Fin de journée', sub:'Déclarer ma journée', always:true },
-    { screen:'planning', icon:'📅', label:'Planning', sub:'Voir mes horaires', always:true },
-    { screen:'stock', icon:'📦', label:'Stocks', sub:'Consulter les stocks', always:true },
-    { screen:'histo', icon:'📊', label:'Historique', sub:'Consulter les données', always:true },
-    { screen:'vente', icon:'🛒', label:'Vente', sub:'Saisir une vente', always:true },
-    { screen:'tdb', icon:'📈', label:'Tableau de bord', sub:'Analyses et KPIs', managerOnly:true },
-    { screen:'gestion', icon:'🗂️', label:'Gestion', sub:'Collaborateurs, produits, magasins', managerOnly:true },
-    { screen:'config', icon:'⚙️', label:'Paramètres', sub:'Mon compte', always:true },
+    { screen:'ca', icon:'cloture', label:'Fin de journée', sub:'Déclarer ma journée', always:true },
+    { screen:'planning', icon:'planning', label:'Planning', sub:'Voir mes horaires', always:true },
+    { screen:'stock', icon:'stock', label:'Stocks', sub:'Consulter les stocks', always:true },
+    { screen:'histo', icon:'historique', label:'Historique', sub:'Consulter les données', always:true },
+    { screen:'vente', icon:'vente', label:'Vente', sub:'Saisir une vente', always:true },
+    { screen:'tdb', icon:'tdb', label:'Tableau de bord', sub:'Analyses et KPIs', managerOnly:true },
+    { screen:'gestion', icon:'gestion', label:'Gestion', sub:'Collaborateurs, produits, magasins', managerOnly:true },
+    { screen:'config', icon:'reglages', label:'Paramètres', sub:'Mon compte', always:true },
   ];
 
   grid.innerHTML = cartes
     .filter(c => c.always || (c.managerOnly && (u.isAdmin || u.isManager)))
     .map(c => `
       <div class="home-card ${c.managerOnly?'amber':''}" onclick="showScreen('${c.screen}')">
-        <div class="home-card-icon">${c.icon}</div>
+        <div class="home-card-icon">${icone(c.icon)}</div>
         <div>
           <div class="home-card-label">${c.label}</div>
           <div class="home-card-sub">${c.sub}</div>
         </div>
       </div>`).join('');
+}
+
+// ── Icônes au trait (SVG 24×24, couleur = currentColor) ──
+// Remplacent les emojis : rendu identique sur tous les appareils, couleur pilotée par le CSS.
+const ICONES = {
+  vente:      '<circle cx="9" cy="20" r="1.4"/><circle cx="18" cy="20" r="1.4"/><path d="M2.5 3h2.6l2.4 11.2a1.5 1.5 0 0 0 1.5 1.2h8.6a1.5 1.5 0 0 0 1.5-1.2L20.5 7H6"/>',
+  cloture:    '<rect x="5" y="4.5" width="14" height="16.5" rx="2.5"/><path d="M9 4.5v-.7a.8.8 0 0 1 .8-.8h4.4a.8.8 0 0 1 .8.8v.7M9 13.5l2.2 2.2 4-4.4"/>',
+  planning:   '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M8 3v4M16 3v4M3.5 10h17"/>',
+  stock:      '<path d="M12 3 4 7v10l8 4 8-4V7z"/><path d="m4 7 8 4 8-4M12 11v10"/>',
+  historique: '<path d="M3.5 12a8.5 8.5 0 1 0 2.6-6.1L3.5 8.5"/><path d="M3.5 4v4.5H8M12 7.5V12l3 2"/>',
+  tdb:        '<path d="M4 4v16h16"/><path d="M8.5 16v-5M13 16V8M17.5 16v-7"/>',
+  gestion:    '<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 14.3A6 6 0 0 1 21 20"/>',
+  reglages:   '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  magasin:    '<path d="M4 10.5v9h16v-9"/><path d="M3 10 5 4.5h14L21 10a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M10 19.5v-5h4v5"/>',
+};
+function icone(nom) {
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[nom] || ''}</svg>`;
 }
 
 const TOOLTIPS = {
@@ -1313,7 +1330,7 @@ async function chargerPlanningTab(tab) {
         })
       );
       return `<div class="planning-row ${estMonMagasin?'moi':''}">
-        <div class="planning-magasin">🏪 ${p.magasin}</div>
+        <div class="planning-magasin">${icone('magasin')}<span>${esc(p.magasin)}</span></div>
         <div class="planning-jours-grid">
           ${p.jours.map((employe, i) => {
             // Vérifier si le collaborateur connecté est dans cette case
@@ -1526,7 +1543,7 @@ async function afficherEditeur(grille, magasins, tab='next') {
   editContainer.innerHTML = magasins.map(mag => {
     const joursGrille = grille[mag] || Array(7).fill('');
     return `<div style="margin-bottom:14px;background:var(--surface);border-radius:10px;padding:10px">
-      <div class="planning-edit-magasin">🏪 ${mag}</div>
+      <div class="planning-edit-magasin">${icone('magasin')}<span>${esc(mag)}</span></div>
       <div class="planning-edit-row">
         ${Array.from({length:7},(_,i)=>{
           const vals = joursGrille[i] ? joursGrille[i].split('|') : [];
@@ -1548,7 +1565,7 @@ async function afficherEditeur(grille, magasins, tab='next') {
             return `<option value="${n}" ${normNom(n)===normNom(match)?'selected':''}>${label}</option>`;
           };
           return `<div>
-            <div style="font-size:.58rem;color:var(--muted);text-align:center;margin-bottom:3px">${JOURS_COURT[i]}<br><span style="font-family:DM Mono,monospace">${formatDateCourt(dates[i])}</span></div>
+            <div style="font-size:.58rem;color:var(--muted);text-align:center;margin-bottom:3px">${JOURS_COURT[i]}<br><span style="font-family:var(--font-num)">${formatDateCourt(dates[i])}</span></div>
             <select onchange="updatePlanningEdit(${JSON.stringify(mag).replace(/"/g,'&quot;')},${i},this.value,0)" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:5px;padding:2px;font-size:.58rem;margin-bottom:2px;outline:none">
               <option value="">—</option>
               ${allNoms.map(n=>mkOpt(n,match1)).join('')}
@@ -2217,7 +2234,7 @@ function renderTableCoutsFixes() {
               oninput="majTotalLigneCouts(${i})"
               style="width:100%;background:var(--surface);border:1.5px solid var(--border);
                      color:var(--text);border-radius:var(--radius-sm);
-                     padding:6px 8px;font-size:.78rem;font-family:'DM Mono',monospace;
+                     padding:6px 8px;font-size:.78rem;font-family:var(--font-num);
                      text-align:right;outline:none;box-sizing:border-box;
                      transition:border-color .15s"
               onfocus="this.style.borderColor='var(--accent)'"
@@ -3213,7 +3230,7 @@ function ajouterLigne(nomProduitPre) {
       <label>Produit</label>
       <input type="search" id="search-${id}" placeholder="🔍 Rechercher…"
         oninput="filtrerProduits(${id},this.value)"
-        style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:9px 12px;font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;margin-bottom:6px;transition:border-color .15s"
+        style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:9px 12px;font-size:.85rem;font-family:var(--font);outline:none;margin-bottom:6px;transition:border-color .15s"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       <select class="select-produit" id="sel-${id}" onchange="produitChange(${id});document.getElementById('search-${id}').value=''">
         ${opts}
@@ -3229,7 +3246,7 @@ function ajouterLigne(nomProduitPre) {
             style="padding:0 16px;background:none;border:none;border-right:1px solid var(--border);color:var(--text);font-size:1.3rem;font-weight:300;cursor:pointer;transition:background .1s;line-height:1;flex-shrink:0;font-family:monospace"
             onmousedown="this.style.background='var(--border)'" onmouseup="this.style.background='none'" onmouseleave="this.style.background='none'">−</button>
           <input type="number" id="qty-${id}" value="1" min="0.001" step="0.001" oninput="calculerLigne(${id})"
-            style="width:54px;text-align:center;background:transparent;border:none;color:var(--text);padding:11px 4px;font-size:.95rem;font-family:'DM Mono',monospace;font-weight:500;outline:none;-moz-appearance:textfield">
+            style="width:54px;text-align:center;background:transparent;border:none;color:var(--text);padding:11px 4px;font-size:.95rem;font-family:var(--font-num);font-weight:500;outline:none;-moz-appearance:textfield">
           <button onclick="stepQty(${id},1)"
             style="padding:0 16px;background:none;border:none;border-left:1px solid var(--border);color:var(--accent);font-size:1.3rem;font-weight:300;cursor:pointer;transition:background .1s;line-height:1;flex-shrink:0;font-family:monospace"
             onmousedown="this.style.background='var(--accent-dim)'" onmouseup="this.style.background='none'" onmouseleave="this.style.background='none'">+</button>
@@ -3246,7 +3263,7 @@ function ajouterLigne(nomProduitPre) {
         </label>
         <input type="number" id="promo-${id}" value="" min="0" max="100" step="1"
           placeholder="0"
-          style="background:var(--surface);border:1.5px solid rgba(245,158,11,.35);border-radius:var(--radius-sm);color:var(--accent2);font-family:'DM Mono',monospace;font-weight:700;text-align:center;padding:9px 6px;font-size:.88rem;outline:none;width:100%;transition:border-color .15s"
+          style="background:var(--surface);border:1.5px solid rgba(245,158,11,.35);border-radius:var(--radius-sm);color:var(--accent2);font-family:var(--font-num);font-weight:700;text-align:center;padding:9px 6px;font-size:.88rem;outline:none;width:100%;transition:border-color .15s"
           oninput="appliquerPromo(${id})"
           onfocus="this.style.borderColor='var(--accent2)'" onblur="this.style.borderColor='rgba(245,158,11,.35)'">
       </div>
@@ -4350,7 +4367,7 @@ async function chargerCollabsGestion() {
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:.85rem">${esc((r[1]||'').trim())} ${esc((r[0]||'').trim())}</div>
           <div style="font-size:.72rem;color:var(--muted)">${esc((r[2]||'').trim())} — ${(r[14]||'NON').trim()==='OUI'?'👔 Manager':'🛒 Vendeur'} — ${(r[15]||'').trim()||'Aucun magasin'}</div>
-          ${_pinsVisibles ? `<div style="font-size:.72rem;color:var(--accent3);font-family:DM Mono,monospace;display:flex;align-items:center;gap:6px;margin-top:2px">
+          ${_pinsVisibles ? `<div style="font-size:.72rem;color:var(--accent3);font-family:var(--font-num);display:flex;align-items:center;gap:6px;margin-top:2px">
             🔑 <span id="pin-val-${i}" style="display:none">${(r[4]||'—').trim()}</span>
             <span id="pin-mask-${i}">••••••</span>
             <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">👁</button>
@@ -4467,13 +4484,13 @@ async function ouvrirFormulaireCollab(rowIdx=null) {
     <div class="row2f">
       <div class="field">
         <label style="display:flex;align-items:center;gap:5px">
-          Salaire horaire <span style="font-size:.62rem;font-family:DM Mono,monospace;color:var(--accent3)">Col. T</span>
+          Salaire horaire <span style="font-size:.62rem;font-family:var(--font-num);color:var(--accent3)">Col. T</span>
         </label>
         <input id="gf-salaire-horaire" type="number" step="0.01" min="0" value="${d.salaireHoraire||''}" placeholder="ex: 12.50 €/h">
       </div>
       <div class="field">
         <label style="display:flex;align-items:center;gap:5px">
-          Salaire % CA <span style="font-size:.62rem;font-family:DM Mono,monospace;color:var(--accent3)">Col. U</span>
+          Salaire % CA <span style="font-size:.62rem;font-family:var(--font-num);color:var(--accent3)">Col. U</span>
         </label>
         <input id="gf-salaire-pct" type="number" step="0.1" min="0" max="100" value="${d.salaireCA||''}" placeholder="ex: 3 %">
       </div>
@@ -4677,7 +4694,7 @@ function renderListeProduits() {
       <div style="min-width:0;flex:1">
         <div style="font-weight:600;font-size:.85rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:flex;align-items:center;gap:6px">
           ${esc((r[0]||'').trim())}
-          ${code ? `<span style="font-family:DM Mono,monospace;font-size:.65rem;color:var(--muted);background:var(--card);padding:1px 5px;border-radius:4px">#${code}</span>` : ''}
+          ${code ? `<span style="font-family:var(--font-num);font-size:.65rem;color:var(--muted);background:var(--card);padding:1px 5px;border-radius:4px">#${code}</span>` : ''}
         </div>
         <div style="font-size:.72rem;color:var(--muted)">${esc((r[1]||'').trim())} — ${esc((r[2]||'').trim())} — TVA ${esc(r[3]||'')}${cat ? ` · <span style="color:var(--accent3)">${cat}</span>` : ''}</div>
         <div style="display:flex;gap:10px;font-size:.72rem;margin-top:2px">
@@ -4766,7 +4783,7 @@ async function ouvrirFormulaireProduit(rowIdx=null) {
       </label>
       <input id="gf-code-produit" value="${esc((r[8]||'').trim())}"
         placeholder="ex: 1, 42, NC001… (utilisé pour saisie rapide)"
-        style="font-family:'DM Mono',monospace;letter-spacing:.05em">
+        style="font-family:var(--font-num);letter-spacing:.05em">
     </div>
     <div class="field" style="margin-bottom:0">
       <label style="display:flex;align-items:center;gap:6px">
@@ -4803,7 +4820,7 @@ async function chargerMagasinsGestion() {
         <div>
           <div style="font-weight:600;font-size:.85rem">${esc((r[0]||'').trim())}</div>
           <div style="font-size:.72rem;color:var(--muted)">${esc((r[1]||'').trim())} — ${esc((r[2]||'').trim())} — ${esc((r[3]||'').trim())}</div>
-          <div style="font-size:.7rem;color:var(--muted);font-family:DM Mono,monospace">${esc((r[4]||'').trim())}</div>
+          <div style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc((r[4]||'').trim())}</div>
         </div>
         <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px" onclick="ouvrirFormulaireMagasin(${r._sheetRow})">✏️</button>
       </div>
@@ -4987,8 +5004,8 @@ function afficherSuivi(rows) {
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-weight:700;font-size:.9rem">${esc(prenom)} ${esc(nom)} <span style="font-size:.7rem;color:var(--muted);font-family:DM Mono,monospace">${esc(mat)}</span></div>
-          <div style="font-size:.78rem;color:var(--muted);font-family:DM Mono,monospace">${date}${mag ? ' · 🏪 '+mag : ''}</div>
+          <div style="font-weight:700;font-size:.9rem">${esc(prenom)} ${esc(nom)} <span style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc(mat)}</span></div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${date}${mag ? ' · 🏪 '+mag : ''}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
           <button onclick="ouvrirModifSuivi(${rowIdx})" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);cursor:pointer">✏️ Modifier</button>
@@ -5120,7 +5137,7 @@ async function ouvrirModifSuivi(rowIdx) {
     <div class="field"><label>⏱ Heures travaillées</label>
       <input id="suivi-edit-heures" type="text" inputmode="text"
         value="${heures}" placeholder="ex: 7h30 ou 7:30"
-        style="font-family:'DM Mono',monospace"
+        style="font-family:var(--font-num)"
         oninput="previewHeuresEdit(this)">
       <div id="suivi-edit-heures-preview" style="font-size:.7rem;color:var(--accent3);margin-top:3px;height:16px"></div>
     </div>
@@ -5145,13 +5162,13 @@ async function ouvrirModifSuivi(rowIdx) {
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--card);border-radius:8px;margin-top:4px">
         <span style="font-size:.8rem;color:var(--muted)">Total CA</span>
-        <span id="suivi-edit-total-display" style="font-size:1rem;font-weight:700;color:var(--accent);font-family:DM Mono,monospace">
+        <span id="suivi-edit-total-display" style="font-size:1rem;font-weight:700;color:var(--accent);font-family:var(--font-num)">
           ${ca ? parseFR(ca).toLocaleString('fr-FR',{minimumFractionDigits:2})+' €' : '0,00 €'}
         </span>
       </div>
     </div>
     <div class="field"><label>📷 URLs photos (séparées par |)</label>
-      <textarea id="suivi-edit-urls" rows="2" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.78rem;font-family:DM Mono,monospace;outline:none;resize:vertical">${esc(urls)}</textarea>
+      <textarea id="suivi-edit-urls" rows="2" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.78rem;font-family:var(--font-num);outline:none;resize:vertical">${esc(urls)}</textarea>
     </div>
     ${urls ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
       ${urls.split('|').map((u,i) => u.trim() ? `<a href="${u.trim()}" target="_blank" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">📷 Photo ${i+1}</a>` : '').join('')}
@@ -5423,7 +5440,7 @@ async function ouvrirFormulaireNotif(rowIdx=null) {
     </div>
     <div class="field">
       <label>Message</label>
-      <textarea id="gf-message" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-family:Sora,sans-serif;font-size:.85rem;resize:vertical">${esc(r[3]||'')}</textarea>
+      <textarea id="gf-message" rows="3" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px;font-family:var(--font);font-size:.85rem;resize:vertical">${esc(r[3]||'')}</textarea>
     </div>
     <div class="field">
       <label>Destinataires</label>
@@ -5798,7 +5815,7 @@ async function chargerRecapJour() {
     // Afficher le récap
     if (div) {
       if (!ticketList.length) {
-        div.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:.82rem">📭 Aucune vente enregistrée ce jour.</div>';
+        div.innerHTML = '<div style="text-align:center;padding:16px;color:var(--muted);font-size:.82rem">Aucune vente enregistrée ce jour.</div>';
       } else {
         div.innerHTML = `<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px">
           ${ticketList.length} ticket(s) — <strong style="color:var(--text)">${esc(dateFR)}</strong>
@@ -5806,13 +5823,13 @@ async function chargerRecapJour() {
         </div>` + ticketList.map(t => `
           <div style="background:var(--surface);border-radius:8px;padding:9px 11px;margin-bottom:7px;border:1px solid var(--border)">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
-              <span style="font-size:.72rem;color:var(--muted);font-family:DM Mono,monospace">${t.ticket ? 'N°'+esc(t.ticket) : esc(t.magasin)}</span>
-              <span style="font-family:DM Mono,monospace;font-weight:800;color:var(--accent)">${t.totalTTC.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
+              <span style="font-size:.72rem;color:var(--muted);font-family:var(--font-num)">${t.ticket ? 'N°'+esc(t.ticket) : esc(t.magasin)}</span>
+              <span style="font-family:var(--font-num);font-weight:800;color:var(--accent)">${t.totalTTC.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</span>
             </div>
             ${t.produits.map(p =>
               `<div style="display:flex;justify-content:space-between;font-size:.76rem;padding:2px 0;border-top:1px solid var(--border)">
                 <span>${esc(p.nom)} ${p.qty > 1 ? '×'+p.qty : ''}</span>
-                <span style="font-family:DM Mono,monospace;color:var(--text2)">${p.ttc.toFixed(2)} €</span>
+                <span style="font-family:var(--font-num);color:var(--text2)">${p.ttc.toFixed(2)} €</span>
               </div>`
             ).join('')}
             ${(t.cb||t.esp||t.autre) ? `<div style="display:flex;gap:8px;margin-top:5px;font-size:.68rem;color:var(--muted)">
@@ -6380,7 +6397,7 @@ function renderVentesHisto() {
           <div style="font-size:.68rem;color:var(--muted)">${l.type}${l.qte>0?' · '+l.qte+(normNom(l.type).includes('kilo')?'kg':'x'):''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:.78rem;font-weight:700;color:var(--accent);font-family:DM Mono,monospace">${l.ttc.toFixed(2)} €</div>
+          <div style="font-size:.78rem;font-weight:700;color:var(--accent);font-family:var(--font-num)">${l.ttc.toFixed(2)} €</div>
           <div style="font-size:.65rem;color:var(--muted)">HT: ${l.ht.toFixed(2)} €</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
@@ -6395,12 +6412,12 @@ function renderVentesHisto() {
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius);padding:12px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
-          <div style="font-size:.7rem;color:var(--muted);font-family:DM Mono,monospace">${t.ticket ? 'N° '+t.ticket : ''}</div>
+          <div style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${t.ticket ? 'N° '+t.ticket : ''}</div>
           <div style="font-weight:700;font-size:.88rem">${t.dateStr} · ${t.collab}</div>
           <div style="font-size:.72rem;color:var(--muted)">${t.magasin}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-weight:800;color:var(--accent);font-size:.92rem;font-family:DM Mono,monospace">${totTicket.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>
+          <div style="font-weight:800;color:var(--accent);font-size:.92rem;font-family:var(--font-num)">${totTicket.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</div>
           <div style="font-size:.65rem;color:var(--muted)">${t.lignes.length} produit${t.lignes.length>1?'s':''}</div>
         </div>
       </div>
@@ -6422,8 +6439,8 @@ function ouvrirModalVente(idx) {
   ).join('');
 
   document.getElementById('modal-modif-vente-contenu').innerHTML = `
-    <div class="field"><label>Date</label><input id="mv-date" value="${r.dateStr}" style="font-family:DM Mono,monospace;opacity:.6" readonly></div>
-    <div class="field"><label>Ticket N°</label><input id="mv-ticket" value="${esc(r.ticket)}" style="font-family:DM Mono,monospace;opacity:.6" readonly></div>
+    <div class="field"><label>Date</label><input id="mv-date" value="${r.dateStr}" style="font-family:var(--font-num);opacity:.6" readonly></div>
+    <div class="field"><label>Ticket N°</label><input id="mv-ticket" value="${esc(r.ticket)}" style="font-family:var(--font-num);opacity:.6" readonly></div>
     <div class="field"><label>Collaborateur</label><input id="mv-collab" value="${esc(r.collab)}"></div>
     <div class="field"><label>Produit</label>
       <select id="mv-produit" onchange="recalcMV()">
@@ -6998,7 +7015,7 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
           +'</div>'
         +'</div>'
         +'<div style="text-align:right">'
-          +'<div style="font-weight:700;color:var(--accent);font-family:DM Mono,monospace;font-size:.88rem">'+c.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</div>'
+          +'<div style="font-weight:700;color:var(--accent);font-family:var(--font-num);font-size:.88rem">'+c.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</div>'
           +'<div style="font-size:.7rem;color:var(--muted)">'+pctCA+'% du CA</div>'
         +'</div>'
       +'</div>'
@@ -7114,7 +7131,7 @@ function remplirOngletProduits(ventesRaw, dMin, dMax) {
   const tventes = document.getElementById('tdb-tbody-v');
   if (tventes) tventes.innerHTML = ventes.length
     ? [...ventes].reverse().slice(0,25).map(r =>
-        '<tr><td style="font-size:.75rem;font-family:DM Mono,monospace">'+(r[1]||'').trim()+'</td>'
+        '<tr><td style="font-size:.75rem;font-family:var(--font-num)">'+(r[1]||'').trim()+'</td>'
         +'<td>'+(r[2]||'').trim()+'</td><td>'+(r[5]||'').trim()+'</td>'
         +'<td class="text-right mono text-accent">'+parseFR(r[12]).toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</td></tr>'
       ).join('')
@@ -7633,11 +7650,11 @@ function afficherTableauStocks(magasin) {
       <td style="font-weight:600">${prod.nom}</td>
       <td style="color:var(--muted)">${prod.type}</td>
       <td style="color:var(--muted);text-align:center">${prod.quotite}</td>
-      <td style="text-align:center;font-family:DM Mono,monospace;font-weight:600;color:${stockActuel===null?'var(--muted)':stockActuel<=0?'var(--danger)':'var(--text)'}">
+      <td style="text-align:center;font-family:var(--font-num);font-weight:600;color:${stockActuel===null?'var(--muted)':stockActuel<=0?'var(--danger)':'var(--text)'}">
         ${stockActuel===null ? '—' : stockActuel}
       </td>
-      <td style="text-align:right;font-family:DM Mono,monospace;font-size:.75rem">${pHT}</td>
-      <td style="text-align:right;font-family:DM Mono,monospace;font-size:.75rem">${pTTC}</td>
+      <td style="text-align:right;font-family:var(--font-num);font-size:.75rem">${pHT}</td>
+      <td style="text-align:right;font-family:var(--font-num);font-size:.75rem">${pTTC}</td>
       <td style="text-align:center;color:var(--muted)">${seuil || '—'}</td>
       <td style="text-align:center"><span class="stock-badge ${statut}">${statutLabel}</span></td>
     </tr>`;
@@ -7688,7 +7705,7 @@ function remplirEtatStocks() {
     return `<tr>
       <td style="font-weight:600">${prod.nom}</td>
       <td style="color:var(--muted)">${prod.type}</td>
-      <td style="text-align:center;font-family:DM Mono,monospace">${stockActuel===null?'—':stockActuel}</td>
+      <td style="text-align:center;font-family:var(--font-num)">${stockActuel===null?'—':stockActuel}</td>
       <td style="text-align:center"><input type="number" class="stock-input" id="etat-${i}" min="0" step="0.01" placeholder="0" value="${valeurInput}" style="${inputStyle}" oninput="this.style.borderColor='';this.style.background=''"></td>
     </tr>`;
   }).join('');
@@ -7784,7 +7801,7 @@ function ajouterLigneTransfert() {
     `<button onclick="document.getElementById('trf-${id}').remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer">✕</button>` +
     `<div class="row2f">` +
       `<div class="field" style="flex:2;margin-bottom:0"><label style="font-size:.75rem;color:var(--muted)">Produit</label>` +
-        `<select id="trf-prod-${id}" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-size:.82rem;font-family:Sora,sans-serif;outline:none">` +
+        `<select id="trf-prod-${id}" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:9px;font-size:.82rem;font-family:var(--font);outline:none">` +
           `<option value="">— Choisir —</option>${opts}` +
         `</select></div>` +
       `<div class="field" style="flex:1;margin-bottom:0"><label style="font-size:.75rem;color:var(--muted)">Quantité</label>` +
@@ -8132,7 +8149,7 @@ async function ajouterLigneDispo() {
     '<button onclick="document.getElementById(\'dispo-ligne-'+id+'\').remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem">✕</button>' +
     '<div class="field" style="margin-bottom:10px">' +
       '<label style="font-size:.78rem;color:var(--muted);font-weight:600">🏪 Magasin</label>' +
-      '<select id="dispo-mag-'+id+'" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:Sora,sans-serif;outline:none;font-size:.9rem;margin-top:4px">' +
+      '<select id="dispo-mag-'+id+'" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:var(--font);outline:none;font-size:.9rem;margin-top:4px">' +
         '<option value="">— Choisir un magasin —</option>' + opts +
       '</select>' +
     '</div>' +
@@ -8393,7 +8410,7 @@ function afficherBanniereInstall() {
       <div style="font-size:.88rem;font-weight:600;color:#e8eaf0">AllinOne App</div>
       <div style="font-size:.75rem;color:#6b7280">Ajouter a l'ecran d'accueil pour un acces rapide</div>
     </div>
-    <button onclick="installerPWA()" style="background:#4ade80;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:Sora,sans-serif">Installer</button>
+    <button onclick="installerPWA()" style="background:#4ade80;color:#000;border:none;border-radius:8px;padding:8px 14px;font-size:.82rem;font-weight:600;cursor:pointer;white-space:nowrap;font-family:var(--font)">Installer</button>
     <button onclick="document.getElementById('install-banner').remove()" style="background:none;border:none;color:#6b7280;cursor:pointer;font-size:1.2rem;padding:0;flex-shrink:0">✕</button>
   `;
   document.body.appendChild(banner);

@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AllinOne App">
 <meta name="application-name" content="AllinOne App">
-<meta name="theme-color" content="#10b981">
+<meta name="theme-color" content="#0b0d12">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <title>AllinOne App</title>
@@ -112,7 +112,7 @@
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
 // Feuille de style versionnée depuis APP_VERSION (cache-busting à chaque version).
 // document.write pendant le parsing = insertion synchrone, même comportement qu'un <link> statique.
@@ -138,7 +138,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <h2>Ton matricule</h2>
       <div class="field">
         <input type="text" id="login-matricule" placeholder="Ex : PF001" autocomplete="off"
-          style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:.1em;font-size:1.1rem;text-align:center"
+          style="text-transform:uppercase;font-family:var(--font-num);letter-spacing:.1em;font-size:1.1rem;text-align:center"
           oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')validerMatricule()">
       </div>
       <button class="btn btn-primary btn-full" onclick="validerMatricule()">Continuer →</button>
@@ -294,7 +294,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <button id="btn-actualiser-catalogue"
           onclick="actualiserCatalogueEtStocks(this)"
           title="Actualiser les produits et les stocks"
-          style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.68rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .15s;flex-shrink:0;margin-left:6px"
+          style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.68rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;flex-shrink:0;margin-left:6px"
           onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
           onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
           <svg id="ico-refresh-catalogue" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -465,15 +465,15 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div id="horaire-plage-1">
       <div style="font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plage 1</div>
       <div class="row2f">
-        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h1-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
-        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h1-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h1-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h1-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
       </div>
     </div>
     <div id="horaire-plage-2" style="display:none;margin-top:10px">
       <div style="font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plage 2 (après pause)</div>
       <div class="row2f">
-        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h2-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
-        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h2-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h2-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h2-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
       </div>
     </div>
     <button id="btn-add-plage" class="btn btn-secondary" onclick="togglePlage2()" style="margin-top:10px;font-size:.78rem;padding:8px 14px;gap:5px">
@@ -482,7 +482,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </button>
     <div id="heures-total-box" style="display:none;margin-top:12px;background:var(--surface);border-radius:var(--radius-sm);padding:12px;align-items:center;justify-content:space-between">
       <span style="font-size:.82rem;color:var(--muted)">Total heures</span>
-      <span id="heures-total-display" style="font-size:1.1rem;font-weight:700;color:var(--accent3);font-family:'DM Mono',monospace">0h00</span>
+      <span id="heures-total-display" style="font-size:1.1rem;font-weight:700;color:var(--accent3);font-family:var(--font-num)">0h00</span>
     </div>
   </div>
 
@@ -636,8 +636,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <button class="pill active" id="tdbtab-global" onclick="switchTdbTab('global')">Global</button>
     <button class="pill" id="tdbtab-collabs" onclick="switchTdbTab('collabs')">Collaborateurs</button>
     <button class="pill" id="tdbtab-produits" onclick="switchTdbTab('produits')">Produits</button>
-    <button class="pill" id="tdbtab-gestion" onclick="switchTdbTab('gestion')">📊 Gestion</button>
-    <button class="pill" id="tdbtab-rentabilite" onclick="switchTdbTab('rentabilite')">💹 Rentabilité</button>
+    <button class="pill" id="tdbtab-gestion" onclick="switchTdbTab('gestion')">Gestion</button>
+    <button class="pill" id="tdbtab-rentabilite" onclick="switchTdbTab('rentabilite')">Rentabilité</button>
     <button class="pill" id="tdbtab-logs" onclick="switchTdbTab('logs')" style="display:none">📋 Logs</button>
   </div>
 
@@ -1100,7 +1100,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         oninput="rechercherProduits(this.value)"
         style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);
                border-radius:var(--radius-sm);padding:9px 34px 9px 32px;font-size:.82rem;
-               font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .15s;box-sizing:border-box"
+               font-family:var(--font);outline:none;transition:border-color .15s;box-sizing:border-box"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       <button id="gestion-prod-search-clear" onclick="viderRechercheProduits()"
         style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
@@ -1144,7 +1144,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </div>
     <!-- Filtre magasin -->
     <select id="sfg-magasin" onchange="filtrerStocksGestion(filtreStocksGestion)"
-      style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:8px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;margin-bottom:8px">
+      style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:8px 10px;font-size:.8rem;font-family:var(--font);outline:none;margin-bottom:8px">
       <option value="">Tous les magasins</option>
     </select>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="stocks-filtres-statut">
@@ -1171,9 +1171,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       </button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="suivi-filtre-collab" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none"><option value="">Tous les collaborateurs</option></select>
-      <input type="date" id="suivi-filtre-du" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
-      <input type="date" id="suivi-filtre-au" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+      <select id="suivi-filtre-collab" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none"><option value="">Tous les collaborateurs</option></select>
+      <input type="date" id="suivi-filtre-du" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none">
+      <input type="date" id="suivi-filtre-au" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none">
     </div>
     <div id="liste-suivi"><div style="text-align:center;padding:30px;color:var(--muted)">Charge l'onglet pour voir les données</div></div>
   </div>
@@ -1208,7 +1208,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <div id="cfg-avatar" style="width:50px;height:50px;border-radius:50%;background:var(--accent-dim);border:2px solid rgba(16,185,129,.3);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;flex-shrink:0">?</div>
       <div>
         <div id="cfg-nom" style="font-weight:700;font-size:1rem;letter-spacing:-.02em">—</div>
-        <div id="cfg-matricule" style="font-size:.76rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px">—</div>
+        <div id="cfg-matricule" style="font-size:.76rem;color:var(--muted);font-family:var(--font-num);margin-top:1px">—</div>
         <div id="cfg-role" style="font-size:.7rem;margin-top:3px"></div>
       </div>
     </div>
@@ -1233,9 +1233,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         Configuration technique
       </h3>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Réservé aux managers et administrateurs.</p>
-      <div class="field"><label>ID TdB Manager</label><input type="text" id="cfg-tdb-id-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
-      <div class="field"><label>ID Base de données</label><input type="text" id="cfg-db-id-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
-      <div class="field" style="margin-bottom:0"><label>ID Dossier Drive</label><input type="text" id="cfg-drive-folder-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
+      <div class="field"><label>ID TdB Manager</label><input type="text" id="cfg-tdb-id-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
+      <div class="field"><label>ID Base de données</label><input type="text" id="cfg-db-id-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
+      <div class="field" style="margin-bottom:0"><label>ID Dossier Drive</label><input type="text" id="cfg-drive-folder-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
     </div>
   </div>
 
@@ -1267,7 +1267,7 @@ document.write('<script src="./app.js?v=' + APP_VERSION + '"><\/script>');
 <div id="paiement-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px)">
   <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:480px;position:relative;border-top:1px solid var(--border)">
     <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mode de paiement</div>
-    <div id="pm-total-affiche" style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:18px;font-family:'DM Mono',monospace;letter-spacing:-.02em">0,00 €</div>
+    <div id="pm-total-affiche" style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:18px;font-family:var(--font-num);letter-spacing:-.02em">0,00 €</div>
 
     <div class="field">
       <label>Carte bancaire (€)</label>
