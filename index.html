@@ -671,7 +671,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="chargerTdb()">Actualiser</button>
-      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">Export PDF</button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">PDF</button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterGestionExcel()">Excel</button>
     </div>
     <div class="section-title">Entrées CA</div>
     <div class="table-wrap">
@@ -754,8 +755,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div style="display:flex;gap:8px;margin-bottom:10px">
       <button class="btn btn-primary" style="flex:1;justify-content:center;gap:7px" onclick="exporterGestionExcel()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-        Export Excel
+        Excel
       </button>
+      <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:7px" onclick="exporterGestionPDF()">PDF</button>
       <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:7px" onclick="chargerGestion()">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
         Actualiser

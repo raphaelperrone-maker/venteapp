@@ -924,7 +924,8 @@ body.light-mode tbody tr:hover{background:#f8fafc}
 .log-ico{color:var(--text2)}
 .rang{flex:0 0 26px;height:26px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:.76rem;font-weight:600;font-variant-numeric:tabular-nums;color:var(--text2);background:var(--surface);border:1px solid var(--border)}
 .rang-top{color:var(--accent);border-color:var(--accent);background:transparent}
-#toast[data-etat]:not([data-etat=""])::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;vertical-align:.06em;background:var(--accent3)}
+#toast[data-etat]::before{content:'';display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:9px;vertical-align:.06em;background:var(--accent3)}
+#toast[data-etat=""]::before{display:none}
 #toast[data-etat="success"]::before{background:var(--accent)}
 #toast[data-etat="error"]::before{background:var(--danger)}
 #toast[data-etat="warn"]::before{background:var(--accent2)}
