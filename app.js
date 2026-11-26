@@ -464,7 +464,7 @@ function ouvrirApp() {
   document.getElementById('bottom-nav').style.display = 'flex';
   // Mettre à jour chip utilisateur
   const u = utilisateurConnecte;
-  const initiales = u.isAdmin ? '👑' : ((u.prenom[0]||'')+(u.nom[0]||'')).toUpperCase();
+  const initiales = ((u.prenom[0]||'')+(u.nom[0]||'')).toUpperCase();
   document.getElementById('header-avatar').textContent = initiales;
   document.getElementById('header-name').textContent = u.isAdmin ? 'Admin' : u.prenom;
   const chip = document.querySelector('.user-chip .uc-avatar');
@@ -477,7 +477,7 @@ function ouvrirApp() {
   if (cfgAvatar) { cfgAvatar.textContent = initiales; cfgAvatar.style.background = u.isAdmin ? 'var(--accent2)' : 'var(--accent)'; }
   if (cfgNom) cfgNom.textContent = u.nomComplet || (u.prenom+' '+u.nom);
   if (cfgMat) cfgMat.textContent = u.matricule;
-  if (cfgRole) { cfgRole.textContent = u.isAdmin ? '👑 Administrateur' : u.isManager ? '👔 Manager' : '🛒 Collaborateur'; cfgRole.style.color = u.isAdmin ? 'var(--accent2)' : u.isManager ? 'var(--accent3)' : 'var(--accent)'; }
+  if (cfgRole) { cfgRole.textContent = u.isAdmin ? 'Administrateur' : u.isManager ? 'Manager' : 'Collaborateur'; cfgRole.style.color = u.isAdmin ? 'var(--accent2)' : u.isManager ? 'var(--accent3)' : 'var(--accent)'; }
   // Afficher la zone admin/manager
   const adminZone = document.getElementById('cfg-admin-zone');
   if (adminZone) adminZone.style.display = (u.isAdmin || u.isManager) ? 'block' : 'none';
@@ -697,7 +697,7 @@ function passerEtape2(collab) {
   document.getElementById('login-error').classList.remove('show');
   document.getElementById('login-step1').classList.remove('active');
   document.getElementById('login-step2').classList.add('active');
-  const initiales = collab.isAdmin ? '👑' : ((collab.prenom[0]||'')+(collab.nom[0]||'')).toUpperCase();
+  const initiales = ((collab.prenom[0]||'')+(collab.nom[0]||'')).toUpperCase();
   document.getElementById('login-avatar').textContent = initiales;
   document.getElementById('login-user-name').textContent = collab.isAdmin ? 'Administrateur' : (collab.nomComplet || collab.prenom+' '+collab.nom);
   document.getElementById('login-user-matricule').textContent = collab.matricule;
@@ -739,7 +739,7 @@ async function validerPin() {
     });
     const data = await res.json();
 
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Se connecter'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
 
     if (!res.ok) {
       afficherErreurLogin(data.error || 'Code PIN incorrect');
@@ -758,7 +758,7 @@ async function validerPin() {
     setTimeout(() => logAction('auth', 'Connexion', `Matricule: ${collab.matricule}`), 1500);
 
   } catch(e) {
-    if (btn) { btn.disabled = false; btn.textContent = '✅ Se connecter'; }
+    if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
     // ⚠️  Pas de fallback local — si le serveur est injoignable, on bloque.
     // Cela évite toute vérification de PIN côté client.
     afficherErreurLogin('Serveur inaccessible — vérifie ta connexion internet');
@@ -826,9 +826,9 @@ function majDestBadges() {
   // Badge vente
   // Plus de badges "Envoi → TdB" — on ne garde que les alertes si la config est incomplète
   const bv = document.getElementById('dest-vente');
-  if (bv) { bv.style.display = (!vendeurId || !tdbId) ? 'flex' : 'none'; if (!vendeurId || !tdbId) bv.innerHTML = '⚠️ Configuration incomplète'; }
+  if (bv) { bv.style.display = (!vendeurId || !tdbId) ? 'flex' : 'none'; if (!vendeurId || !tdbId) bv.innerHTML = 'Configuration incomplète'; }
   const bc = document.getElementById('dest-ca');
-  if (bc) { bc.style.display = !tdbId ? 'flex' : 'none'; if (!tdbId) bc.innerHTML = '⚠️ ID TdB Manager manquant'; }
+  if (bc) { bc.style.display = !tdbId ? 'flex' : 'none'; if (!tdbId) bc.innerHTML = 'ID TdB Manager manquant'; }
 }
 
 
@@ -1007,11 +1007,20 @@ const ICONES = {
   tdb:        '<path d="M4 4v16h16"/><path d="M8.5 16v-5M13 16V8M17.5 16v-7"/>',
   gestion:    '<circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 14.3A6 6 0 0 1 21 20"/>',
   reglages:   '<path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/>',
+  modifier:   '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="m14.5 7.5 3 3"/>',
+  supprimer:  '<path d="M4 7h16M9.5 7V4.5h5V7M6.5 7l.9 12.2a1.5 1.5 0 0 0 1.5 1.3h6.2a1.5 1.5 0 0 0 1.5-1.3L17.500 7M10 11v6M14 11v6"/>',
+  oeil:       '<path d="M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z"/><circle cx="12" cy="12" r="2.8"/>',
+  cadenas:    '<rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/>',
   magasin:    '<path d="M4 10.5v9h16v-9"/><path d="M3 10 5 4.5h14L21 10a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0z"/><path d="M10 19.5v-5h4v5"/>',
 };
 function icone(nom) {
   return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ICONES[nom] || ''}</svg>`;
 }
+// Icône « en ligne », à la taille du texte qui l'entoure (boutons, libellés)
+function ic(nom) { return `<span class="ic">${icone(nom)}</span>`; }
+// Retire les emojis d'un texte (les anciens messages et certaines valeurs du Sheet en contiennent)
+const RE_EMOJI = /(?![✓✕])[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{23E9}-\u{23FF}]\uFE0F?/gu;
+function sansEmoji(s) { return String(s ?? '').replace(RE_EMOJI, '').replace(/ {2,}/g, ' ').trim(); }
 
 const TOOLTIPS = {
   vente: {
@@ -1362,7 +1371,7 @@ async function chargerPlanningTab(tab) {
     }).join('');
 
   } catch(e) {
-    container.innerHTML = `<div class="card"><p style="color:var(--danger)">❌ ${esc(e.message)}</p></div>`;
+    container.innerHTML = `<div class="card"><p style="color:var(--danger)">${esc(e.message)}</p></div>`;
     showToast('❌ Planning: '+e.message,'error');
   }
 }
@@ -1396,7 +1405,7 @@ async function chargerDisponibilites() {
     // Stocker pour la génération
     window._dispos = dispos;
     document.getElementById('planning-editeur').style.display='block';
-  } catch(e) { container.innerHTML=`<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`; }
+  } catch(e) { container.innerHTML=`<p style="color:var(--danger)">${esc(e.message)}</p>`; }
 }
 
 // ── Manager : générer proposition automatique ──
@@ -1455,9 +1464,9 @@ async function genererProposition() {
   planningEditTab = 'next';
   planningEditData = grille;
   const labelEl = document.getElementById('editeur-label');
-  if (labelEl) labelEl.textContent = '✏️ Proposition générée — modifiez puis publiez (S+1)';
+  if (labelEl) labelEl.textContent = 'Proposition générée — modifiez puis publiez (S+1)';
   const btnP = document.getElementById('btn-publier');
-  if (btnP) btnP.textContent = '✅ Publier S+1';
+  if (btnP) btnP.textContent = 'Publier S+1';
   await afficherEditeur(grille, tousMagasins, 'next');
   showToast('⚡ Proposition générée','success');
 }
@@ -1512,10 +1521,10 @@ async function _editerPlanningExistant(tab) {
     // 5. Label et bouton
     const label = document.getElementById('editeur-label');
     if (label) label.textContent = tab === 'current'
-      ? '✏️ Planning en cours — modifiez puis sauvegardez'
-      : '✏️ Planning S+1 — modifiez puis publiez';
+      ? 'Planning en cours — modifiez puis sauvegardez'
+      : 'Planning S+1 — modifiez puis publiez';
     const btnPublier = document.getElementById('btn-publier');
-    if (btnPublier) btnPublier.textContent = tab === 'current' ? '✅ Sauvegarder' : '✅ Publier S+1';
+    if (btnPublier) btnPublier.textContent = tab === 'current' ? 'Sauvegarder' : 'Publier S+1';
 
     // 6. Afficher l'éditeur avec les bonnes dates
     await afficherEditeur(grille, magasins, tab);
@@ -1619,7 +1628,7 @@ async function publierPlanning() {
 
       await sheetsPut(tdbId, plage, values);
 
-      const msg = isCurrentTab ? '✅ Planning en cours mis à jour !' : '✅ Planning S+1 publié !';
+      const msg = isCurrentTab ? 'Planning en cours mis à jour !' : 'Planning S+1 publié !';
       showToast(msg,'success');
 
       // Invalider le cache
@@ -1928,7 +1937,7 @@ async function chargerRentabilite() {
       if (dMin && date < dMin) return;
       if (dMax && date > dMax) return;
       if (filtMag && normNom(magasin) !== normNom(filtMag)) return;
-      if (!aAccesTousMagasins() && !peutVoirMagasin(magasin)) return; // 🔐 périmètre
+      if (!aAccesTousMagasins() && !peutVoirMagasin(magasin)) return; // périmètre
 
       // CA
       if (ca > 0) caParMag[magasin] = (caParMag[magasin]||0) + ca;
@@ -1951,7 +1960,7 @@ async function chargerRentabilite() {
       const mag = (r[0]||'').trim();
       if (!mag) return;
       if (filtMag && normNom(mag) !== normNom(filtMag)) return;
-      if (!aAccesTousMagasins() && !peutVoirMagasin(mag)) return; // 🔐 périmètre
+      if (!aAccesTousMagasins() && !peutVoirMagasin(mag)) return; // périmètre
       const internet = parseFR(r[2]);
       const eau      = parseFR(r[3]);
       const elec     = parseFR(r[4]);
@@ -2060,7 +2069,7 @@ async function chargerRentabilite() {
     if (nbSansTaux > 0) showToast(`⚠️ ${nbSansTaux} magasin(s) ont des heures sans taux horaire défini`, 'info');
     else showToast('✅ Rentabilité calculée','success');
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);text-align:center;padding:20px">❌ ${esc(e.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="7" style="color:var(--danger);text-align:center;padding:20px">${esc(e.message)}</td></tr>`;
     console.error('chargerRentabilite:', e);
   }
 }
@@ -2145,7 +2154,7 @@ async function chargerCoutsFixes() {
     document.getElementById('btn-save-couts').style.display = 'flex';
     showToast('✅ Coûts chargés', 'success');
   } catch(e) {
-    wrap.innerHTML = `<div style="color:var(--danger);text-align:center;padding:24px;font-size:.8rem">❌ ${esc(e.message)}</div>`;
+    wrap.innerHTML = `<div style="color:var(--danger);text-align:center;padding:24px;font-size:.8rem">${esc(e.message)}</div>`;
     console.error('chargerCoutsFixes:', e);
   }
 }
@@ -2514,7 +2523,7 @@ async function exporterRentabiliteExcel() {
     return;
   }
   const btn = document.getElementById('btn-export-rentab');
-  if (btn) { btn.disabled = true; btn.textContent = '⏳ Export…'; }
+  if (btn) { btn.disabled = true; btn.textContent = 'Export…'; }
   try {
     const du  = document.getElementById('tdb-filtre-du')?.value  || '';
     const au  = document.getElementById('tdb-filtre-au')?.value  || '';
@@ -2660,7 +2669,7 @@ async function chargerLogs() {
     renderLogs();
     showToast(`✅ ${logsCache.length} entrées`,'success');
   } catch(e) {
-    if (container) container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger)">❌ ${esc(e.message)}<br><small style="color:var(--muted)">Vérifier que l'onglet "📋 Logs" existe dans le TdB</small></div>`;
+    if (container) container.innerHTML = `<div style="text-align:center;padding:20px;color:var(--danger)">${esc(e.message)}<br><small style="color:var(--muted)">Vérifier que l'onglet "📋 Logs" existe dans le TdB</small></div>`;
   }
 }
 
@@ -2674,7 +2683,7 @@ function filtrerLogs() {
   const dateDu = du ? new Date(du) : null;
   const dateAu = au ? new Date(au + 'T23:59:59') : null;
 
-  const ICONS = { vente:'🧾', auth:'🔐', edit:'✏️', delete:'🗑️', system:'⚙️' };
+  const ICONS = { vente:'vente', auth:'cadenas', edit:'modifier', delete:'supprimer', system:'reglages' };
   const container = document.getElementById('logs-container');
   if (!container) return;
 
@@ -2708,7 +2717,7 @@ function filtrerLogs() {
 
   container.innerHTML = data.slice(0, 500).map(r => {
     const type   = (r[3]||'system').toLowerCase();
-    const ico    = ICONS[type] || '⚙️';
+    const ico    = ic(ICONS[type] || 'reglages');
     const action = r[4] || '';
     const detail = r[5] || '';
     const who    = r[2] ? `${r[2]} (${r[1]})` : r[1] || '—';
@@ -2769,7 +2778,7 @@ async function purgerLogsAnciens() {
     logAction('system', `Purge logs`, `${nbSupprimes} entrée(s) > 7 jours supprimée(s)`);
   } catch(e) {
     showToast('❌ ' + e.message, 'error');
-    if (container) container.innerHTML = `<div style="color:var(--danger);padding:20px;text-align:center">❌ ${esc(e.message)}</div>`;
+    if (container) container.innerHTML = `<div style="color:var(--danger);padding:20px;text-align:center">${esc(e.message)}</div>`;
   }
 }
 
@@ -2832,7 +2841,7 @@ async function buildTop10Produits() {
     return a.nom.localeCompare(b.nom, 'fr');
   });
 
-  if (srcLbl) srcLbl.textContent = '🔤 A → Z';
+  if (srcLbl) srcLbl.textContent = 'A → Z';
 
   loading.style.display = 'none';
   renderProduitsPaysage(magasin);
@@ -2885,7 +2894,7 @@ function renderProduitsPaysage(magasin) {
     let stockHTML = '';
     if (stock !== null) {
       const cls = stock <= 0 ? 'empty' : (prod.seuil && stock <= prod.seuil ? 'low' : 'ok');
-      const lbl = stock <= 0 ? '❌ Rupture' : stock+' en stock';
+      const lbl = stock <= 0 ? 'Rupture' : stock+' en stock';
       stockHTML = `<span class="top10-stock ${cls}">${lbl}</span>`;
     }
 
@@ -3050,9 +3059,9 @@ function ouvrirModalTop10(nom) {
   if (qtyEl) { qtyEl.value = isKg ? '0.1' : '1'; }
   if (infoEl) {
     const infoItems = [];
-    if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">💶 ${prod.prixTTC.toFixed(2)} € TTC</span>`);
-    if (prod.type)    infoItems.push(`<span>📦 ${prod.type}</span>`);
-    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">⚖️ par ${prod.quotite}</span>`);
+    if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">${prod.prixTTC.toFixed(2)} € TTC</span>`);
+    if (prod.type)    infoItems.push(`<span>${prod.type}</span>`);
+    if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${prod.quotite}</span>`);
     if (stock !== null) {
       const col = stock <= 0 ? 'var(--danger)' : stock <= (prod.seuil||0) ? 'var(--accent2)' : 'var(--accent)';
       infoItems.push(`<span style="color:${col}">Stock : ${stock}</span>`);
@@ -3167,8 +3176,8 @@ function buildProduitOptions() {
     else horsStock.push(opt);
   });
   let html = '<option value="">— Choisir un produit —</option>';
-  if (enStock.length) html += '<optgroup label="✅ En stock">' + enStock.join('') + '</optgroup>';
-  if (horsStock.length) html += '<optgroup label="⚠️ Hors stock / Non saisi">' + horsStock.join('') + '</optgroup>';
+  if (enStock.length) html += '<optgroup label="En stock">' + enStock.join('') + '</optgroup>';
+  if (horsStock.length) html += '<optgroup label="Hors stock / Non saisi">' + horsStock.join('') + '</optgroup>';
   return html;
 }
 
@@ -3183,7 +3192,7 @@ function ajouterLigne(nomProduitPre) {
     <!-- F : Recherche texte + select produit -->
     <div class="field" style="margin-bottom:8px">
       <label>Produit</label>
-      <input type="search" id="search-${id}" placeholder="🔍 Rechercher…"
+      <input type="search" id="search-${id}" placeholder="Rechercher…"
         oninput="filtrerProduits(${id},this.value)"
         style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:9px 12px;font-size:.85rem;font-family:var(--font);outline:none;margin-bottom:6px;transition:border-color .15s"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
@@ -3306,8 +3315,8 @@ function filtrerProduits(id, query) {
     else horsStock.push(opt);
   });
   let html = '<option value="">— Choisir —</option>';
-  if (enStock.length) html += '<optgroup label="✅ En stock">' + enStock.join('') + '</optgroup>';
-  if (horsStock.length) html += '<optgroup label="⚠️ Hors stock">' + horsStock.join('') + '</optgroup>';
+  if (enStock.length) html += '<optgroup label="En stock">' + enStock.join('') + '</optgroup>';
+  if (horsStock.length) html += '<optgroup label="Hors stock">' + horsStock.join('') + '</optgroup>';
   sel.innerHTML = html;
   // Auto-sélection si un seul résultat
   if (enStock.length + horsStock.length === 1) { sel.selectedIndex = 1; produitChange(id); }
@@ -3485,7 +3494,7 @@ async function validerVente() {
     const ligneStock = stocksData.find(r=>normNom(r[0]||'')===normNom(nom)&&normNom(r[1]||'')===normNom(magasin));
     const stockActuel = ligneStock ? parseFR(ligneStock[6]) : null;
     if (stockActuel !== null && qty > stockActuel) {
-      if (!confirm(`⚠️ Stock insuffisant pour "${esc(nom)}" (stock: ${stockActuel}, demandé: ${qty}). Continuer quand même ?`)) return;
+      if (!confirm(`Stock insuffisant pour "${esc(nom)}" (stock: ${stockActuel}, demandé: ${qty}). Continuer quand même ?`)) return;
     }
 
     // Promo et prix original
@@ -3607,7 +3616,7 @@ async function _doVente(date,vendeur,magasin,tdbId,produitLignes) {
     } catch(e) { erreurs.push('Stocks: '+e.message); console.warn(e); }
   }
 
-  btn.disabled=false; btn.innerHTML='✅ Valider la commande';
+  btn.disabled=false; btn.innerHTML='Valider la commande';
   if (erreurs.length&&!succes.length) { showToast('❌ '+erreurs.join(' | '),'error'); return; }
   showToast(`✅ Vente #${numVente} enregistrée !`,'success');
 
@@ -3850,7 +3859,7 @@ function genererTicketPDF(date, vendeur, magasin, numTicket, produits) {
   if (!societe) { console.warn('Société non trouvée pour:', magasin); return; }
 
   // Demander si l'utilisateur veut le ticket
-  if (!confirm('🧾 Générer le ticket de caisse PDF ?')) return;
+  if (!confirm('Générer le ticket de caisse PDF ?')) return;
 
   if (!window.jspdf) { showToast('⏳ Chargement PDF…','info'); setTimeout(()=>genererTicketPDF(date,vendeur,magasin,numTicket,produits), 1500); return; }
 
@@ -4090,7 +4099,7 @@ async function ouvrirCommandeStock() {
     `).join('');
 
   } catch(e) {
-    lignesDiv.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`;
+    lignesDiv.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`;
   }
 }
 
@@ -4163,7 +4172,7 @@ async function chargerCommandesManager() {
     }));
     afficherCommandesFiltrees();
   } catch(e) {
-    div.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`;
+    div.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`;
   }
 }
 
@@ -4192,7 +4201,7 @@ function afficherCommandesFiltrees() {
 
   div.innerHTML = Object.entries(parMagasin).map(([mag, cmds]) => `
     <div style="background:var(--surface);border-radius:10px;padding:10px;margin-bottom:10px">
-      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">🏪 ${mag}</div>
+      <div style="font-weight:600;font-size:.82rem;margin-bottom:6px;color:var(--accent)">${mag}</div>
       <div style="font-size:.72rem;color:var(--muted);margin-bottom:8px">Par ${cmds[0].collab} — ${cmds[0].date}</div>
       ${cmds.map(c => `
         <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);font-size:.78rem">
@@ -4202,9 +4211,9 @@ function afficherCommandesFiltrees() {
       `).join('')}
       ${filtreCommandeActif === 'En cours' ? `
         <div style="display:flex;gap:6px;margin-top:10px">
-          <button class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.75rem" data-kbd-action="cmdModifier" data-valeur="${esc(mag)}">✏️ Modifier</button>
-          <button class="btn" style="flex:1;justify-content:center;font-size:.75rem;background:#7f1d1d33;border:1px solid var(--danger);color:var(--danger)" data-kbd-action="cmdRefuser" data-valeur="${esc(mag)}">❌ Refuser</button>
-          <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:.75rem" data-kbd-action="cmdValider" data-valeur="${esc(mag)}">✅ Valider</button>
+          <button class="btn btn-secondary" style="flex:1;justify-content:center;font-size:.75rem" data-kbd-action="cmdModifier" data-valeur="${esc(mag)}">Modifier</button>
+          <button class="btn" style="flex:1;justify-content:center;font-size:.75rem;background:#7f1d1d33;border:1px solid var(--danger);color:var(--danger)" data-kbd-action="cmdRefuser" data-valeur="${esc(mag)}">Refuser</button>
+          <button class="btn btn-primary" style="flex:1;justify-content:center;font-size:.75rem" data-kbd-action="cmdValider" data-valeur="${esc(mag)}">Valider</button>
         </div>
       ` : ''}
     </div>
@@ -4321,18 +4330,18 @@ async function chargerCollabsGestion() {
       <div style="background:var(--surface);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
         <div style="flex:1;min-width:0">
           <div style="font-weight:600;font-size:.85rem">${esc((r[1]||'').trim())} ${esc((r[0]||'').trim())}</div>
-          <div style="font-size:.72rem;color:var(--muted)">${esc((r[2]||'').trim())} — ${(r[14]||'NON').trim()==='OUI'?'👔 Manager':'🛒 Vendeur'} — ${(r[15]||'').trim()||'Aucun magasin'}</div>
+          <div style="font-size:.72rem;color:var(--muted)">${esc((r[2]||'').trim())} — ${(r[14]||'NON').trim()==='OUI'?'Manager':'Vendeur'} — ${(r[15]||'').trim()||'Aucun magasin'}</div>
           ${_pinsVisibles ? `<div style="font-size:.72rem;color:var(--accent3);font-family:var(--font-num);display:flex;align-items:center;gap:6px;margin-top:2px">
-            🔑 <span id="pin-val-${i}" style="display:none">${(r[4]||'—').trim()}</span>
+            PIN <span id="pin-val-${i}" style="display:none">${(r[4]||'—').trim()}</span>
             <span id="pin-mask-${i}">••••••</span>
-            <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">👁</button>
+            <button onclick="togglePinVisu(${i})" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.8rem;padding:0">${ic('oeil')}</button>
           </div>` : ''}
           <div style="font-size:.7rem;color:${(r[18]||'OUI').trim()==='OUI'?'var(--accent)':'var(--danger)'}">Compte ${(r[18]||'OUI').trim()==='OUI'?'actif':'désactivé'}</div>
         </div>
-        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0;margin-left:8px" onclick="ouvrirFormulaireCollab(${r._sheetRow})">✏️</button>
+        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0;margin-left:8px" onclick="ouvrirFormulaireCollab(${r._sheetRow})">${ic('modifier')}</button>
       </div>
     `).join('') || '<p style="color:var(--muted);text-align:center;padding:20px">Aucun collaborateur</p>';
-  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`; }
+  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`; }
 }
 
 async function ouvrirFormulaireCollab(rowIdx=null) {
@@ -4360,7 +4369,7 @@ async function ouvrirFormulaireCollab(rowIdx=null) {
     d._nextNum = nextNum;
   }
   gestionModeEdit = { type:'collab', rowIdx, d };
-  document.getElementById('gestion-modal-titre').textContent = rowIdx ? '✏️ Modifier le collaborateur' : '➕ Nouveau collaborateur';
+  document.getElementById('gestion-modal-titre').textContent = rowIdx ? 'Modifier le collaborateur' : 'Nouveau collaborateur';
   document.getElementById('gestion-modal-contenu').innerHTML = `
     <div style="font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Identité</div>
     <div class="row2f">
@@ -4406,14 +4415,14 @@ async function ouvrirFormulaireCollab(rowIdx=null) {
     <div class="row2f">
       <div class="field"><label>Rôle</label>
         <select id="gf-manager">
-          <option value="NON" ${d.manager!=='OUI'?'selected':''}>🛒 Vendeur</option>
-          <option value="OUI" ${d.manager==='OUI'?'selected':''}>👔 Manager</option>
+          <option value="NON" ${d.manager!=='OUI'?'selected':''}>Vendeur</option>
+          <option value="OUI" ${d.manager==='OUI'?'selected':''}>Manager</option>
         </select>
       </div>
       <div class="field"><label>Compte</label>
         <select id="gf-actif">
-          <option value="OUI" ${d.actif!=='NON'?'selected':''}>✅ Actif</option>
-          <option value="NON" ${d.actif==='NON'?'selected':''}>❌ Désactivé</option>
+          <option value="OUI" ${d.actif!=='NON'?'selected':''}>Actif</option>
+          <option value="NON" ${d.actif==='NON'?'selected':''}>Désactivé</option>
         </select>
       </div>
     </div>
@@ -4480,7 +4489,7 @@ function demanderPINManagerPourVoir() {
   const u = utilisateurConnecte;
   if (!u) return;
   gestionModeEdit = { type:'__voir_pins__', rowIdx: null, d: {} };
-  document.getElementById('gestion-modal-titre').textContent = '🔐 Confirmer votre identité';
+  document.getElementById('gestion-modal-titre').textContent = 'Confirmer votre identité';
   document.getElementById('gestion-modal-contenu').innerHTML = `
     <p style="font-size:.82rem;color:var(--muted);margin-bottom:14px">
       Pour des raisons de sécurité, saisissez votre propre PIN pour afficher les PINs des collaborateurs.
@@ -4490,9 +4499,9 @@ function demanderPINManagerPourVoir() {
       <input id="gf-pin-confirm" type="password" placeholder="Votre PIN" autofocus
         onkeydown="if(event.key==='Enter') confirmerPINManager()">
     </div>
-    <div id="gf-pin-erreur" style="color:var(--danger);font-size:.78rem;display:none;margin-top:4px">❌ PIN incorrect</div>
+    <div id="gf-pin-erreur" style="color:var(--danger);font-size:.78rem;display:none;margin-top:4px">PIN incorrect</div>
   `;
-  document.getElementById('gestion-modal-btn').textContent = '🔓 Confirmer';
+  document.getElementById('gestion-modal-btn').textContent = 'Confirmer';
   document.getElementById('gestion-modal-btn').onclick = confirmerPINManager;
   document.getElementById('gestion-modal').style.display = 'block';
   setTimeout(() => document.getElementById('gf-pin-confirm')?.focus(), 100);
@@ -4528,13 +4537,13 @@ async function confirmerPINManager() {
     _pinsVisibles = true;
     fermerGestionModal();
     // Remettre le bouton normal
-    document.getElementById('gestion-modal-btn').textContent = '💾 Enregistrer';
+    document.getElementById('gestion-modal-btn').textContent = 'Enregistrer';
     document.getElementById('gestion-modal-btn').onclick = sauvegarderGestion;
     // Recharger la liste avec PINs visibles
     chargerCollabsGestion();
   } catch(e) {
     document.getElementById('gf-pin-erreur').style.display = 'block';
-    document.getElementById('gf-pin-erreur').textContent = '❌ Erreur : ' + e.message;
+    document.getElementById('gf-pin-erreur').textContent = 'Erreur : ' + e.message;
   }
 }
 
@@ -4582,7 +4591,7 @@ async function chargerProduitsGestion() {
     const sc = document.getElementById('gestion-prod-search-clear'); if (sc) sc.style.display = 'none';
     buildFiltresProduits();
     renderListeProduits();
-  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`; }
+  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`; }
 }
 
 function buildFiltresProduits() {
@@ -4659,8 +4668,8 @@ function renderListeProduits() {
         </div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
-        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px" onclick="ouvrirFormulaireProduit(${rowIdx})">✏️</button>
-        <button style="background:var(--danger-dim);border:1px solid rgba(248,113,113,.3);color:var(--danger);border-radius:8px;padding:5px 8px;font-size:.72rem;cursor:pointer" data-kbd-action="prodSuppr" data-row="${rowIdx}" data-valeur="${esc(r[0]||'')}">🗑️</button>
+        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px" onclick="ouvrirFormulaireProduit(${rowIdx})">${ic('modifier')}</button>
+        <button style="background:var(--danger-dim);border:1px solid rgba(248,113,113,.3);color:var(--danger);border-radius:8px;padding:5px 8px;font-size:.72rem;cursor:pointer" data-kbd-action="prodSuppr" data-row="${rowIdx}" data-valeur="${esc(r[0]||'')}">${ic('supprimer')}</button>
       </div>
     </div>`;
   }).join('') || '<p style="color:var(--muted);text-align:center;padding:20px">Aucun produit</p>';
@@ -4674,7 +4683,7 @@ async function ouvrirFormulaireProduit(rowIdx=null) {
     r = rows[0] || [];
   }
   gestionModeEdit = { type:'produit', rowIdx, r };
-  document.getElementById('gestion-modal-titre').textContent = rowIdx ? '✏️ Modifier le produit' : '➕ Nouveau produit';
+  document.getElementById('gestion-modal-titre').textContent = rowIdx ? 'Modifier le produit' : 'Nouveau produit';
   const tvaActuel = (r[3]||'20%').toString().trim();
 
   // Types existants depuis le catalogue en mémoire + types par défaut
@@ -4754,7 +4763,7 @@ async function ouvrirFormulaireProduit(rowIdx=null) {
   `;
   setTimeout(calcPrixHT, 50);
   const btn = document.getElementById('gestion-modal-btn');
-  if (btn) { btn.onclick = sauvegarderGestion; btn.textContent = '💾 Enregistrer'; btn.disabled = false; }
+  if (btn) { btn.onclick = sauvegarderGestion; btn.textContent = 'Enregistrer'; btn.disabled = false; }
   document.getElementById('gestion-modal').style.display = 'block';
 }
 async function chargerMagasinsGestion() {
@@ -4777,10 +4786,10 @@ async function chargerMagasinsGestion() {
           <div style="font-size:.72rem;color:var(--muted)">${esc((r[1]||'').trim())} — ${esc((r[2]||'').trim())} — ${esc((r[3]||'').trim())}</div>
           <div style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc((r[4]||'').trim())}</div>
         </div>
-        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px" onclick="ouvrirFormulaireMagasin(${r._sheetRow})">✏️</button>
+        <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px" onclick="ouvrirFormulaireMagasin(${r._sheetRow})">${ic('modifier')}</button>
       </div>
     `).join('') || '<p style="color:var(--muted);text-align:center;padding:20px">Aucun magasin</p>';
-  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`; }
+  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`; }
 }
 
 async function ouvrirFormulaireMagasin(rowIdx=null) {
@@ -4791,7 +4800,7 @@ async function ouvrirFormulaireMagasin(rowIdx=null) {
     r = rows[0] || [];
   }
   gestionModeEdit = { type:'magasin', rowIdx, r };
-  document.getElementById('gestion-modal-titre').textContent = rowIdx ? '✏️ Modifier le magasin' : '➕ Nouveau magasin';
+  document.getElementById('gestion-modal-titre').textContent = rowIdx ? 'Modifier le magasin' : 'Nouveau magasin';
   document.getElementById('gestion-modal-contenu').innerHTML = `
     <div class="field"><label>Nom du magasin</label><input id="gf-nom" value="${esc(r[0]||'')}" placeholder="ex: Maison Perrert Grasse"></div>
     <div class="field"><label>Entreprise</label>
@@ -4869,7 +4878,7 @@ async function chargerSuiviGestion() {
 
     filtrerSuivi();
   } catch(e) {
-    div.innerHTML = `<p style="color:var(--danger);text-align:center">❌ ${esc(e.message)}</p>`;
+    div.innerHTML = `<p style="color:var(--danger);text-align:center">${esc(e.message)}</p>`;
   }
 }
 
@@ -4953,17 +4962,17 @@ function afficherSuivi(rows) {
 
     // Photos
     const photoLinks = urls ? urls.split('|').map(u => u.trim()).filter(Boolean).map((u, pi) =>
-      `<a href="${u}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">📷 Photo ${pi+1}</a>`
+      `<a href="${u}" target="_blank" style="display:inline-flex;align-items:center;gap:4px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:4px 8px;font-size:.72rem;color:var(--accent3);text-decoration:none;margin:2px">Photo ${pi+1}</a>`
     ).join('') : '<span style="font-size:.72rem;color:var(--muted)">Aucune photo</span>';
 
     return `<div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:10px">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <div>
           <div style="font-weight:700;font-size:.9rem">${esc(prenom)} ${esc(nom)} <span style="font-size:.7rem;color:var(--muted);font-family:var(--font-num)">${esc(mat)}</span></div>
-          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${date}${mag ? ' · 🏪 '+mag : ''}</div>
+          <div style="font-size:.78rem;color:var(--muted);font-family:var(--font-num)">${date}${mag ? ' · '+mag : ''}</div>
         </div>
         <div style="display:flex;gap:6px;align-items:center">
-          <button onclick="ouvrirModifSuivi(${rowIdx})" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);cursor:pointer">✏️ Modifier</button>
+          <button onclick="ouvrirModifSuivi(${rowIdx})" style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:5px 10px;font-size:.72rem;color:var(--text);cursor:pointer">Modifier</button>
           <button data-kbd-action="supprSuivi" data-row="${rowIdx}" data-valeur="${esc((prenom+' '+nom).trim())}" data-date="${esc(date)}"
             title="Supprimer cette entrée"
             style="background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.3);border-radius:8px;padding:5px 9px;font-size:.72rem;color:var(--danger);cursor:pointer;transition:all .15s"
@@ -4974,13 +4983,13 @@ function afficherSuivi(rows) {
         </div>
       </div>
       <div style="display:flex;gap:16px;margin-bottom:8px;flex-wrap:wrap">
-        ${heures !== null ? `<div style="font-size:.82rem"><span style="color:var(--muted)">⏱ Heures : </span><strong style="color:var(--accent3)">${minutesEnHeures(heures * 60)}</strong>${horaires ? ` <span style="color:var(--muted);font-size:.72rem">(${esc(horaires)})</span>` : ''}</div>` : ''}
-        ${ca !== null ? `<div style="font-size:.82rem"><span style="color:var(--muted)">💶 CA : </span><strong style="color:var(--accent)">${ca.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
+        ${heures !== null ? `<div style="font-size:.82rem"><span style="color:var(--muted)">Heures : </span><strong style="color:var(--accent3)">${minutesEnHeures(heures * 60)}</strong>${horaires ? ` <span style="color:var(--muted);font-size:.72rem">(${esc(horaires)})</span>` : ''}</div>` : ''}
+        ${ca !== null ? `<div style="font-size:.82rem"><span style="color:var(--muted)">CA : </span><strong style="color:var(--accent)">${ca.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
       </div>
       ${(cb !== null || esp !== null || autre !== null) ? `<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap">
-        ${cb !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">💳 CB : <strong>${cb.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
-        ${esp !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">💵 Esp : <strong>${esp.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
-        ${autre !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">🔀 Autres : <strong>${autre.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
+        ${cb !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">CB : <strong>${cb.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
+        ${esp !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">Esp : <strong>${esp.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
+        ${autre !== null ? `<div style="font-size:.75rem;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:3px 9px">Autres : <strong>${autre.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</strong></div>` : ''}
       </div>` : ''}
       <div style="display:flex;flex-wrap:wrap;gap:4px">${photoLinks}</div>
     </div>`;
@@ -5081,38 +5090,38 @@ async function ouvrirModifSuivi(rowIdx) {
   ).join('');
 
   document.getElementById('gestion-modal-titre').textContent =
-    '✏️ ' + (r[1]||'').trim() + ' ' + (r[0]||'').trim() + ' — ' + (r[3]||'').trim();
+    '' + (r[1]||'').trim() + ' ' + (r[0]||'').trim() + ' — ' + (r[3]||'').trim();
 
   document.getElementById('gestion-modal-contenu').innerHTML = `
-    <div class="field"><label>🏪 Magasin</label>
+    <div class="field"><label>Magasin</label>
       <select id="suivi-edit-magasin" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.85rem;outline:none">
         <option value="">— Choisir —</option>${magOpts}
       </select>
     </div>
-    <div class="field"><label>⏱ Heures travaillées</label>
+    <div class="field"><label>Heures travaillées</label>
       <input id="suivi-edit-heures" type="text" inputmode="text"
         value="${heures}" placeholder="ex: 7h30 ou 7:30"
         style="font-family:var(--font-num)"
         oninput="previewHeuresEdit(this)">
       <div id="suivi-edit-heures-preview" style="font-size:.7rem;color:var(--accent3);margin-top:3px;height:16px"></div>
     </div>
-    <div class="field"><label>🕐 Horaires</label>
+    <div class="field"><label>Horaires</label>
       <input id="suivi-edit-horaires" value="${esc(horaires)}" placeholder="ex: 09:00-17:00">
     </div>
     <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:12px">
-      <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">💶 Répartition CA</div>
+      <div style="font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px">Répartition CA</div>
       <div class="row2f" style="margin-bottom:8px">
         <div class="field" style="margin-bottom:0">
-          <label>💳 CB (€)</label>
+          <label>CB (€)</label>
           <input id="suivi-edit-cb" type="number" step="0.01" min="0" value="${cb}" placeholder="0.00" oninput="recalcTotalSuiviEdit()">
         </div>
         <div class="field" style="margin-bottom:0">
-          <label>💵 Espèces (€)</label>
+          <label>Espèces (€)</label>
           <input id="suivi-edit-esp" type="number" step="0.01" min="0" value="${esp}" placeholder="0.00" oninput="recalcTotalSuiviEdit()">
         </div>
       </div>
       <div class="field" style="margin-bottom:8px">
-        <label>🔀 Autres (€)</label>
+        <label>Autres (€)</label>
         <input id="suivi-edit-autre" type="number" step="0.01" min="0" value="${autre}" placeholder="0.00" oninput="recalcTotalSuiviEdit()">
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--card);border-radius:8px;margin-top:4px">
@@ -5122,11 +5131,11 @@ async function ouvrirModifSuivi(rowIdx) {
         </span>
       </div>
     </div>
-    <div class="field"><label>📷 URLs photos (séparées par |)</label>
+    <div class="field"><label>URLs photos (séparées par |)</label>
       <textarea id="suivi-edit-urls" rows="2" style="width:100%;background:var(--surface);border:1px solid var(--border);color:var(--text);border-radius:10px;padding:10px;font-size:.78rem;font-family:var(--font-num);outline:none;resize:vertical">${esc(urls)}</textarea>
     </div>
     ${urls ? `<div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">
-      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${u.trim()}" target="_blank" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">📷 Photo ${i+1}</a>` : '').join('')}
+      ${urls.split('|').map((u,i) => u.trim() ? `<a href="${u.trim()}" target="_blank" style="font-size:.72rem;color:var(--accent3);border:1px solid var(--border);border-radius:8px;padding:4px 10px;text-decoration:none;background:var(--surface)">Photo ${i+1}</a>` : '').join('')}
     </div>` : ''}
   `;
 
@@ -5134,7 +5143,7 @@ async function ouvrirModifSuivi(rowIdx) {
   setTimeout(recalcTotalSuiviEdit, 50);
 
   gestionModeEdit = { type: 'suivi', rowIdx, d: r };
-  document.getElementById('gestion-modal-btn').textContent = '💾 Enregistrer';
+  document.getElementById('gestion-modal-btn').textContent = 'Enregistrer';
   document.getElementById('gestion-modal').style.display = 'block';
 }
 
@@ -5202,7 +5211,7 @@ async function sauvegarderSuivi() {
   } catch(e) {
     showToast('❌ ' + e.message, 'error');
   }
-  btn.disabled = false; btn.innerHTML = '💾 Enregistrer';
+  btn.disabled = false; btn.innerHTML = 'Enregistrer';
 }
 
 async function sauvegarderGestion() {
@@ -5329,7 +5338,7 @@ async function sauvegarderGestion() {
   } catch(e) {
     showToast('❌ ' + e.message, 'error');
   }
-  btn.disabled = false; btn.innerHTML = '💾 Enregistrer';
+  btn.disabled = false; btn.innerHTML = 'Enregistrer';
 }
 
 function fermerGestionModal() {
@@ -5360,12 +5369,12 @@ async function chargerNotifsGestion() {
               ${esc((r[0]||'').trim())} — ${esc((r[1]||'').trim())} à ${esc((r[2]||'').trim())}
               — <span style="color:${dest.toLowerCase()==='manager'?'var(--accent2)':'var(--accent)'}">${dest}</span>
             </div>
-            <div style="font-size:.7rem;color:${actif?'var(--accent)':'var(--danger)'};margin-top:2px">${actif?'✅ Active':'❌ Désactivée'}</div>
+            <div style="font-size:.7rem;color:${actif?'var(--accent)':'var(--danger)'};margin-top:2px">${actif?'Active':'Désactivée'}</div>
           </div>
-          <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0" onclick="ouvrirFormulaireNotif(${i+2})">✏️</button>
+          <button class="btn btn-secondary" style="font-size:.72rem;padding:5px 8px;flex-shrink:0" onclick="ouvrirFormulaireNotif(${i+2})">${ic('modifier')}</button>
         </div>`;
     }).join('');
-  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">❌ ${esc(e.message)}</p>`; }
+  } catch(e) { div.innerHTML = `<p style="color:var(--danger)">${esc(e.message)}</p>`; }
 }
 
 async function ouvrirFormulaireNotif(rowIdx=null) {
@@ -5376,13 +5385,13 @@ async function ouvrirFormulaireNotif(rowIdx=null) {
     r = rows[0] || [];
   }
   gestionModeEdit = { type:'notif', rowIdx };
-  document.getElementById('gestion-modal-titre').textContent = rowIdx ? '✏️ Modifier la notification' : '➕ Nouvelle notification';
+  document.getElementById('gestion-modal-titre').textContent = rowIdx ? 'Modifier la notification' : 'Nouvelle notification';
   document.getElementById('gestion-modal-contenu').innerHTML = `
     <div class="field">
       <label>Type</label>
       <select id="gf-type">
-        <option value="Hebdo" ${(r[0]||'Hebdo')==='Hebdo'?'selected':''}>📅 Hebdomadaire (jour de la semaine)</option>
-        <option value="Ponctuel" ${r[0]==='Ponctuel'?'selected':''}>📌 Ponctuel (date précise)</option>
+        <option value="Hebdo" ${(r[0]||'Hebdo')==='Hebdo'?'selected':''}>Hebdomadaire (jour de la semaine)</option>
+        <option value="Ponctuel" ${r[0]==='Ponctuel'?'selected':''}>Ponctuel (date précise)</option>
       </select>
     </div>
     <div class="field">
@@ -5400,15 +5409,15 @@ async function ouvrirFormulaireNotif(rowIdx=null) {
     <div class="field">
       <label>Destinataires</label>
       <select id="gf-dest">
-        <option value="Tous" ${(r[4]||'Tous')==='Tous'?'selected':''}>👥 Tous</option>
-        <option value="Manager" ${r[4]==='Manager'?'selected':''}>👔 Managers uniquement</option>
+        <option value="Tous" ${(r[4]||'Tous')==='Tous'?'selected':''}>Tous</option>
+        <option value="Manager" ${r[4]==='Manager'?'selected':''}>Managers uniquement</option>
       </select>
     </div>
     <div class="field">
       <label>Statut</label>
       <select id="gf-actif">
-        <option value="Oui" ${(r[5]||'Oui')==='Oui'?'selected':''}>✅ Active</option>
-        <option value="Non" ${r[5]==='Non'?'selected':''}>❌ Désactivée</option>
+        <option value="Oui" ${(r[5]||'Oui')==='Oui'?'selected':''}>Active</option>
+        <option value="Non" ${r[5]==='Non'?'selected':''}>Désactivée</option>
       </select>
     </div>
   `;
@@ -5435,7 +5444,7 @@ function calcPrixHT() {
     if (achat > 0 && pht > 0) {
       const marge  = pht - achat;
       const margeP = achat > 0 ? (marge / achat * 100) : 0;
-      margeEl.innerHTML = `💡 Marge brute : <strong style="color:${marge>=0?'var(--accent)':'var(--danger)'}">
+      margeEl.innerHTML = `Marge brute : <strong style="color:${marge>=0?'var(--accent)':'var(--danger)'}">
         ${marge.toFixed(2)} € HT &nbsp;(${margeP.toFixed(1)} %)
       </strong>`;
     } else {
@@ -5466,7 +5475,7 @@ async function chargerStocksGestion() {
 
     afficherStocksGestion();
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);text-align:center;padding:20px">❌ ${esc(e.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="5" style="color:var(--danger);text-align:center;padding:20px">${esc(e.message)}</td></tr>`;
   }
 }
 
@@ -5505,7 +5514,7 @@ function afficherStocksGestion() {
       <td style="font-size:.75rem;color:var(--muted)">${esc((r[1]||'').trim())}</td>
       <td style="font-size:.75rem;color:var(--muted)">${esc((r[2]||'').trim())}</td>
       <td style="text-align:center;font-weight:600">${r[6]||'0'}</td>
-      <td style="text-align:center;color:${couleur};font-size:.8rem">${statut||'—'}</td>
+      <td style="text-align:center;color:${couleur};font-size:.8rem">${esc(sansEmoji(statut))||'—'}</td>
     </tr>`;
   }).join('');
 }
@@ -5611,7 +5620,7 @@ function recalcHeures() {
   if (!box || !disp) return;
   if (totalMin > 0) {
     box.style.display = 'flex';
-    disp.textContent = minutesEnHeures(totalMin) + (totalMin > 600 ? ' ⚠️' : '');
+    disp.textContent = minutesEnHeures(totalMin) + (totalMin > 600 ? ' (plus de 10 h)' : '');
     disp.style.color = totalMin > 600 ? 'var(--danger)' : 'var(--accent3)';
   } else {
     box.style.display = 'none';
@@ -5624,7 +5633,7 @@ function togglePlage2() {
   if (!p2 || !btn) return;
   const estCache = p2.style.display === 'none' || p2.style.display === '';
   p2.style.display = estCache ? 'block' : 'none';
-  btn.innerHTML = estCache ? '➖ Supprimer la pause' : '➕ Ajouter une pause';
+  btn.innerHTML = estCache ? 'Supprimer la pause' : 'Ajouter une pause';
   if (!estCache) {
     document.getElementById('h2-debut').value = '';
     document.getElementById('h2-fin').value = '';
@@ -5788,16 +5797,16 @@ async function chargerRecapJour() {
               </div>`
             ).join('')}
             ${(t.cb||t.esp||t.autre) ? `<div style="display:flex;gap:8px;margin-top:5px;font-size:.68rem;color:var(--muted)">
-              ${t.cb    > 0 ? `<span>💳 ${t.cb.toFixed(2)} €</span>` : ''}
-              ${t.esp   > 0 ? `<span>💵 ${t.esp.toFixed(2)} €</span>` : ''}
-              ${t.autre > 0 ? `<span>🔀 ${t.autre.toFixed(2)} €</span>` : ''}
+              ${t.cb    > 0 ? `<span>CB ${t.cb.toFixed(2)} €</span>` : ''}
+              ${t.esp   > 0 ? `<span>Esp. ${t.esp.toFixed(2)} €</span>` : ''}
+              ${t.autre > 0 ? `<span>Autres ${t.autre.toFixed(2)} €</span>` : ''}
             </div>` : ''}
           </div>`
         ).join('');
       }
     }
   } catch(e) {
-    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">❌ ' + e.message + '</div>';
+    if (div) div.innerHTML = '<div style="color:var(--danger);font-size:.78rem;padding:12px">' + e.message + '</div>';
   }
 }
 
@@ -5816,7 +5825,7 @@ async function envoyerCA() {
   // Vérification heures > 10h
   const heures = getHeuresDecimales();
   if (heures > 10) {
-    if (!confirm('⚠️ Plus de 10 heures saisies ('+minutesEnHeures(heures*60)+'). Confirmer ?')) return;
+    if (!confirm('Plus de 10 heures saisies ('+minutesEnHeures(heures*60)+'). Confirmer ?')) return;
   }
   // Vérification horaire fin > heure actuelle
   const maintenant = new Date();
@@ -5827,7 +5836,7 @@ async function envoyerCA() {
     const finSaisie = new Date(dateCA);
     finSaisie.setHours(hh, mm, 0, 0);
     if (finSaisie > maintenant) {
-      const msgH = `⚠️ L'heure de fin saisie (${h1fin}) est supérieure à l'heure actuelle (${maintenant.getHours().toString().padStart(2,'0')}:${maintenant.getMinutes().toString().padStart(2,'0')}). Continuer quand même ?`;
+      const msgH = `L'heure de fin saisie (${h1fin}) est supérieure à l'heure actuelle (${maintenant.getHours().toString().padStart(2,'0')}:${maintenant.getMinutes().toString().padStart(2,'0')}). Continuer quand même ?`;
       if (!confirm(msgH)) return;
     }
   }
@@ -5869,7 +5878,7 @@ async function _doCA(date,magasin,employe,cb,esp,autre,total) {
         pj.status='done'; ov.remove(); pj.thumbEl.classList.add('done');
         pj.thumbEl.querySelector('.pj-name').textContent=nomFichier;
         done++;
-      } catch(e){pj.status='error';ov.innerHTML='<span style="color:var(--danger);font-size:.7rem">❌</span>';erreurs.push('Photo: '+e.message);}
+      } catch(e){pj.status='error';ov.innerHTML='<span style="color:var(--danger);font-size:.7rem">✕</span>';erreurs.push('Photo: '+e.message);}
       pb.style.width=Math.round((done/photos.length)*100)+'%';
     }
     if (done>0) succes.push(done+' photo(s) uploadée(s)');
@@ -5917,7 +5926,7 @@ async function _doCA(date,magasin,employe,cb,esp,autre,total) {
     } catch(e){ erreurs.push('Enregistrement: '+e.message); }
   }
 
-  btn.disabled=false; btn.innerHTML='✅ Enregistrer le CA';
+  btn.disabled=false; btn.innerHTML='Enregistrer le CA';
   if (erreurs.length&&!succes.length){showToast('❌ '+erreurs.join(' | '),'error');return;}
   logAction('vente', `CA enregistré — ${esc(magasin)}`, `${employe} · ${total > 0 ? total.toFixed(2)+' € TTC' : 'heures seulement'} · ${dateFR}`);
 
@@ -5929,7 +5938,7 @@ async function _doCA(date,magasin,employe,cb,esp,autre,total) {
   ['m-cb','m-esp','m-autre'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   ['h1-debut','h1-fin','h2-debut','h2-fin'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
   const p2 = document.getElementById('horaire-plage-2'); if (p2) p2.style.display = 'none';
-  const btnP = document.getElementById('btn-add-plage'); if (btnP) btnP.textContent = '➕ Ajouter une pause';
+  const btnP = document.getElementById('btn-add-plage'); if (btnP) btnP.textContent = 'Ajouter une pause';
   document.getElementById('heures-total-box').style.display = 'none';
   recalcTotal();
   const next = new Date(date); next.setDate(next.getDate() + 1);
@@ -6403,7 +6412,7 @@ async function chargerVentesHisto() {
 
       // Filtres magasin/employé (manager seulement)
       if (filtMag && normNom(magasin) !== normNom(filtMag)) return;
-      if (!aAccesTousMagasins() && !peutVoirMagasin(magasin)) return; // 🔐 périmètre
+      if (!aAccesTousMagasins() && !peutVoirMagasin(magasin)) return; // périmètre
       if (filtEmp && normNom(collab) !== normNom(filtEmp)) return;
 
       _ventesHistoData.push({ dateStr, date, collab, magasin, ticket, produit, type, qte, ht, tva, ttc,
@@ -6424,7 +6433,7 @@ async function chargerVentesHisto() {
     renderVentesHisto();
     showToast(`✅ ${_ventesHistoData.length} vente(s) chargée(s)`,'success');
   } catch(e) {
-    list.innerHTML = `<div style="color:var(--danger);padding:20px;text-align:center">❌ ${esc(e.message)}</div>`;
+    list.innerHTML = `<div style="color:var(--danger);padding:20px;text-align:center">${esc(e.message)}</div>`;
   }
 }
 
@@ -6469,9 +6478,9 @@ function renderVentesHisto() {
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button onclick="ouvrirModalVente(${i})" title="Modifier"
-            style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:.72rem;cursor:pointer;color:var(--text)">✏️</button>
+            style="background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:4px 7px;font-size:.72rem;cursor:pointer;color:var(--text)">${ic('modifier')}</button>
           ${estManager?`<button onclick="supprimerVente(${i})" title="Supprimer"
-            style="background:var(--danger-dim);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:4px 7px;font-size:.72rem;cursor:pointer;color:var(--danger)">🗑️</button>`:''}
+            style="background:var(--danger-dim);border:1px solid rgba(248,113,113,.3);border-radius:6px;padding:4px 7px;font-size:.72rem;cursor:pointer;color:var(--danger)">${ic('supprimer')}</button>`:''}
         </div>
       </div>`;
     }).join('');
@@ -6523,10 +6532,10 @@ function ouvrirModalVente(idx) {
     </div>
     <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 6px">Paiement (optionnel)</div>
     <div class="row2f">
-      <div class="field" style="margin-bottom:0"><label>💳 CB (€)</label><input type="number" id="mv-cb" value="${r.cb||''}" step="0.01" min="0" placeholder="0"></div>
-      <div class="field" style="margin-bottom:0"><label>💵 Espèces (€)</label><input type="number" id="mv-esp" value="${r.esp||''}" step="0.01" min="0" placeholder="0"></div>
+      <div class="field" style="margin-bottom:0"><label>CB (€)</label><input type="number" id="mv-cb" value="${r.cb||''}" step="0.01" min="0" placeholder="0"></div>
+      <div class="field" style="margin-bottom:0"><label>Espèces (€)</label><input type="number" id="mv-esp" value="${r.esp||''}" step="0.01" min="0" placeholder="0"></div>
     </div>
-    <div class="field" style="margin-top:8px;margin-bottom:0"><label>🔀 Autre (€)</label><input type="number" id="mv-autre" value="${r.autre||''}" step="0.01" min="0" placeholder="0"></div>
+    <div class="field" style="margin-top:8px;margin-bottom:0"><label>Autre (€)</label><input type="number" id="mv-autre" value="${r.autre||''}" step="0.01" min="0" placeholder="0"></div>
   `;
   // Pré-remplir pttc depuis catalogue
   const prod = catalogue.find(p => normNom(p.nom)===normNom(r.produit));
@@ -6640,7 +6649,7 @@ async function sauvegarderModifVente() {
     showToast('❌ ' + e.message, 'error');
     console.error('sauvegarderModifVente:', e);
   }
-  if (btn) { btn.disabled = false; btn.innerHTML = '💾 Enregistrer'; }
+  if (btn) { btn.disabled = false; btn.innerHTML = 'Enregistrer'; }
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -6697,7 +6706,7 @@ async function supprimerVente(idx) {
   const qteNum = parseFR(r.qte) || 0;
   const msg = `Supprimer cette ligne ?\n` +
     `${esc(r.produit)} × ${qteNum} — ${r.ttc.toFixed(2)} €\n\n` +
-    `⚠️ Le stock de "${esc(r.produit)}" sera remis à jour (+${qteNum}).`;
+    `Le stock de "${esc(r.produit)}" sera remis à jour (+${qteNum}).`;
   if (!confirm(msg)) return;
 
   const tdbId = getConfig('cfg-tdb-id');
@@ -7062,7 +7071,6 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
   setEl('tdb-col-nb',      list.length);
 
   // Classement
-  const medals = ['🥇','🥈','🥉'];
   const divList = document.getElementById('tdb-liste-collabs');
   if (divList) divList.innerHTML = list.map((c,i) => {
     const cah   = c.heures>0 ? (c.ca/c.heures).toFixed(2) : '—';
@@ -7072,9 +7080,9 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
     return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
         +'<div style="display:flex;align-items:center;gap:8px">'
-          +'<span style="font-size:.95rem">'+(medals[i]||'#'+(i+1))+'</span>'
+          +'<span class="rang'+(i<3?' rang-top':'')+'">'+(i+1)+'</span>'
           +'<div>'
-            +'<div style="font-weight:700;font-size:.85rem">'+c.nom+'</div>'
+            +'<div style="font-weight:700;font-size:.85rem">'+esc(c.nom)+'</div>'
             +'<div style="font-size:.7rem;color:var(--muted)">'+c.jours+' jour(s) · '+c.heures.toFixed(1)+'h</div>'
           +'</div>'
         +'</div>'
@@ -7084,10 +7092,10 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
         +'</div>'
       +'</div>'
       +'<div style="display:flex;gap:5px;flex-wrap:wrap">'
-        +(c.heures>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">⚡ '+cah+' €/h</span>':'')
-        +'<span style="font-size:.7rem;border-radius:6px;padding:2px 8px;background:'+pctColor+'22;border:1px solid '+pctColor+'55;color:'+pctColor+'">📷 '+pct+'%</span>'
-        +(c.cb>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">💳 '+c.cb.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
-        +(c.esp>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">💵 '+c.esp.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
+        +(c.heures>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">'+cah+' €/h</span>':'')
+        +'<span style="font-size:.7rem;border-radius:6px;padding:2px 8px;background:'+pctColor+'22;border:1px solid '+pctColor+'55;color:'+pctColor+'">Photos '+pct+' %</span>'
+        +(c.cb>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">CB '+c.cb.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
+        +(c.esp>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">Esp. '+c.esp.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
       +'</div>'
     +'</div>';
   }).join('');
@@ -7384,7 +7392,7 @@ async function chargerTdb() {
             const caH = s.heures>0 ? (s.ca/s.heures).toFixed(2) : '—';
             const alerte = nbJoursPeriode<=7 && s.heures>48;
             return `<tr ${alerte?'style="background:#7f1d1d22"':''}>
-              <td>${esc(nom)}${alerte?' <span style="color:var(--danger);font-size:.7rem">⚠️ >48h</span>':''}</td>
+              <td>${esc(nom)}${alerte?' <span style="color:var(--danger);font-size:.7rem">>48h</span>':''}</td>
               <td class="text-right mono">${s.heures.toFixed(2)}h</td>
               <td class="text-right mono">${caH!=='—'?caH+' €/h':'—'}</td>
               <td class="text-right mono text-accent">${s.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td>
@@ -7658,7 +7666,7 @@ async function chargerStocks() {
     logAction('system', `Stocks consultés`, `Magasin: ${esc(magasin)}`);
 
   } catch(e) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px">❌ ${esc(e.message)}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:var(--danger);padding:20px">${esc(e.message)}</td></tr>`;
     showToast('❌ Stocks: '+e.message,'error');
   }
 }
@@ -7697,10 +7705,10 @@ function afficherTableauStocks(magasin) {
     const seuil = prod.seuil || (ligneStock ? parseFR(ligneStock[10]) : 0);
 
     // Statut
-    let statut = 'ok', statutLabel = '✅ OK';
+    let statut = 'ok', statutLabel = 'OK';
     if (stockActuel === null) { statut = 'ok'; statutLabel = '— N/A'; }
-    else if (stockActuel <= 0) { statut = 'empty'; statutLabel = '❌ Rupture'; }
-    else if (seuil > 0 && stockActuel <= seuil) { statut = 'low'; statutLabel = '⚠️ Bas'; }
+    else if (stockActuel <= 0) { statut = 'empty'; statutLabel = 'Rupture'; }
+    else if (seuil > 0 && stockActuel <= seuil) { statut = 'low'; statutLabel = 'Bas'; }
 
     const pHT = prod.prixHT ? prod.prixHT.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €' : '—';
     const pTTC = prod.prixTTC ? prod.prixTTC.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €' : '—';
@@ -8207,12 +8215,12 @@ async function ajouterLigneDispo() {
   div.innerHTML =
     '<button onclick="document.getElementById(\'dispo-ligne-'+id+'\').remove()" style="position:absolute;top:8px;right:8px;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem">✕</button>' +
     '<div class="field" style="margin-bottom:10px">' +
-      '<label style="font-size:.78rem;color:var(--muted);font-weight:600">🏪 Magasin</label>' +
+      '<label style="font-size:.78rem;color:var(--muted);font-weight:600">Magasin</label>' +
       '<select id="dispo-mag-'+id+'" style="width:100%;background:var(--card);border:1px solid var(--border);color:var(--text);border-radius:8px;padding:10px 12px;font-family:var(--font);outline:none;font-size:.9rem;margin-top:4px">' +
         '<option value="">— Choisir un magasin —</option>' + opts +
       '</select>' +
     '</div>' +
-    '<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">📅 Jours disponibles</div>' +
+    '<div style="font-size:.75rem;color:var(--muted);margin-bottom:8px;font-weight:600">Jours disponibles</div>' +
     '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px">' +
     ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'].map((j,i) =>
       '<div style="display:flex;flex-direction:column;align-items:center;gap:3px">' +
@@ -8295,7 +8303,7 @@ async function envoyerDisponibilites() {
       document.getElementById('dispo-lignes').innerHTML='';
       dispoLigneId = 0;
     } catch(e) { showToast('❌ '+e.message,'error'); }
-    btn.disabled=false; btn.innerHTML='📤 Envoyer mes disponibilités';
+    btn.disabled=false; btn.innerHTML='Envoyer mes disponibilités';
   });
 }
 
@@ -8402,10 +8410,9 @@ function verifierNotifications() {
       if (!matchJour) return;
 
       localStorage.setItem(cle, '1');
-      const icone = message.toLowerCase().includes('planning') ? '📅' : '📋';
       const typeNotif = message.toLowerCase().includes('planning') ? 'planning' : 'rappel';
       envoyerNotifNative('AllinOne — Rappel', message, typeNotif);
-      afficherNotif(icone + ' ' + message, typeNotif, 8000);
+      afficherNotif(message, typeNotif, 8000);
     });
   }).catch(() => {});
 
@@ -8432,7 +8439,7 @@ async function verifierNouveauPlanning() {
       localStorage.setItem(clePlanning, header);
       if (dernierVu) {
         // Pas la première fois → c'est vraiment nouveau
-        afficherNotif('📅 Un nouveau planning est disponible ! Consulte l onglet Planning.', 'planning');
+        afficherNotif('Un nouveau planning est disponible ! Consulte l onglet Planning.', 'planning');
       }
     }
   } catch(e) { /* silencieux */ }
@@ -8529,8 +8536,11 @@ document.addEventListener('click', function (e) {
 });
 
 let toastTimer;
+const TOAST_ETATS = { '✅':'success', '❌':'error', '⚠':'warn', '⏳':'wait' };
 function showToast(msg,type=''){
-  const t=document.getElementById('toast');t.textContent=msg;t.className='show '+(type||'');
+  const brut=String(msg ?? ''), etat=TOAST_ETATS[(brut.match(/^\s*(✅|❌|⚠|⏳)/)||[])[1]] || type || '';
+  const t=document.getElementById('toast');t.textContent=sansEmoji(brut);t.className='show '+(type||'');
+  t.dataset.etat=etat;
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='',type==='error'?5000:3200);
 }
 

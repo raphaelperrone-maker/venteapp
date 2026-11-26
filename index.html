@@ -40,7 +40,7 @@
       '; expires=' + expires + '; path=/; SameSite=Strict';
   }
 
-  // ⚠️ Les cookies sont BLOQUÉS sur file:// (ouverture directe du fichier).
+  // Les cookies sont BLOQUÉS sur file:// (ouverture directe du fichier).
   //    Sans ce garde-fou, la vérification échoue toujours → rechargement en
   //    boucle infinie → l'application ne démarre jamais en test local.
   if (location.protocol === 'file:') {
@@ -511,8 +511,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- Sous-onglets -->
   <div style="display:flex;gap:6px;margin-bottom:12px">
-    <button class="pill active" id="histotab-ca"    onclick="switchHistoTab('ca')">💶 CA</button>
-    <button class="pill"        id="histotab-ventes" onclick="switchHistoTab('ventes')">🧾 Ventes</button>
+    <button class="pill active" id="histotab-ca"    onclick="switchHistoTab('ca')">CA</button>
+    <button class="pill"        id="histotab-ventes" onclick="switchHistoTab('ventes')">Ventes</button>
   </div>
 
   <!-- Filtres communs -->
@@ -595,13 +595,13 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 <div id="modal-modif-vente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;width:100%;max-width:360px;max-height:85vh;overflow-y:auto">
     <div style="font-weight:800;font-size:.95rem;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
-      ✏️ Modifier la vente
+      Modifier la vente
       <button onclick="fermerModalVente()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
     </div>
     <div id="modal-modif-vente-contenu"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="fermerModalVente()">Annuler</button>
-      <button class="btn btn-primary"   style="flex:2;justify-content:center" id="btn-sauver-vente" onclick="sauvegarderModifVente()">💾 Enregistrer</button>
+      <button class="btn btn-primary"   style="flex:2;justify-content:center" id="btn-sauver-vente" onclick="sauvegarderModifVente()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -638,7 +638,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <button class="pill" id="tdbtab-produits" onclick="switchTdbTab('produits')">Produits</button>
     <button class="pill" id="tdbtab-gestion" onclick="switchTdbTab('gestion')">Gestion</button>
     <button class="pill" id="tdbtab-rentabilite" onclick="switchTdbTab('rentabilite')">Rentabilité</button>
-    <button class="pill" id="tdbtab-logs" onclick="switchTdbTab('logs')" style="display:none">📋 Logs</button>
+    <button class="pill" id="tdbtab-logs" onclick="switchTdbTab('logs')" style="display:none">Logs</button>
   </div>
 
   <!-- ═══ GLOBAL ═══ -->
@@ -738,8 +738,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div id="tdbtab-content-gestion" style="display:none">
     <!-- Sous-onglets -->
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="pill active" id="gestab-ventes" onclick="switchGestabTab('ventes')">🧾 Ventes</button>
-      <button class="pill" id="gestab-heures" onclick="switchGestabTab('heures')">⏱ Heures</button>
+      <button class="pill active" id="gestab-ventes" onclick="switchGestabTab('ventes')">Ventes</button>
+      <button class="pill" id="gestab-heures" onclick="switchGestabTab('heures')">Heures</button>
     </div>
 
     <!-- Barre totaux dynamique -->
@@ -799,8 +799,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div id="tdbtab-content-rentabilite" style="display:none">
     <!-- Sous-onglets Rentabilité -->
     <div style="display:flex;gap:6px;margin-bottom:14px">
-      <button class="pill active" id="rentab-tab-analyse" onclick="switchRentabTab('analyse')">📊 Analyse</button>
-      <button class="pill" id="rentab-tab-couts" onclick="switchRentabTab('couts')">🏪 Coûts fixes</button>
+      <button class="pill active" id="rentab-tab-analyse" onclick="switchRentabTab('analyse')">Analyse</button>
+      <button class="pill" id="rentab-tab-couts" onclick="switchRentabTab('couts')">Coûts fixes</button>
     </div>
 
     <!-- ── SOUS-ONGLET ANALYSE (existant) ── -->
@@ -857,7 +857,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
       <!-- Info -->
       <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5">
-        💡 Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont utilisés dans le calcul de rentabilité selon la période sélectionnée.
+        Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont utilisés dans le calcul de rentabilité selon la période sélectionnée.
         <br>Le champ <strong style="color:var(--text)">Salaire</strong> est indicatif — les salaires réels sont calculés depuis les heures déclarées.
       </div>
 
