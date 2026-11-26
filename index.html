@@ -517,15 +517,19 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- Filtres communs -->
   <div class="card" id="histo-filtres" style="padding:14px;margin-bottom:12px">
-    <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;display:flex;align-items:center;gap:6px">
-      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      Filtres
+    <div class="chart-title">Filtres</div>
+    <div class="periode-rapide" data-ecran="histo">
+      <button type="button" class="pill" data-p="semaine" onclick="periodeRapide('semaine','histo')">Cette semaine</button>
+      <button type="button" class="pill" data-p="semaineprec" onclick="periodeRapide('semaineprec','histo')">Semaine dernière</button>
+      <button type="button" class="pill" data-p="mois" onclick="periodeRapide('mois','histo')">Ce mois</button>
+      <button type="button" class="pill" data-p="moisprec" onclick="periodeRapide('moisprec','histo')">Mois dernier</button>
+      <button type="button" class="pill" data-p="annee" onclick="periodeRapide('annee','histo')">Cette année</button>
     </div>
     <div class="row2f" style="margin-bottom:8px">
-      <div class="field" style="margin-bottom:0"><label>Du</label><input type="date" id="filtre-du"></div>
-      <div class="field" style="margin-bottom:0"><label>Au</label><input type="date" id="filtre-au"></div>
+      <div class="field" style="margin-bottom:0"><label>Du</label><input type="date" id="filtre-du" onchange="marquerPeriodeRapide('histo')"></div>
+      <div class="field" style="margin-bottom:0"><label>Au</label><input type="date" id="filtre-au" onchange="marquerPeriodeRapide('histo')"></div>
     </div>
-    <div class="row2f" style="margin-bottom:10px" id="histo-filtres-manager" style="display:none">
+    <div class="row2f filtres-listes" style="margin-bottom:10px" id="histo-filtres-manager">
       <div class="field" style="margin-bottom:0"><label>Magasin</label>
         <select id="filtre-magasin"><option value="">Tous les magasins</option></select>
       </div>
@@ -538,16 +542,16 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- ══ ONGLET CA ══ -->
   <div id="histotab-content-ca">
-    <div style="display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap">
-      <div class="stat-card" style="flex:1;min-width:120px"><div class="label">CA Total</div><div class="value green mono" id="h-total">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:100px"><div class="label">Saisies</div><div class="value blue mono" id="h-saisies">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:100px"><div class="label">CB</div><div class="value mono" id="h-cb">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:100px"><div class="label">Espèces</div><div class="value amber mono" id="h-esp">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:100px"><div class="label">Autres</div><div class="value mono" id="h-autres">—</div></div>
+    <div class="kpi-grid">
+      <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="h-total">—</div></div>
+      <div class="stat-card"><div class="label">Saisies</div><div class="value blue mono" id="h-saisies">—</div></div>
+      <div class="stat-card"><div class="label">CB</div><div class="value mono" id="h-cb">—</div></div>
+      <div class="stat-card"><div class="label">Espèces</div><div class="value amber mono" id="h-esp">—</div></div>
+      <div class="stat-card"><div class="label">Autres</div><div class="value mono" id="h-autres">—</div></div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">Évolution du CA</div>
-      <div style="position:relative;height:180px"><canvas id="chart-evolution"></canvas></div>
+      <div class="chart-title">Évolution du CA</div>
+      <div style="position:relative;height:200px"><canvas id="chart-evolution"></canvas></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:6px" onclick="chargerHistorique()">
@@ -566,6 +570,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <tbody id="histo-tbody"><tr><td colspan="4" style="text-align:center;color:var(--muted);padding:24px">Charger…</td></tr></tbody>
       </table>
     </div>
+    <div id="histo-pied"></div>
     <select id="chart-magasin" style="display:none"></select>
     <select id="chart-vendeur" style="display:none"></select>
     <select id="chart-paiements" style="display:none"></select>
@@ -573,10 +578,10 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- ══ ONGLET VENTES ══ -->
   <div id="histotab-content-ventes" style="display:none">
-    <div style="display:flex;gap:8px;margin-bottom:10px">
-      <div class="stat-card" style="flex:1"><div class="label">Lignes</div><div class="value mono" id="hv-lignes">—</div></div>
-      <div class="stat-card" style="flex:1"><div class="label">Total TTC</div><div class="value green mono" id="hv-ttc">—</div></div>
-      <div class="stat-card" style="flex:1"><div class="label">Total HT</div><div class="value mono" id="hv-ht">—</div></div>
+    <div class="kpi-grid">
+      <div class="stat-card"><div class="label">Lignes</div><div class="value mono" id="hv-lignes">—</div></div>
+      <div class="stat-card"><div class="label">Total TTC</div><div class="value green mono" id="hv-ttc">—</div></div>
+      <div class="stat-card"><div class="label">Total HT</div><div class="value mono" id="hv-ht">—</div></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center;gap:6px" onclick="chargerVentesHisto()">
@@ -585,7 +590,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       </button>
     </div>
     <div id="histo-ventes-list">
-      <div style="text-align:center;color:var(--muted);padding:32px;font-size:.82rem">Appuyer sur Appliquer pour charger les ventes</div>
+      <div style="text-align:center;color:var(--muted);padding:32px;font-size:.82rem">Chargement des ventes…</div>
     </div>
   </div>
 
@@ -621,15 +626,16 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <div class="chart-title" style="margin:0">Filtres</div>
       <button class="info-btn" onclick="showTooltip('tdb')">i</button>
     </div>
-    <div class="periode-rapide">
-      <button type="button" class="pill" data-p="semaine" onclick="periodeRapide('semaine')">Cette semaine</button>
-      <button type="button" class="pill" data-p="mois" onclick="periodeRapide('mois')">Ce mois</button>
-      <button type="button" class="pill" data-p="moisprec" onclick="periodeRapide('moisprec')">Mois dernier</button>
-      <button type="button" class="pill" data-p="annee" onclick="periodeRapide('annee')">Cette année</button>
+    <div class="periode-rapide" data-ecran="tdb">
+      <button type="button" class="pill" data-p="semaine" onclick="periodeRapide('semaine','tdb')">Cette semaine</button>
+      <button type="button" class="pill" data-p="semaineprec" onclick="periodeRapide('semaineprec','tdb')">Semaine dernière</button>
+      <button type="button" class="pill" data-p="mois" onclick="periodeRapide('mois','tdb')">Ce mois</button>
+      <button type="button" class="pill" data-p="moisprec" onclick="periodeRapide('moisprec','tdb')">Mois dernier</button>
+      <button type="button" class="pill" data-p="annee" onclick="periodeRapide('annee','tdb')">Cette année</button>
     </div>
     <div class="row2f" style="margin-bottom:10px">
-      <div class="field" style="margin-bottom:0"><label>Du</label><input type="date" id="tdb-filtre-du"></div>
-      <div class="field" style="margin-bottom:0"><label>Au</label><input type="date" id="tdb-filtre-au"></div>
+      <div class="field" style="margin-bottom:0"><label>Du</label><input type="date" id="tdb-filtre-du" onchange="marquerPeriodeRapide('tdb')"></div>
+      <div class="field" style="margin-bottom:0"><label>Au</label><input type="date" id="tdb-filtre-au" onchange="marquerPeriodeRapide('tdb')"></div>
     </div>
     <div class="row2f filtres-listes" style="margin-bottom:10px">
       <div class="field" style="margin-bottom:0"><label>Magasin</label><select id="tdb-filtre-magasin"><option value="">Tous les magasins</option></select></div>

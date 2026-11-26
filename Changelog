@@ -1,3 +1,11 @@
+V2.5.0
+Historique : mêmes raccourcis de période que le tableau de bord (Cette semaine, Semaine dernière, Ce mois, Mois dernier, Cette année)
+Tableau de bord : nouveau raccourci « Semaine dernière »
+Historique : l'onglet Ventes se charge tout seul quand on l'ouvre, avec les filtres en cours (plus besoin d'appuyer sur « Appliquer »)
+Correction Historique : le tableau des saisies n'affichait que 30 lignes sans le dire ; il indique maintenant combien sont affichées et propose d'afficher la suite
+Correction Historique : les ventes s'affichent par tranches de 30 tickets, la page n'est plus interminable sur une longue période
+Correction Historique : sur téléphone, les montants des indicateurs ne sont plus coupés et la page ne déborde plus sur le côté
+Correction Historique : une valeur numérique dans le Sheet pouvait empêcher l'affichage des ventes
 V2.4.0
 Nouvelle identité : bleu comme couleur de marque et nouveau logo assorti (anneau bleu et « A »), fond bleu nuit ; le vert est réservé au positif (réussite, hausse, montants), le rouge et l'orange aux alertes
 Nombres au format français partout : virgule décimale, espace avant € et % (« 133,29 €/h », « 413,0 h »)
