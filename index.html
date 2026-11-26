@@ -10,7 +10,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="AllinOne App">
 <meta name="application-name" content="AllinOne App">
-<meta name="theme-color" content="#10b981">
+<meta name="theme-color" content="#0b0d12">
 <link rel="manifest" href="./manifest.json">
 <link rel="apple-touch-icon" href="./icon-192.png">
 <title>AllinOne App</title>
@@ -40,7 +40,7 @@
       '; expires=' + expires + '; path=/; SameSite=Strict';
   }
 
-  // ⚠️ Les cookies sont BLOQUÉS sur file:// (ouverture directe du fichier).
+  // Les cookies sont BLOQUÉS sur file:// (ouverture directe du fichier).
   //    Sans ce garde-fou, la vérification échoue toujours → rechargement en
   //    boucle infinie → l'application ne démarre jamais en test local.
   if (location.protocol === 'file:') {
@@ -112,7 +112,7 @@
 })();
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <script>
 // Feuille de style versionnée depuis APP_VERSION (cache-busting à chaque version).
 // document.write pendant le parsing = insertion synchrone, même comportement qu'un <link> statique.
@@ -138,7 +138,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <h2>Ton matricule</h2>
       <div class="field">
         <input type="text" id="login-matricule" placeholder="Ex : PF001" autocomplete="off"
-          style="text-transform:uppercase;font-family:'DM Mono',monospace;letter-spacing:.1em;font-size:1.1rem;text-align:center"
+          style="text-transform:uppercase;font-family:var(--font-num);letter-spacing:.1em;font-size:1.1rem;text-align:center"
           oninput="this.value=this.value.toUpperCase()" onkeydown="if(event.key==='Enter')validerMatricule()">
       </div>
       <button class="btn btn-primary btn-full" onclick="validerMatricule()">Continuer →</button>
@@ -294,7 +294,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <button id="btn-actualiser-catalogue"
           onclick="actualiserCatalogueEtStocks(this)"
           title="Actualiser les produits et les stocks"
-          style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.68rem;font-weight:600;font-family:'Plus Jakarta Sans',sans-serif;cursor:pointer;transition:all .15s;flex-shrink:0;margin-left:6px"
+          style="display:flex;align-items:center;gap:5px;padding:4px 9px;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:transparent;color:var(--muted);font-size:.68rem;font-weight:600;font-family:var(--font);cursor:pointer;transition:all .15s;flex-shrink:0;margin-left:6px"
           onmouseenter="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'"
           onmouseleave="this.style.borderColor='var(--border)';this.style.color='var(--muted)'">
           <svg id="ico-refresh-catalogue" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
@@ -465,15 +465,15 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div id="horaire-plage-1">
       <div style="font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plage 1</div>
       <div class="row2f">
-        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h1-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
-        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h1-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h1-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h1-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
       </div>
     </div>
     <div id="horaire-plage-2" style="display:none;margin-top:10px">
       <div style="font-size:.7rem;color:var(--muted);font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px">Plage 2 (après pause)</div>
       <div class="row2f">
-        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h2-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
-        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h2-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Début</label><input type="time" id="h2-debut" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
+        <div class="field" style="margin-bottom:0"><label>Fin</label><input type="time" id="h2-fin" step="900" oninput="recalcHeures()" style="background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:11px 13px;font-size:.9rem;font-family:var(--font);width:100%;outline:none"></div>
       </div>
     </div>
     <button id="btn-add-plage" class="btn btn-secondary" onclick="togglePlage2()" style="margin-top:10px;font-size:.78rem;padding:8px 14px;gap:5px">
@@ -482,7 +482,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </button>
     <div id="heures-total-box" style="display:none;margin-top:12px;background:var(--surface);border-radius:var(--radius-sm);padding:12px;align-items:center;justify-content:space-between">
       <span style="font-size:.82rem;color:var(--muted)">Total heures</span>
-      <span id="heures-total-display" style="font-size:1.1rem;font-weight:700;color:var(--accent3);font-family:'DM Mono',monospace">0h00</span>
+      <span id="heures-total-display" style="font-size:1.1rem;font-weight:700;color:var(--accent3);font-family:var(--font-num)">0h00</span>
     </div>
   </div>
 
@@ -511,8 +511,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- Sous-onglets -->
   <div style="display:flex;gap:6px;margin-bottom:12px">
-    <button class="pill active" id="histotab-ca"    onclick="switchHistoTab('ca')">💶 CA</button>
-    <button class="pill"        id="histotab-ventes" onclick="switchHistoTab('ventes')">🧾 Ventes</button>
+    <button class="pill active" id="histotab-ca"    onclick="switchHistoTab('ca')">CA</button>
+    <button class="pill"        id="histotab-ventes" onclick="switchHistoTab('ventes')">Ventes</button>
   </div>
 
   <!-- Filtres communs -->
@@ -595,13 +595,13 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 <div id="modal-modif-vente" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:500;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(8px)">
   <div style="background:var(--card);border:1px solid var(--border);border-radius:var(--radius-lg);padding:22px;width:100%;max-width:360px;max-height:85vh;overflow-y:auto">
     <div style="font-weight:800;font-size:.95rem;margin-bottom:14px;display:flex;justify-content:space-between;align-items:center">
-      ✏️ Modifier la vente
+      Modifier la vente
       <button onclick="fermerModalVente()" style="background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer">✕</button>
     </div>
     <div id="modal-modif-vente-contenu"></div>
     <div style="display:flex;gap:8px;margin-top:14px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="fermerModalVente()">Annuler</button>
-      <button class="btn btn-primary"   style="flex:2;justify-content:center" id="btn-sauver-vente" onclick="sauvegarderModifVente()">💾 Enregistrer</button>
+      <button class="btn btn-primary"   style="flex:2;justify-content:center" id="btn-sauver-vente" onclick="sauvegarderModifVente()">Enregistrer</button>
     </div>
   </div>
 </div>
@@ -618,7 +618,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 <div class="screen" id="screen-tdb">
   <div class="card" style="padding:14px;margin-bottom:12px">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Filtres</div>
+      <div class="chart-title" style="margin:0">Filtres</div>
       <button class="info-btn" onclick="showTooltip('tdb')">i</button>
     </div>
     <div class="row2f" style="margin-bottom:10px">
@@ -636,25 +636,25 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <button class="pill active" id="tdbtab-global" onclick="switchTdbTab('global')">Global</button>
     <button class="pill" id="tdbtab-collabs" onclick="switchTdbTab('collabs')">Collaborateurs</button>
     <button class="pill" id="tdbtab-produits" onclick="switchTdbTab('produits')">Produits</button>
-    <button class="pill" id="tdbtab-gestion" onclick="switchTdbTab('gestion')">📊 Gestion</button>
-    <button class="pill" id="tdbtab-rentabilite" onclick="switchTdbTab('rentabilite')">💹 Rentabilité</button>
-    <button class="pill" id="tdbtab-logs" onclick="switchTdbTab('logs')" style="display:none">📋 Logs</button>
+    <button class="pill" id="tdbtab-gestion" onclick="switchTdbTab('gestion')">Gestion</button>
+    <button class="pill" id="tdbtab-rentabilite" onclick="switchTdbTab('rentabilite')">Rentabilité</button>
+    <button class="pill" id="tdbtab-logs" onclick="switchTdbTab('logs')" style="display:none">Logs</button>
   </div>
 
   <!-- ═══ GLOBAL ═══ -->
   <div id="tdbtab-content-global">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:500px">
-        <div class="stat-card" style="flex:0 0 140px"><div class="label">CA Total</div><div class="value green mono" id="tdb-total">—</div></div>
-        <div class="stat-card" style="flex:0 0 130px"><div class="label">CA moy/jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">CB</div><div class="value mono" id="tdb-cb">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">Espèces</div><div class="value amber mono" id="tdb-esp">—</div></div>
-        <div class="stat-card" style="flex:0 0 120px"><div class="label">Nb saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="tdb-total">—</div></div>
+        <div class="stat-card"><div class="label">CA moy/jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
+        <div class="stat-card"><div class="label">CB</div><div class="value mono" id="tdb-cb">—</div></div>
+        <div class="stat-card"><div class="label">Espèces</div><div class="value amber mono" id="tdb-esp">—</div></div>
+        <div class="stat-card"><div class="label">Nb saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;flex-wrap:wrap;gap:6px">
-        <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em">Évolution du CA</div>
+        <div class="chart-title" style="margin:0">Évolution du CA</div>
         <div style="display:flex;gap:4px">
           <button id="evo-btn-jour" onclick="setEvoMode('jour')" class="pill active" style="font-size:.62rem;padding:3px 9px">Jour</button>
           <button id="evo-btn-semaine" onclick="setEvoMode('semaine')" class="pill" style="font-size:.62rem;padding:3px 9px">Sem.</button>
@@ -662,14 +662,13 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
           <button id="evo-btn-annee" onclick="setEvoMode('annee')" class="pill" style="font-size:.62rem;padding:3px 9px">Année</button>
         </div>
       </div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:300px"><canvas id="tdb-chart-evolution"></canvas></div></div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:300px"><canvas id="tdb-chart-evolution"></canvas></div></div>
     </div>
-    <div class="scroll-x-graphs" style="display:flex;gap:10px;margin-bottom:4px">
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">Par magasin</div><div style="position:relative;height:160px"><canvas id="tdb-chart-magasin"></canvas></div></div>
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">Paiements</div><div style="position:relative;height:160px"><canvas id="tdb-chart-paiements"></canvas></div></div>
-      <div class="card" style="padding:14px;flex:0 0 270px"><div style="font-size:.68rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;text-align:center">CA moy/jour sem.</div><div style="position:relative;height:160px"><canvas id="tdb-chart-joursem"></canvas></div></div>
+    <div class="chart-grid">
+      <div class="card chart-card"><div class="chart-title">Par magasin</div><div style="position:relative;height:200px"><canvas id="tdb-chart-magasin"></canvas></div></div>
+      <div class="card chart-card"><div class="chart-title">Paiements</div><div style="position:relative;height:200px"><canvas id="tdb-chart-paiements"></canvas></div></div>
+      <div class="card chart-card"><div class="chart-title">CA moy/jour sem.</div><div style="position:relative;height:200px"><canvas id="tdb-chart-joursem"></canvas></div></div>
     </div>
-    <div class="scroll-hint" style="margin-bottom:12px">← Glisser →</div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="chargerTdb()">Actualiser</button>
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="exporterTdb()">Export PDF</button>
@@ -683,16 +682,16 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
   <!-- ═══ COLLABORATEURS ═══ -->
   <div id="tdbtab-content-collabs" style="display:none">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:400px">
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Heures totales</div><div class="value blue mono" id="tdb-col-heures">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Meilleur CA/h</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">% Photos</div><div class="value mono" id="tdb-col-photos">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Collabs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">Heures totales</div><div class="value blue mono" id="tdb-col-heures">—</div></div>
+        <div class="stat-card"><div class="label">Meilleur CA/h</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
+        <div class="stat-card"><div class="label">% Photos</div><div class="value mono" id="tdb-col-photos">—</div></div>
+        <div class="stat-card"><div class="label">Collabs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">CA moyen / jour travaillé</div>
+      <div class="chart-title">CA moyen / jour travaillé</div>
       <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:thin;scrollbar-color:var(--border) var(--surface)">
         <div style="position:relative;height:200px;min-width:320px"><canvas id="tdb-chart-moy-vendeur"></canvas></div>
       </div>
@@ -705,23 +704,23 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <tbody id="tdb-tbody-horaires"><tr><td colspan="6" style="text-align:center;color:var(--muted);padding:24px">Charger…</td></tr></tbody></table>
     </div>
     <div class="card" style="padding:14px;margin-top:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center">Part de CA par collaborateur</div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:280px"><canvas id="tdb-chart-vendeur"></canvas></div></div>
+      <div class="chart-title">Part de CA par collaborateur</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:280px"><canvas id="tdb-chart-vendeur"></canvas></div></div>
     </div>
   </div>
 
   <!-- ═══ PRODUITS ═══ -->
   <div id="tdbtab-content-produits" style="display:none">
-    <div style="overflow-x:auto;-webkit-overflow-scrolling:touch;margin-bottom:12px;padding-bottom:4px">
-      <div style="display:flex;gap:10px;min-width:400px">
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Produits vendus</div><div class="value blue mono" id="tdb-prod-nb">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">Top produit</div><div class="value amber mono" id="tdb-prod-top">—</div></div>
-        <div class="stat-card" style="flex:0 0 150px"><div class="label">CA produits</div><div class="value green mono" id="tdb-prod-ca">—</div></div>
+    <div>
+      <div class="kpi-grid">
+        <div class="stat-card"><div class="label">Produits vendus</div><div class="value blue mono" id="tdb-prod-nb">—</div></div>
+        <div class="stat-card"><div class="label">Top produit</div><div class="value amber mono" id="tdb-prod-top">—</div></div>
+        <div class="stat-card"><div class="label">CA produits</div><div class="value green mono" id="tdb-prod-ca">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px;text-align:center">Top produits</div>
-      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:180px;min-width:280px"><canvas id="tdb-chart-produits"></canvas></div></div>
+      <div class="chart-title">Top produits</div>
+      <div style="overflow-x:auto;-webkit-overflow-scrolling:touch"><div style="position:relative;height:200px;min-width:280px"><canvas id="tdb-chart-produits"></canvas></div></div>
     </div>
     <div class="section-title">Classement produits</div>
     <div class="table-wrap">
@@ -739,8 +738,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div id="tdbtab-content-gestion" style="display:none">
     <!-- Sous-onglets -->
     <div style="display:flex;gap:6px;margin-bottom:12px">
-      <button class="pill active" id="gestab-ventes" onclick="switchGestabTab('ventes')">🧾 Ventes</button>
-      <button class="pill" id="gestab-heures" onclick="switchGestabTab('heures')">⏱ Heures</button>
+      <button class="pill active" id="gestab-ventes" onclick="switchGestabTab('ventes')">Ventes</button>
+      <button class="pill" id="gestab-heures" onclick="switchGestabTab('heures')">Heures</button>
     </div>
 
     <!-- Barre totaux dynamique -->
@@ -800,8 +799,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div id="tdbtab-content-rentabilite" style="display:none">
     <!-- Sous-onglets Rentabilité -->
     <div style="display:flex;gap:6px;margin-bottom:14px">
-      <button class="pill active" id="rentab-tab-analyse" onclick="switchRentabTab('analyse')">📊 Analyse</button>
-      <button class="pill" id="rentab-tab-couts" onclick="switchRentabTab('couts')">🏪 Coûts fixes</button>
+      <button class="pill active" id="rentab-tab-analyse" onclick="switchRentabTab('analyse')">Analyse</button>
+      <button class="pill" id="rentab-tab-couts" onclick="switchRentabTab('couts')">Coûts fixes</button>
     </div>
 
     <!-- ── SOUS-ONGLET ANALYSE (existant) ── -->
@@ -817,15 +816,15 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       </button>
     </div>
     <!-- Totaux -->
-    <div style="display:flex;gap:8px;margin-bottom:12px;flex-wrap:wrap">
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">CA Total</div><div class="value green mono" id="rent-tot-ca">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Coûts Total</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Marge nette</div><div class="value mono" id="rent-tot-marge">—</div></div>
-      <div class="stat-card" style="flex:1;min-width:110px"><div class="label">Rentabilité</div><div class="value mono" id="rent-tot-pct">—</div></div>
+    <div class="kpi-grid">
+      <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="rent-tot-ca">—</div></div>
+      <div class="stat-card"><div class="label">Coûts Total</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
+      <div class="stat-card"><div class="label">Marge nette</div><div class="value mono" id="rent-tot-marge">—</div></div>
+      <div class="stat-card"><div class="label">Rentabilité</div><div class="value mono" id="rent-tot-pct">—</div></div>
     </div>
     <!-- Graphique -->
     <div class="card" style="padding:14px;margin-bottom:12px">
-      <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:10px">CA vs Coûts par magasin</div>
+      <div class="chart-title">CA vs Coûts par magasin</div>
       <div style="position:relative;height:220px"><canvas id="chart-rentabilite"></canvas></div>
     </div>
     <!-- Tableau détail -->
@@ -858,7 +857,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
       <!-- Info -->
       <div style="background:rgba(16,185,129,.06);border:1px solid rgba(16,185,129,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5">
-        💡 Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont utilisés dans le calcul de rentabilité selon la période sélectionnée.
+        Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont utilisés dans le calcul de rentabilité selon la période sélectionnée.
         <br>Le champ <strong style="color:var(--text)">Salaire</strong> est indicatif — les salaires réels sont calculés depuis les heures déclarées.
       </div>
 
@@ -1100,7 +1099,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         oninput="rechercherProduits(this.value)"
         style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);
                border-radius:var(--radius-sm);padding:9px 34px 9px 32px;font-size:.82rem;
-               font-family:'Plus Jakarta Sans',sans-serif;outline:none;transition:border-color .15s;box-sizing:border-box"
+               font-family:var(--font);outline:none;transition:border-color .15s;box-sizing:border-box"
         onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'">
       <button id="gestion-prod-search-clear" onclick="viderRechercheProduits()"
         style="display:none;position:absolute;right:8px;top:50%;transform:translateY(-50%);
@@ -1144,7 +1143,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </div>
     <!-- Filtre magasin -->
     <select id="sfg-magasin" onchange="filtrerStocksGestion(filtreStocksGestion)"
-      style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:8px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;margin-bottom:8px">
+      style="width:100%;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:8px 10px;font-size:.8rem;font-family:var(--font);outline:none;margin-bottom:8px">
       <option value="">Tous les magasins</option>
     </select>
     <div style="display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap" id="stocks-filtres-statut">
@@ -1171,9 +1170,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       </button>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
-      <select id="suivi-filtre-collab" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none"><option value="">Tous les collaborateurs</option></select>
-      <input type="date" id="suivi-filtre-du" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
-      <input type="date" id="suivi-filtre-au" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none">
+      <select id="suivi-filtre-collab" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none"><option value="">Tous les collaborateurs</option></select>
+      <input type="date" id="suivi-filtre-du" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none">
+      <input type="date" id="suivi-filtre-au" onchange="filtrerSuivi()" style="flex:1;background:var(--surface);border:1.5px solid var(--border);color:var(--text);border-radius:var(--radius-sm);padding:7px 10px;font-size:.8rem;font-family:var(--font);outline:none">
     </div>
     <div id="liste-suivi"><div style="text-align:center;padding:30px;color:var(--muted)">Charge l'onglet pour voir les données</div></div>
   </div>
@@ -1208,7 +1207,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <div id="cfg-avatar" style="width:50px;height:50px;border-radius:50%;background:var(--accent-dim);border:2px solid rgba(16,185,129,.3);color:var(--accent);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:1.2rem;flex-shrink:0">?</div>
       <div>
         <div id="cfg-nom" style="font-weight:700;font-size:1rem;letter-spacing:-.02em">—</div>
-        <div id="cfg-matricule" style="font-size:.76rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px">—</div>
+        <div id="cfg-matricule" style="font-size:.76rem;color:var(--muted);font-family:var(--font-num);margin-top:1px">—</div>
         <div id="cfg-role" style="font-size:.7rem;margin-top:3px"></div>
       </div>
     </div>
@@ -1233,9 +1232,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         Configuration technique
       </h3>
       <p style="font-size:.78rem;color:var(--muted);margin-bottom:12px">Réservé aux managers et administrateurs.</p>
-      <div class="field"><label>ID TdB Manager</label><input type="text" id="cfg-tdb-id-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
-      <div class="field"><label>ID Base de données</label><input type="text" id="cfg-db-id-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
-      <div class="field" style="margin-bottom:0"><label>ID Dossier Drive</label><input type="text" id="cfg-drive-folder-vis" style="font-family:'DM Mono',monospace;font-size:.8rem"></div>
+      <div class="field"><label>ID TdB Manager</label><input type="text" id="cfg-tdb-id-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
+      <div class="field"><label>ID Base de données</label><input type="text" id="cfg-db-id-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
+      <div class="field" style="margin-bottom:0"><label>ID Dossier Drive</label><input type="text" id="cfg-drive-folder-vis" style="font-family:var(--font-num);font-size:.8rem"></div>
     </div>
   </div>
 
@@ -1267,7 +1266,7 @@ document.write('<script src="./app.js?v=' + APP_VERSION + '"><\/script>');
 <div id="paiement-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.75);z-index:400;align-items:flex-end;justify-content:center;backdrop-filter:blur(8px)">
   <div style="background:var(--card);border-radius:20px 20px 0 0;padding:24px 20px;width:100%;max-width:480px;position:relative;border-top:1px solid var(--border)">
     <div style="font-size:.7rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Mode de paiement</div>
-    <div id="pm-total-affiche" style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:18px;font-family:'DM Mono',monospace;letter-spacing:-.02em">0,00 €</div>
+    <div id="pm-total-affiche" style="font-size:1.6rem;font-weight:800;color:var(--accent);margin-bottom:18px;font-family:var(--font-num);letter-spacing:-.02em">0,00 €</div>
 
     <div class="field">
       <label>Carte bancaire (€)</label>

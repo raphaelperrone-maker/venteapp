@@ -1,3 +1,15 @@
+V2.2.0
+Nouveau design, plus sobre et plus professionnel : aucune fonction ne change, seule l'apparence évolue
+Police unique (Inter) et chiffres alignés ; libellés plus lisibles, moins de majuscules, meilleurs contrastes
+Icônes au trait à la place des emojis sur l'accueil, le rôle et le planning
+Accueil repensé : en-tête compact, tuiles avec icône ; 4 colonnes sur tablette
+Tablette et grand écran : les écrans utilisent toute la largeur utile
+Planning : onglets en contrôle segmenté, cases plus lisibles, zone manager sobre
+Mode clair retravaillé (cartes blanches, ombres légères) ; boutons et champs de 44 px minimum pour le tactile
+Tableaux de bord : indicateurs en grille (plus de défilement horizontal), graphiques « Par magasin / Paiements / Jour de semaine » côte à côte sur tablette
+Graphiques refaits : mêmes couleurs que l'app en mode sombre comme en mode clair, courbe du CA avec dégradé, total affiché au centre des anneaux, meilleure valeur mise en avant, info-bulles plus lisibles
+Correction : le « CA moy/jour » pouvait afficher 3 décimales ; les quantités du top produits n'affichent plus « € »
+Emojis retirés de toute l'interface : classement des collaborateurs numéroté, paiements en toutes lettres (CB, Esp., Autres), boutons Modifier / Supprimer avec icônes au trait, messages avec une pastille de couleur (vert, rouge, orange) à la place des symboles
 V2.1.0
 Plannings : les magasins où personne n'est planifié de la semaine ne sont plus affichés en consultation (ni dans l'export PDF), pour tout le monde
 Plannings : dans « Modifier le planning », tous les magasins réapparaissent, y compris ceux sans personne, pour pouvoir les affecter
