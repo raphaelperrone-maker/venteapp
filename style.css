@@ -976,3 +976,5 @@ body.light-mode tbody tr:hover{background:#f8fafc}
 body.light-mode .btn-primary,body.light-mode .pill.active{color:#fff}
 /* Classes « vert » génériques : sens positif, pas couleur de marque */
 .green,.mono.green{color:var(--success)}
+/* Un nombre et son unité ne se séparent jamais (« 140,0 h », « 113,76 €/h ») */
+td.mono,.stat-card .value{white-space:nowrap}

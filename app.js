@@ -7711,9 +7711,12 @@ async function chargerTdb() {
         const nom = ((r[1]||'')+' '+(r[0]||'')).trim();
         const h = parseFR(r[4]);
         const ca = parseFR(r[6]);
-        if (!stats[nom]) stats[nom]={heures:0,ca:0,alertes:[]};
+        if (!stats[nom]) stats[nom]={heures:0,ca:0,alertes:[],jours:new Set(),total:0,avecPhoto:0};
         stats[nom].heures += h;
         stats[nom].ca += ca;
+        stats[nom].jours.add((r[3]||'').trim());
+        stats[nom].total++;
+        if ((r[7]||'').trim()) stats[nom].avecPhoto++;
       });
 
       // Alerte si > 48h sur la période si période = 1 semaine
@@ -7727,12 +7730,14 @@ async function chargerTdb() {
             const alerte = nbJoursPeriode<=7 && s.heures>48;
             return `<tr ${alerte?'style="background:#7f1d1d22"':''}>
               <td>${esc(nom)}${alerte?' <span style="color:var(--danger);font-size:.7rem">>48h</span>':''}</td>
-              <td class="text-right mono">${s.heures.toLocaleString('fr-FR',FR2)} h</td>
+              <td class="text-right mono">${s.heures.toLocaleString('fr-FR',FR1)} h</td>
+              <td class="text-right mono">${s.jours.size}</td>
               <td class="text-right mono">${caH!=='—'?caH+' €/h':'—'}</td>
+              <td class="text-right mono">${s.total ? Math.round(s.avecPhoto/s.total*100)+' %' : '—'}</td>
               <td class="text-right mono text-accent">${s.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td>
             </tr>`;
           }).join('')
-        : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucun horaire sur cette période</td></tr>';
+        : '<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px">Aucun horaire sur cette période</td></tr>';
     } catch(e) { console.warn('Horaires:', e.message); }
 
   // Ventes
