@@ -135,7 +135,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div class="login-box">
     <div id="login-error" class="login-error">Matricule ou code PIN incorrect</div>
     <div class="login-step active" id="login-step1">
-      <h2>Ton matricule</h2>
+      <h2>Votre matricule</h2>
       <div class="field">
         <input type="text" id="login-matricule" placeholder="Ex : PF001" autocomplete="off"
           style="text-transform:uppercase;font-family:var(--font-num);letter-spacing:.1em;font-size:1.1rem;text-align:center"
@@ -621,11 +621,17 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
       <div class="chart-title" style="margin:0">Filtres</div>
       <button class="info-btn" onclick="showTooltip('tdb')">i</button>
     </div>
+    <div class="periode-rapide">
+      <button type="button" class="pill" data-p="semaine" onclick="periodeRapide('semaine')">Cette semaine</button>
+      <button type="button" class="pill" data-p="mois" onclick="periodeRapide('mois')">Ce mois</button>
+      <button type="button" class="pill" data-p="moisprec" onclick="periodeRapide('moisprec')">Mois dernier</button>
+      <button type="button" class="pill" data-p="annee" onclick="periodeRapide('annee')">Cette année</button>
+    </div>
     <div class="row2f" style="margin-bottom:10px">
       <div class="field" style="margin-bottom:0"><label>Du</label><input type="date" id="tdb-filtre-du"></div>
       <div class="field" style="margin-bottom:0"><label>Au</label><input type="date" id="tdb-filtre-au"></div>
     </div>
-    <div class="row2f" style="margin-bottom:10px">
+    <div class="row2f filtres-listes" style="margin-bottom:10px">
       <div class="field" style="margin-bottom:0"><label>Magasin</label><select id="tdb-filtre-magasin"><option value="">Tous les magasins</option></select></div>
       <div class="field" style="margin-bottom:0"><label>Employé</label><select id="tdb-filtre-employe"><option value="">Tous les employés</option></select></div>
     </div>
@@ -646,10 +652,10 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div>
       <div class="kpi-grid">
         <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="tdb-total">—</div></div>
-        <div class="stat-card"><div class="label">CA moy/jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
+        <div class="stat-card"><div class="label">CA moyen par jour</div><div class="value blue mono" id="tdb-moy-jour">—</div></div>
         <div class="stat-card"><div class="label">CB</div><div class="value mono" id="tdb-cb">—</div></div>
         <div class="stat-card"><div class="label">Espèces</div><div class="value amber mono" id="tdb-esp">—</div></div>
-        <div class="stat-card"><div class="label">Nb saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
+        <div class="stat-card"><div class="label">Saisies</div><div class="value mono" id="tdb-saisies">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
@@ -657,7 +663,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <div class="chart-title" style="margin:0">Évolution du CA</div>
         <div style="display:flex;gap:4px">
           <button id="evo-btn-jour" onclick="setEvoMode('jour')" class="pill active" style="font-size:.62rem;padding:3px 9px">Jour</button>
-          <button id="evo-btn-semaine" onclick="setEvoMode('semaine')" class="pill" style="font-size:.62rem;padding:3px 9px">Sem.</button>
+          <button id="evo-btn-semaine" onclick="setEvoMode('semaine')" class="pill" style="font-size:.62rem;padding:3px 9px">Semaine</button>
           <button id="evo-btn-mois" onclick="setEvoMode('mois')" class="pill" style="font-size:.62rem;padding:3px 9px">Mois</button>
           <button id="evo-btn-annee" onclick="setEvoMode('annee')" class="pill" style="font-size:.62rem;padding:3px 9px">Année</button>
         </div>
@@ -667,7 +673,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div class="chart-grid">
       <div class="card chart-card"><div class="chart-title">Par magasin</div><div style="position:relative;height:200px"><canvas id="tdb-chart-magasin"></canvas></div></div>
       <div class="card chart-card"><div class="chart-title">Paiements</div><div style="position:relative;height:200px"><canvas id="tdb-chart-paiements"></canvas></div></div>
-      <div class="card chart-card"><div class="chart-title">CA moy/jour sem.</div><div style="position:relative;height:200px"><canvas id="tdb-chart-joursem"></canvas></div></div>
+      <div class="card chart-card"><div class="chart-title">CA moyen par jour de la semaine</div><div style="position:relative;height:200px"><canvas id="tdb-chart-joursem"></canvas></div></div>
     </div>
     <div style="display:flex;gap:8px;margin-bottom:12px">
       <button class="btn btn-secondary" style="flex:1;justify-content:center" onclick="chargerTdb()">Actualiser</button>
@@ -686,9 +692,9 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <div>
       <div class="kpi-grid">
         <div class="stat-card"><div class="label">Heures totales</div><div class="value blue mono" id="tdb-col-heures">—</div></div>
-        <div class="stat-card"><div class="label">Meilleur CA/h</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
-        <div class="stat-card"><div class="label">% Photos</div><div class="value mono" id="tdb-col-photos">—</div></div>
-        <div class="stat-card"><div class="label">Collabs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
+        <div class="stat-card"><div class="label">Meilleur CA par heure</div><div class="value amber mono" id="tdb-col-cah">—</div></div>
+        <div class="stat-card"><div class="label">Journées avec photo</div><div class="value mono" id="tdb-col-photos">—</div></div>
+        <div class="stat-card"><div class="label">Collaborateurs actifs</div><div class="value mono" id="tdb-col-nb">—</div></div>
       </div>
     </div>
     <div class="card" style="padding:14px;margin-bottom:12px">
@@ -980,7 +986,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
         <div style="font-size:.82rem;font-weight:700;color:var(--accent)">Demande de réapprovisionnement</div>
         <button onclick="fermerCommande()" style="background:none;border:none;color:var(--muted);font-size:1.1rem;cursor:pointer">✕</button>
       </div>
-      <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px">Quantités calculées sur les 2 dernières semaines. Modifie si besoin.</p>
+      <p style="font-size:.75rem;color:var(--muted);margin-bottom:12px">Quantités calculées sur les 2 dernières semaines. Modifiez si besoin.</p>
       <div id="commande-lignes"><div style="text-align:center;color:var(--muted);padding:20px">Chargement…</div></div>
       <div style="margin-top:12px;display:flex;gap:8px">
         <button class="btn btn-secondary" onclick="fermerCommande()" style="flex:1;justify-content:center">Annuler</button>

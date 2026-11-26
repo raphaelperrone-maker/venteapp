@@ -940,3 +940,22 @@ body.light-mode tbody tr:hover{background:#f8fafc}
   .ponct-form{grid-template-columns:150px 1fr 2fr 130px auto}
   .ponct-form .ponct-large,.ponct-form .btn{grid-column:auto}
 }
+
+/* ── Confirmation, raccourcis de période, évolution des indicateurs ── */
+.confirm-fond{position:fixed;inset:0;z-index:2000;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:20px}
+.confirm-boite{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow-lg);padding:22px;width:100%;max-width:400px}
+.confirm-texte{font-size:.95rem;line-height:1.5;color:var(--text);margin:0 0 20px;white-space:pre-line}
+.confirm-actions{display:flex;gap:10px}
+.confirm-actions .btn{flex:1;justify-content:center}
+.btn-danger{background:var(--danger);color:#fff;border:1px solid var(--danger)}
+.periode-rapide{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto;padding-bottom:2px;scrollbar-width:none}
+.periode-rapide::-webkit-scrollbar{display:none}
+.periode-rapide .pill{flex:0 0 auto}
+.kpi-delta{font-size:.72rem;color:var(--muted);margin-top:6px;line-height:1.35}
+.kpi-delta:empty{display:none}
+.kpi-delta.hausse{color:var(--accent)}
+.kpi-delta.baisse{color:var(--danger)}
+/* Listes de filtres : une par ligne sur téléphone, sinon elles sont tronquées (« Tous les magasi ») */
+@media (max-width:520px){ .filtres-listes{flex-direction:column} }
+/* Messages : jamais tronqués, le texte passe à la ligne */
+#toast{white-space:normal;text-align:left;max-width:min(92vw,520px);width:max-content;line-height:1.4;overflow:visible;text-overflow:clip}

@@ -229,15 +229,15 @@ async function apiCall(endpoint, body, _retry = false) {
       signal: controller.signal
     });
   } catch(e) {
-    if (e.name === 'AbortError') throw new Error('Le serveur ne répond pas — réessaie dans un instant');
-    throw new Error('Pas de connexion — vérifie ton réseau');
+    if (e.name === 'AbortError') throw new Error('Le serveur ne répond pas — réessayez dans un instant');
+    throw new Error('Pas de connexion — vérifiez votre réseau');
   } finally {
     clearTimeout(tId);
   }
   // Hors ligne : le Service Worker répond 503 {error:'OFFLINE'} → message clair
   if (res.status === 503) {
     const err = await res.json().catch(()=>({}));
-    if (err.error === 'OFFLINE') throw new Error('Pas de connexion — vérifie ton réseau');
+    if (err.error === 'OFFLINE') throw new Error('Pas de connexion — vérifiez votre réseau');
   }
   // 401 = token expiré ou absent → tenter un refresh silencieux une seule fois
   if (res.status === 401 && !_retry && utilisateurConnecte) {
@@ -614,7 +614,7 @@ async function chargerMagasins() {
     // 🔐 Restreindre au périmètre autorisé de l'utilisateur connecté
     const magasins = magasinsAutorises();
     if (isManager() && magasins.length === 0) {
-      showToast('⚠️ Aucun magasin autorisé — vérifie la colonne "Autorisation manager magasin"', 'error');
+      showToast('⚠️ Aucun magasin autorisé — vérifiez la colonne "Autorisation manager magasin"', 'error');
     }
 
     // Priorité : magasin de l'utilisateur connecté > localStorage > rien
@@ -686,7 +686,7 @@ async function chargerCollaborateurs() {
 // ── LOGIN STEP 1 : vérifier le matricule ──
 function validerMatricule() {
   const matricule = document.getElementById('login-matricule').value.trim().toUpperCase();
-  if (!matricule) { afficherErreurLogin('Saisis ton matricule'); return; }
+  if (!matricule) { afficherErreurLogin('Saisissez votre matricule'); return; }
 
   // _loginCollab ne contient JAMAIS le PIN — uniquement des données d'affichage
   window._loginCollab = { matricule, nom:'', prenom:'', nomComplet:matricule };
@@ -718,7 +718,7 @@ async function validerPin() {
   const pin = document.getElementById('login-pin').value.trim();
   const collab = window._loginCollab;
   if (!collab) { retourStep1(); return; }
-  if (!pin) { afficherErreurLogin('Saisis ton code PIN'); return; }
+  if (!pin) { afficherErreurLogin('Saisissez votre code PIN'); return; }
 
   const btn = document.getElementById('login-pin').nextElementSibling?.nextElementSibling
     || document.querySelector('#login-step2 .btn-primary');
@@ -761,7 +761,7 @@ async function validerPin() {
     if (btn) { btn.disabled = false; btn.textContent = 'Se connecter'; }
     // ⚠️  Pas de fallback local — si le serveur est injoignable, on bloque.
     // Cela évite toute vérification de PIN côté client.
-    afficherErreurLogin('Serveur inaccessible — vérifie ta connexion internet');
+    afficherErreurLogin('Serveur inaccessible — vérifiez votre connexion internet');
     _CRYPTO.effacerSession();
   }
 }
@@ -780,8 +780,8 @@ function afficherErreurLogin(msg) {
   el.classList.add('show');
 }
 
-function demanderDeconnexion() {
-  if (confirm('Se déconnecter ?')) {
+async function demanderDeconnexion() {
+  if (await confirmer('Se déconnecter ?', { ok:'Se déconnecter' })) {
     logAction('auth', 'Déconnexion', `Matricule: ${utilisateurConnecte?.matricule||'—'}`).finally(() => {
       localStorage.removeItem('session_user');
       localStorage.removeItem('jwt_token');
@@ -1031,27 +1031,27 @@ const TOOLTIPS = {
   },
   ca: {
     titre: "Fin de journée",
-    texte: "Déclare ton CA de fin de journée : saisis les horaires de travail et les montants encaissés (CB, espèces, autres). Le récapitulatif des ventes du jour s'affiche automatiquement."
+    texte: "Déclarez votre CA de fin de journée : saisissez les horaires de travail et les montants encaissés (CB, espèces, autres). Le récapitulatif des ventes du jour s'affiche automatiquement."
   },
   histo: {
     titre: "Historique",
-    texte: "Consulte tes saisies CA (onglet CA) et le détail de tes ventes produit (onglet Ventes). Filtre par période, magasin ou employé. Les managers peuvent modifier ou supprimer des ventes — le stock est ajusté automatiquement."
+    texte: "Consultez vos saisies de CA (onglet CA) et le détail de vos ventes par produit (onglet Ventes). Filtrez par période, magasin ou employé. Les managers peuvent modifier ou supprimer des ventes — le stock est ajusté automatiquement."
   },
   tdb: {
     titre: "Tableau de bord",
-    texte: "Vue réservée aux managers. Tu ne vois que les magasins de ton périmètre (colonne 'Autorisation manager magasin' de la base). Analyse les performances par magasin, collaborateur et produit. L'onglet Gestion permet d'exporter les données en Excel. L'onglet Rentabilité calcule la marge par magasin en tenant compte du CA déclaré, des coûts fixes et des salaires réels."
+    texte: "Vue réservée aux managers. Vous ne voyez que les magasins de votre périmètre (colonne 'Autorisation manager magasin' de la base). Analysez les performances par magasin, collaborateur et produit. L'onglet Gestion permet d'exporter les données en Excel. L'onglet Rentabilité calcule la marge par magasin en tenant compte du CA déclaré, des coûts fixes et des salaires réels."
   },
   planning: {
     titre: "Planning",
-    texte: "Consulte le planning de la semaine en cours. Déclare tes disponibilités pour la semaine suivante. Les managers créent et publient le planning, puis peuvent effectuer une rotation pour passer au planning suivant."
+    texte: "Consultez le planning de la semaine en cours. Déclarez vos disponibilités pour la semaine suivante. Les managers créent et publient le planning, puis peuvent effectuer une rotation pour passer au planning suivant."
   },
   config: {
     titre: "Paramètres",
-    texte: "Configure ton magasin et ton nom par défaut. Les IDs Google Sheets permettent à l'application de se connecter aux bonnes bases de données. Ces paramètres sont sauvegardés sur cet appareil."
+    texte: "Configurez votre magasin et votre nom par défaut. Les IDs Google Sheets permettent à l'application de se connecter aux bonnes bases de données. Ces paramètres sont sauvegardés sur cet appareil."
   },
   stock: {
     titre: "Stocks",
-    texte: "Consulte les stocks de ton magasin. 'État des stocks' permet de saisir les quantités actuelles — les produits déjà en stock apparaissent pré-remplis en haut. 'Transfert' déplace des produits entre magasins. 'Commande' envoie une demande de réapprovisionnement aux managers."
+    texte: "Consultez les stocks de votre magasin. 'État des stocks' permet de saisir les quantités actuelles — les produits déjà en stock apparaissent pré-remplis en haut. 'Transfert' déplace des produits entre magasins. 'Commande' envoie une demande de réapprovisionnement aux managers."
   }
 };
 
@@ -1881,7 +1881,7 @@ async function chargerCatalogue() {
 function mettreAJourSelects() {
   document.querySelectorAll('.select-produit').forEach(sel => {
     const cur=sel.value;
-    sel.innerHTML='<option value="">— Choisir —</option>'+catalogue.map(p=>`<option value="${esc(p.nom)}">${esc(p.nom)} (${p.prixTTC?p.prixTTC.toFixed(2)+'€ TTC':'—'})</option>`).join('');
+    sel.innerHTML='<option value="">— Choisir —</option>'+catalogue.map(p=>`<option value="${esc(p.nom)}">${esc(p.nom)} (${p.prixTTC?p.prixTTC.toLocaleString('fr-FR',FR2)+' € TTC':'—'})</option>`).join('');
     if (cur) sel.value=cur;
   });
 }
@@ -2034,7 +2034,7 @@ async function chargerRentabilite() {
     });
 
     const fmtE = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
-    const fmtP = v => (v>=0?'+':'') + v.toFixed(1) + ' %';
+    const fmtP = v => (v>=0?'+':'') + v.toLocaleString('fr-FR',FR1) + ' %';
     const couleur = v => v >= 0 ? 'var(--accent)' : 'var(--danger)';
 
     // Totaux
@@ -2050,7 +2050,8 @@ async function chargerRentabilite() {
     document.getElementById('rent-tot-marge').style.color = couleur(totMarge);
     document.getElementById('rent-tot-marge').textContent = fmtE(totMarge);
     document.getElementById('rent-tot-pct').style.color   = couleur(totPct);
-    document.getElementById('rent-tot-pct').textContent   = fmtP(totPct);
+    document.getElementById('rent-tot-pct').textContent   = totCouts > 0 ? fmtP(totPct) : '—';
+    document.getElementById('rent-tot-pct').title         = totCouts > 0 ? '' : 'Aucun coût renseigné : la rentabilité ne peut pas être calculée';
 
     // ── Tableau — 6 colonnes avec détail salaires ──
     // Mettre à jour l'en-tête
@@ -2077,10 +2078,10 @@ async function chargerRentabilite() {
         <td class="mono text-right" style="color:var(--danger);font-size:.72rem">${d.deductions>0?'−'+fmtE(d.deductions):'—'}</td>
         <td class="mono text-right" style="color:var(--muted)">${fmtE(d.coutsFixe)}</td>
         <td class="mono text-right" style="color:var(--muted)">${d.coutsPonct>0?fmtE(d.coutsPonct):'—'}</td>
-        <td class="mono text-right amber" title="${d.heuresMag.toFixed(1)}h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toFixed(1)}h</span></td>
+        <td class="mono text-right amber" title="${d.heuresMag.toLocaleString('fr-FR',FR1)} h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toLocaleString('fr-FR',FR1)} h</span></td>
         <td class="mono text-right amber" style="font-weight:700">${fmtE(d.couts)}</td>
         <td class="mono text-right" style="color:${couleur(d.marge)};font-weight:700">${fmtE(d.marge)}</td>
-        <td class="mono text-right" style="color:${couleur(d.pct)};font-weight:700">${fmtP(d.pct)}</td>
+        <td class="mono text-right" style="color:${d.couts>0?couleur(d.pct):'var(--muted)'};font-weight:${d.couts>0?700:400}">${d.couts>0?fmtP(d.pct):'Coûts non renseignés'}</td>
       </tr>`).join('') :
       '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
 
@@ -2194,7 +2195,7 @@ async function ajouterCoutPonctuel() {
 }
 
 async function supprimerCoutPonctuel(ligne) {
-  if (!confirm('Supprimer ce coût ponctuel ?')) return;
+  if (!await confirmer('Supprimer ce coût ponctuel ?', { ok:'Supprimer', danger:true })) return;
   try {
     // La ligne est vidée (pas décalée) : les numéros des autres lignes ne bougent pas
     await sheetsClear(getConfig('cfg-db-id'), `${ONGLET_COUTS_PONCTUELS}!A${ligne}:F${ligne}`);
@@ -2339,7 +2340,7 @@ function majTotalLigneCouts(i) {
 async function sauvegarderCoutsFixes() {
   const dbId = getConfig('cfg-db-id');
   if (!dbId || !_nomOngletCouts) { showToast('⚠️ Données non chargées', 'error'); return; }
-  if (!confirm('Sauvegarder les modifications des coûts fixes ?')) return;
+  if (!await confirmer('Sauvegarder les modifications des coûts fixes ?', { ok:'Sauvegarder' })) return;
 
   const btn = document.getElementById('btn-save-couts');
   btn.disabled = true;
@@ -2515,9 +2516,9 @@ function renderGestion(du, au, mag, emp) {
           <td style="font-weight:600">${esc(r.produit)}</td>
           <td style="color:var(--muted)">${esc(r.type)}</td>
           <td class="mono text-right">${r.qte}</td>
-          <td class="mono text-right">${r.ht.toFixed(2)} €</td>
+          <td class="mono text-right">${r.ht.toLocaleString('fr-FR',FR2)} €</td>
           <td class="mono text-right" style="color:var(--muted)">${r.tva}</td>
-          <td class="mono text-right green" style="font-weight:700">${r.ttc.toFixed(2)} €</td>
+          <td class="mono text-right green" style="font-weight:700">${r.ttc.toLocaleString('fr-FR',FR2)} €</td>
         </tr>`).join('');
     }
   }
@@ -2536,9 +2537,9 @@ function renderGestion(du, au, mag, emp) {
           <td style="max-width:110px;overflow:hidden;text-overflow:ellipsis">${esc(r.magasin)}</td>
           <td style="color:var(--muted)">${r.horaires}</td>
           <td class="mono text-right amber" style="font-weight:700">${r.heures>0?minutesEnHeures(r.heures*60):''}</td>
-          <td class="mono text-right green">${r.ca>0?r.ca.toFixed(2)+' €':''}</td>
-          <td class="mono text-right">${r.cb>0?r.cb.toFixed(2)+' €':''}</td>
-          <td class="mono text-right">${r.esp>0?r.esp.toFixed(2)+' €':''}</td>
+          <td class="mono text-right green">${r.ca>0?r.ca.toLocaleString('fr-FR',FR2)+' €':''}</td>
+          <td class="mono text-right">${r.cb>0?r.cb.toLocaleString('fr-FR',FR2)+' €':''}</td>
+          <td class="mono text-right">${r.esp>0?r.esp.toLocaleString('fr-FR',FR2)+' €':''}</td>
         </tr>`).join('');
     }
   }
@@ -2560,13 +2561,13 @@ function mettreAJourTotauxGestion(ventes, heures) {
   if (isVentes) {
     const ttc = ventes.reduce((s,r) => s + r.ttc, 0);
     const ht  = ventes.reduce((s,r) => s + r.ht, 0);
-    document.getElementById('gest-tot-ttc').textContent = ttc.toFixed(2) + ' €';
-    document.getElementById('gest-tot-ht').textContent  = ht.toFixed(2) + ' €';
+    document.getElementById('gest-tot-ttc').textContent = ttc.toLocaleString('fr-FR',FR2) + ' €';
+    document.getElementById('gest-tot-ht').textContent  = ht.toLocaleString('fr-FR',FR2) + ' €';
   } else {
     const totalH = heures.reduce((s,r) => s + r.heures, 0);
     document.getElementById('gest-tot-heures').textContent = minutesEnHeures(totalH * 60);
     const ttc = heures.reduce((s,r) => s + r.ca, 0);
-    document.getElementById('gest-tot-ttc').textContent = ttc.toFixed(2) + ' €';
+    document.getElementById('gest-tot-ttc').textContent = ttc.toLocaleString('fr-FR',FR2) + ' €';
     document.getElementById('gest-tot-ht').textContent = '—';
   }
 }
@@ -2576,6 +2577,9 @@ function mettreAJourTotauxGestion(ventes, heures) {
 // Deux sources : les tickets de vente (HT / TVA / TTC) et les fins de journée
 // (CA déclaré, CB, espèces, autres, heures). L'écart entre les deux est affiché.
 // ══════════════════════════════════════════════════════════════
+// Formats d'affichage français : virgule décimale, espace des milliers
+const FR0 = { minimumFractionDigits:0, maximumFractionDigits:0 }, FR1 = { minimumFractionDigits:1, maximumFractionDigits:1 },
+      FR2 = { minimumFractionDigits:2, maximumFractionDigits:2 }, FRMAX1 = { maximumFractionDigits:1 };
 const arrondi2 = n => Math.round((Number(n) || 0) * 100) / 100;
 // Taux de TVA : le Sheet contient 0.2, 20 ou « 20 % » selon les lignes → toujours une fraction
 function tauxTVA(v) { let n = parseFR(String(v).replace('%','')) || 0; if (n > 1) n /= 100; return n; }
@@ -3023,7 +3027,7 @@ async function purgerLogsAnciens() {
   const limiteMs = 7 * 24 * 60 * 60 * 1000; // 7 jours en ms
   const maintenant = Date.now();
 
-  if (!confirm('Supprimer définitivement les logs de plus de 7 jours ?')) return;
+  if (!await confirmer('Supprimer définitivement les logs de plus de 7 jours ?', { ok:'Supprimer', danger:true })) return;
 
   const container = document.getElementById('logs-container');
   if (container) container.innerHTML = '<div style="text-align:center;padding:20px"><div class="spinner" style="color:var(--accent);margin:0 auto"></div></div>';
@@ -3165,7 +3169,7 @@ function renderProduitsPaysage(magasin) {
     const prod = catalogue.find(c => normNom(c.nom)===normNom(p.nom)) || {};
     const ls = stocksData.find(r => normNom(r[0]||'')===normNom(p.nom) && normNom(r[1]||'')===normNom(magasin));
     const stock = ls ? parseFR(ls[6]) : null;
-    const prixStr = prod.prixTTC ? prod.prixTTC.toFixed(2)+'€' : '';
+    const prixStr = prod.prixTTC ? prod.prixTTC.toLocaleString('fr-FR',FR2)+' €' : '';
     // Plus d'échappement JS manuel : la valeur passe par un data-attribute (voir délégation)
 
     // Badge de rang retiré (tri alphabétique — le numéro de position n'a plus de sens)
@@ -3181,7 +3185,7 @@ function renderProduitsPaysage(magasin) {
 
     // Badge ventes
     const ventesHTML = p.score > 0
-      ? `<span class="top10-ventes">×${p.score%1===0?p.score:p.score.toFixed(1)} vendu${p.score>1?'s':''}</span>`
+      ? `<span class="top10-ventes">×${p.score%1===0?p.score:p.score.toLocaleString('fr-FR',FR1)} vendu${p.score>1?'s':''}</span>`
       : '';
 
     return `<div class="top10-card"
@@ -3340,7 +3344,7 @@ function ouvrirModalTop10(nom) {
   if (qtyEl) { qtyEl.value = isKg ? '0.1' : '1'; }
   if (infoEl) {
     const infoItems = [];
-    if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">${prod.prixTTC.toFixed(2)} € TTC</span>`);
+    if (prod.prixTTC) infoItems.push(`<span style="color:var(--accent)">${prod.prixTTC.toLocaleString('fr-FR',FR2)} € TTC</span>`);
     if (prod.type)    infoItems.push(`<span>${esc(prod.type)}</span>`);
     if (prod.quotite) infoItems.push(`<span style="color:var(--accent3)">par ${esc(prod.quotite)}</span>`);
     if (stock !== null) {
@@ -3451,7 +3455,7 @@ function buildProduitOptions() {
     );
     const qte = ligneStock ? parseFR(ligneStock[6]) : null;
     const hasStock = qte !== null && qte > 0;
-    const label = p.nom + (p.categorie ? ` [${esc(p.categorie)}]` : '') + ` — ${p.prixTTC?p.prixTTC.toFixed(2)+'€ TTC':'—'}` + (qte!==null?` (stock: ${qte})`:'');
+    const label = p.nom + (p.categorie ? ` [${esc(p.categorie)}]` : '') + ` — ${p.prixTTC?p.prixTTC.toLocaleString('fr-FR',FR2)+' € TTC':'—'}` + (qte!==null?` (stock: ${qte})`:'');
     const opt = `<option value="${esc(p.nom)}" ${hasStock?'':'style="color:#4a5068"'}>${label}</option>`;
     if (hasStock) enStock.push(opt);
     else horsStock.push(opt);
@@ -3591,7 +3595,7 @@ function filtrerProduits(id, query) {
     const ls = stocksData.find(r => normNom(r[0]||'')===normNom(p.nom) && normNom(r[1]||'')===normNom(magasin));
     const qte = ls ? parseFR(ls[6]) : null;
     const hasStock = qte !== null && qte > 0;
-    const opt = `<option value="${esc(p.nom)}" ${hasStock?'':'style="color:#4a5068"'}>${esc(p.nom)} — ${p.prixTTC?p.prixTTC.toFixed(2)+'€':'—'}${qte!==null?' ('+qte+')':''}</option>`;
+    const opt = `<option value="${esc(p.nom)}" ${hasStock?'':'style="color:#4a5068"'}>${esc(p.nom)} — ${p.prixTTC?p.prixTTC.toLocaleString('fr-FR',FR2)+' €':'—'}${qte!==null?' ('+qte+')':''}</option>`;
     if (hasStock) enStock.push(opt);
     else horsStock.push(opt);
   });
@@ -3697,7 +3701,7 @@ function produitChange(id) {
     if (bestDiff > 0.001) {
       const opt = document.createElement('option');
       opt.value = p.tva;
-      opt.textContent = (p.tva * 100).toFixed(1).replace('.0','') + '%';
+      opt.textContent = (p.tva * 100).toLocaleString('fr-FR',FRMAX1) + '%';
       opt.selected = true;
       tvaEl.appendChild(opt);
     }
@@ -3705,7 +3709,7 @@ function produitChange(id) {
   calculerLigne(id);
   // Afficher le taux TVA en lecture seule dans le label
   const lbl = document.getElementById(`tva-label-${id}`);
-  if (lbl && p) lbl.textContent = `TVA ${(p.tva*100).toFixed(1).replace('.0','')}%`;
+  if (lbl && p) lbl.textContent = `TVA ${(p.tva*100).toLocaleString('fr-FR',FRMAX1)} %`;
 }
 
 function calculerLigne(id) {
@@ -3722,13 +3726,13 @@ function calculerLigne(id) {
   const phtOriginal = pttcOriginal / (1 + tva);
   const thtEl  = document.getElementById(`tht-${id}`);
   const tttcEl = document.getElementById(`tttc-${id}`);
-  if (thtEl)  thtEl.textContent  = (qty * pht).toFixed(2) + ' €';
-  if (tttcEl) tttcEl.textContent = (qty * pttc).toFixed(2) + ' €';
+  if (thtEl)  thtEl.textContent  = (qty * pht).toLocaleString('fr-FR',FR2) + ' €';
+  if (tttcEl) tttcEl.textContent = (qty * pttc).toLocaleString('fr-FR',FR2) + ' €';
   // Afficher le prix barré si promo active
   if (promo > 0 && pttcOriginal > 0) {
     if (tttcEl) tttcEl.innerHTML =
-      `<span style="text-decoration:line-through;opacity:.45;font-size:.72em">${(qty*pttcOriginal).toFixed(2)} €</span> `
-      + (promo < 100 ? `${(qty*pttc).toFixed(2)} €` : '<span style="color:var(--accent)">0,00 € (offert)</span>');
+      `<span style="text-decoration:line-through;opacity:.45;font-size:.72em">${(qty*pttcOriginal).toLocaleString('fr-FR',FR2)} €</span> `
+      + (promo < 100 ? `${(qty*pttc).toLocaleString('fr-FR',FR2)} €` : '<span style="color:var(--accent)">0,00 € (offert)</span>');
   }
   recalcVente();
 }
@@ -3744,9 +3748,9 @@ function recalcVente() {
     tva += qty*pht*t;
     ttc += qty*pttc;
   });
-  document.getElementById('sum-ht').textContent=ht.toFixed(2)+' €';
-  document.getElementById('sum-tva').textContent=tva.toFixed(2)+' €';
-  document.getElementById('sum-ttc').textContent=ttc.toFixed(2)+' €';
+  document.getElementById('sum-ht').textContent=ht.toLocaleString('fr-FR',FR2)+' €';
+  document.getElementById('sum-tva').textContent=tva.toLocaleString('fr-FR',FR2)+' €';
+  document.getElementById('sum-ttc').textContent=ttc.toLocaleString('fr-FR',FR2)+' €';
 }
 
 // ══════════════════════════════════════════════════════════════
@@ -3775,7 +3779,7 @@ async function validerVente() {
     const ligneStock = stocksData.find(r=>normNom(r[0]||'')===normNom(nom)&&normNom(r[1]||'')===normNom(magasin));
     const stockActuel = ligneStock ? parseFR(ligneStock[6]) : null;
     if (stockActuel !== null && qty > stockActuel) {
-      if (!confirm(`Stock insuffisant pour "${esc(nom)}" (stock: ${stockActuel}, demandé: ${qty}). Continuer quand même ?`)) return;
+      if (!await confirmer(`Stock insuffisant pour « ${nom} » (en stock : ${stockActuel}, demandé : ${qty}). Continuer quand même ?`, { ok:'Continuer' })) return;
     }
 
     // Promo et prix original
@@ -4135,12 +4139,12 @@ async function validerPaiementVente() {
 // ══════════════════════════════════════════════════════════════
 // TICKET DE CAISSE PDF (conforme législation française)
 // ══════════════════════════════════════════════════════════════
-function genererTicketPDF(date, vendeur, magasin, numTicket, produits) {
+async function genererTicketPDF(date, vendeur, magasin, numTicket, produits) {
   const societe = getSociete(magasin);
   if (!societe) { console.warn('Société non trouvée pour:', magasin); return; }
 
   // Demander si l'utilisateur veut le ticket
-  if (!confirm('Générer le ticket de caisse PDF ?')) return;
+  if (!await confirmer('Générer le ticket de caisse PDF ?', { ok:'Générer', annuler:'Non merci' })) return;
 
   if (!window.jspdf) { showToast('⏳ Chargement PDF…','info'); setTimeout(()=>genererTicketPDF(date,vendeur,magasin,numTicket,produits), 1500); return; }
 
@@ -4292,7 +4296,7 @@ function toggleCommandesManager() {
 
 async function ouvrirCommandeStock() {
   const magasin = document.getElementById('stock-magasin').value;
-  if (!magasin) { showToast('⚠️ Choisis un magasin d\'abord', 'error'); return; }
+  if (!magasin) { showToast('⚠️ Choisissez d\'abord un magasin', 'error'); return; }
 
   document.getElementById('zone-commande').style.display = 'block';
   document.getElementById('zone-etat-stocks').style.display = 'none';
@@ -4502,7 +4506,7 @@ function afficherCommandesFiltrees() {
 }
 
 async function refuserCommande(magasin) {
-  if (!confirm('Refuser toutes les commandes de ' + magasin + ' ?')) return;
+  if (!await confirmer('Refuser toutes les commandes de ' + magasin + ' ?', { ok:'Refuser', danger:true })) return;
   const tdbId = getConfig('cfg-tdb-id');
   const cmds = toutesCommandes.filter(c => c.magasin === magasin && c.statut === 'En cours');
   try {
@@ -4550,7 +4554,7 @@ function _ouvrirTransfertDepuisCommande(magasin, cmds, mode) {
     if (inputQte) { inputQte.value = c.stockDemande; }
   });
 
-  showToast('🔄 Transfert pré-rempli — choisis le magasin source et valide', 'info', 5000);
+  showToast('🔄 Transfert pré-rempli — choisissez le magasin source et validez', 'info', 5000);
   document.getElementById('zone-transfert').scrollIntoView({behavior:'smooth'});
 }
 
@@ -4746,7 +4750,7 @@ async function ouvrirFormulaireCollab(rowIdx=null) {
 
 
 async function supprimerProduitGestion(rowIdx, nom) {
-  if (!confirm(`Supprimer définitivement "${esc(nom)}" ?`)) return;
+  if (!await confirmer(`Supprimer définitivement « ${nom} » ?`, { ok:'Supprimer', danger:true })) return;
   const dbId = getConfig('cfg-db-id');
   try {
     // Effacer la ligne complète (A→H) pour ne pas décaler les autres
@@ -4943,9 +4947,9 @@ function renderListeProduits() {
         </div>
         <div style="font-size:.72rem;color:var(--muted)">${esc((r[1]||'').trim())} — ${esc((r[2]||'').trim())} — TVA ${esc(r[3]||'')}${cat ? ` · <span style="color:var(--accent3)">${cat}</span>` : ''}</div>
         <div style="display:flex;gap:10px;font-size:.72rem;margin-top:2px">
-          <span style="color:var(--accent)">Vente: ${r[5]||'—'}€ TTC</span>
-          ${achat > 0 ? `<span style="color:var(--muted)">Achat: ${achat.toFixed(2)}€ HT</span>` : ''}
-          ${marge !== null ? `<span style="color:${marge>=0?'var(--accent)':'var(--danger)'}">Marge: ${marge.toFixed(2)}€ (${margeP.toFixed(0)}%)</span>` : ''}
+          <span style="color:var(--accent)">Vente: ${r[5]||'—'} € TTC</span>
+          ${achat > 0 ? `<span style="color:var(--muted)">Achat: ${achat.toLocaleString('fr-FR',FR2)} € HT</span>` : ''}
+          ${marge !== null ? `<span style="color:${marge>=0?'var(--accent)':'var(--danger)'}">Marge: ${marge.toLocaleString('fr-FR',FR2)} € (${margeP.toLocaleString('fr-FR',FR0)} %)</span>` : ''}
         </div>
       </div>
       <div style="display:flex;gap:5px;flex-shrink:0">
@@ -5278,7 +5282,7 @@ function afficherSuivi(rows) {
 }
 
 async function supprimerSuivi(rowIdx, nomComplet, date) {
-  if (!confirm(`Supprimer la journée du ${date} pour ${esc(nomComplet)} ?
+  if (!await confirmer(`Supprimer la journée du ${date} pour ${esc(nomComplet)} ?
 
 Cette action est irréversible.`)) return;
 
@@ -5726,7 +5730,7 @@ function calcPrixHT() {
       const marge  = pht - achat;
       const margeP = achat > 0 ? (marge / achat * 100) : 0;
       margeEl.innerHTML = `Marge brute : <strong style="color:${marge>=0?'var(--accent)':'var(--danger)'}">
-        ${marge.toFixed(2)} € HT &nbsp;(${margeP.toFixed(1)} %)
+        ${marge.toLocaleString('fr-FR',FR2)} € HT &nbsp;(${margeP.toLocaleString('fr-FR',FR1)} %)
       </strong>`;
     } else {
       margeEl.textContent = '';
@@ -5991,7 +5995,7 @@ async function chargerRecapJour() {
   const u      = utilisateurConnecte;
   const div    = document.getElementById('ca-recap-ventes');
   if (!tdbId || !u) {
-    if (div) div.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:.82rem;padding:16px">Connecte-toi pour voir ton récap</div>';
+    if (div) div.innerHTML = '<div style="text-align:center;color:var(--muted);font-size:.82rem;padding:16px">Connectez-vous pour voir votre récapitulatif</div>';
     return;
   }
   if (div) div.innerHTML = '<div style="text-align:center;padding:16px"><div class="spinner"></div></div>';
@@ -6074,13 +6078,13 @@ async function chargerRecapJour() {
             ${t.produits.map(p =>
               `<div style="display:flex;justify-content:space-between;font-size:.76rem;padding:2px 0;border-top:1px solid var(--border)">
                 <span>${esc(p.nom)} ${p.qty > 1 ? '×'+p.qty : ''}</span>
-                <span style="font-family:var(--font-num);color:var(--text2)">${p.ttc.toFixed(2)} €</span>
+                <span style="font-family:var(--font-num);color:var(--text2)">${p.ttc.toLocaleString('fr-FR',FR2)} €</span>
               </div>`
             ).join('')}
             ${(t.cb||t.esp||t.autre) ? `<div style="display:flex;gap:8px;margin-top:5px;font-size:.68rem;color:var(--muted)">
-              ${t.cb    > 0 ? `<span>CB ${t.cb.toFixed(2)} €</span>` : ''}
-              ${t.esp   > 0 ? `<span>Esp. ${t.esp.toFixed(2)} €</span>` : ''}
-              ${t.autre > 0 ? `<span>Autres ${t.autre.toFixed(2)} €</span>` : ''}
+              ${t.cb    > 0 ? `<span>CB ${t.cb.toLocaleString('fr-FR',FR2)} €</span>` : ''}
+              ${t.esp   > 0 ? `<span>Espèces ${t.esp.toLocaleString('fr-FR',FR2)} €</span>` : ''}
+              ${t.autre > 0 ? `<span>Autres ${t.autre.toLocaleString('fr-FR',FR2)} €</span>` : ''}
             </div>` : ''}
           </div>`
         ).join('');
@@ -6106,7 +6110,7 @@ async function envoyerCA() {
   // Vérification heures > 10h
   const heures = getHeuresDecimales();
   if (heures > 10) {
-    if (!confirm('Plus de 10 heures saisies ('+minutesEnHeures(heures*60)+'). Confirmer ?')) return;
+    if (!await confirmer('Plus de 10 heures saisies ('+minutesEnHeures(heures*60)+'). Confirmer ?')) return;
   }
   // Vérification horaire fin > heure actuelle
   const maintenant = new Date();
@@ -6118,7 +6122,7 @@ async function envoyerCA() {
     finSaisie.setHours(hh, mm, 0, 0);
     if (finSaisie > maintenant) {
       const msgH = `L'heure de fin saisie (${h1fin}) est supérieure à l'heure actuelle (${maintenant.getHours().toString().padStart(2,'0')}:${maintenant.getMinutes().toString().padStart(2,'0')}). Continuer quand même ?`;
-      if (!confirm(msgH)) return;
+      if (!await confirmer(msgH)) return;
     }
   }
   demanderToken(()=>_doCA(date,magasin,employe,cb,esp,autre,total));
@@ -6404,7 +6408,7 @@ function creerChart(canvasId, type, labels, datasets, opts={}) {
       tooltip: { callbacks: { label: c => {
         if (anneau) {
           const tot = c.dataset.data.reduce((s,v)=>s+(Number(v)||0),0);
-          return ` ${c.label} : ${fmtValeurChart(c.parsed, unite)}` + (tot ? ` (${(c.parsed/tot*100).toFixed(1)} %)` : '');
+          return ` ${c.label} : ${fmtValeurChart(c.parsed, unite)}` + (tot ? ` (${(c.parsed/tot*100).toLocaleString('fr-FR',FR1)} %)` : '');
         }
         const v = horiz ? c.parsed.x : c.parsed.y;
         const nom = c.chart.data.datasets.length > 1 && c.dataset.label ? c.dataset.label + ' : ' : '';
@@ -6755,8 +6759,8 @@ function renderVentesHisto() {
           <div style="font-size:.68rem;color:var(--muted)">${l.type}${l.qte>0?' · '+l.qte+(normNom(l.type).includes('kilo')?'kg':'x'):''}</div>
         </div>
         <div style="text-align:right;flex-shrink:0">
-          <div style="font-size:.78rem;font-weight:700;color:var(--accent);font-family:var(--font-num)">${l.ttc.toFixed(2)} €</div>
-          <div style="font-size:.65rem;color:var(--muted)">HT: ${l.ht.toFixed(2)} €</div>
+          <div style="font-size:.78rem;font-weight:700;color:var(--accent);font-family:var(--font-num)">${l.ttc.toLocaleString('fr-FR',FR2)} €</div>
+          <div style="font-size:.65rem;color:var(--muted)">HT: ${l.ht.toLocaleString('fr-FR',FR2)} €</div>
         </div>
         <div style="display:flex;gap:4px;flex-shrink:0">
           <button onclick="ouvrirModalVente(${i})" title="Modifier"
@@ -6809,8 +6813,8 @@ function ouvrirModalVente(idx) {
     <div class="field"><label>Quantité</label><input type="number" id="mv-qte" value="${r.qte}" step="0.001" min="0" oninput="recalcMV()"></div>
     <div class="field"><label>Prix TTC unitaire (€)</label><input type="number" id="mv-pttc" value="" step="0.01" oninput="recalcMV()" placeholder="auto depuis catalogue"></div>
     <div style="background:var(--surface);border-radius:var(--radius-sm);padding:10px;font-size:.78rem;display:flex;gap:12px;margin-bottom:4px">
-      <div><span style="color:var(--muted)">HT : </span><strong class="mono" id="mv-ht-preview">${r.ht.toFixed(2)} €</strong></div>
-      <div><span style="color:var(--muted)">TTC : </span><strong class="mono green" id="mv-ttc-preview">${r.ttc.toFixed(2)} €</strong></div>
+      <div><span style="color:var(--muted)">HT : </span><strong class="mono" id="mv-ht-preview">${r.ht.toLocaleString('fr-FR',FR2)} €</strong></div>
+      <div><span style="color:var(--muted)">TTC : </span><strong class="mono green" id="mv-ttc-preview">${r.ttc.toLocaleString('fr-FR',FR2)} €</strong></div>
     </div>
     <div style="font-size:.62rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;margin:10px 0 6px">Paiement (optionnel)</div>
     <div class="row2f">
@@ -6840,8 +6844,8 @@ function recalcMV() {
   const tvaRate = prod?.tva || 0.2;
   const ttc = (pttcVal||0) * qte;
   const ht  = ttc / (1 + tvaRate);
-  document.getElementById('mv-ht-preview').textContent  = ht.toFixed(2)  + ' €';
-  document.getElementById('mv-ttc-preview').textContent = ttc.toFixed(2) + ' €';
+  document.getElementById('mv-ht-preview').textContent  = ht.toLocaleString('fr-FR',FR2)  + ' €';
+  document.getElementById('mv-ttc-preview').textContent = ttc.toLocaleString('fr-FR',FR2) + ' €';
 }
 
 function fermerModalVente() {
@@ -6987,9 +6991,9 @@ async function supprimerVente(idx) {
 
   const qteNum = parseFR(r.qte) || 0;
   const msg = `Supprimer cette ligne ?\n` +
-    `${esc(r.produit)} × ${qteNum} — ${r.ttc.toFixed(2)} €\n\n` +
+    `${esc(r.produit)} × ${qteNum} — ${r.ttc.toLocaleString('fr-FR',FR2)} €\n\n` +
     `Le stock de "${esc(r.produit)}" sera remis à jour (+${qteNum}).`;
-  if (!confirm(msg)) return;
+  if (!await confirmer(msg)) return;
 
   const tdbId = getConfig('cfg-tdb-id');
   const sheetRow = _ventesHistoSheetRows[idx];
@@ -7224,6 +7228,36 @@ function switchTdbTab(tab) {
 }
 
 // Bouton "Appliquer" — route vers le bon handler selon l'onglet visible
+// Raccourcis de période du tableau de bord : évitent de manipuler deux calendriers
+function periodeRapide(code) {
+  const auj = new Date(), a = auj.getFullYear(), m = auj.getMonth();
+  const lundi = new Date(a, m, auj.getDate() - ((auj.getDay() + 6) % 7));
+  const bornes = {
+    semaine:  [lundi, auj],
+    mois:     [new Date(a, m, 1), auj],
+    moisprec: [new Date(a, m - 1, 1), new Date(a, m, 0)],
+    annee:    [new Date(a, 0, 1), auj],
+  }[code];
+  if (!bornes) return;
+  document.getElementById('tdb-filtre-du').value = isoLocal(bornes[0]);
+  document.getElementById('tdb-filtre-au').value = isoLocal(bornes[1]);
+  document.querySelectorAll('.periode-rapide .pill').forEach(b => b.classList.toggle('active', b.dataset.p === code));
+  appliquerFiltresTdb();
+}
+
+// Évolution d'un indicateur par rapport à la période précédente de même durée
+function afficherEvolution(id, actuel, precedent) {
+  const carte = document.getElementById(id)?.closest('.stat-card');
+  if (!carte) return;
+  let el = carte.querySelector('.kpi-delta');
+  if (!el) { el = document.createElement('div'); el.className = 'kpi-delta'; carte.appendChild(el); }
+  if (precedent == null) { el.textContent = ''; el.className = 'kpi-delta'; return; }
+  if (!(precedent > 0)) { el.textContent = 'Pas de donnée sur la période précédente'; el.className = 'kpi-delta'; return; }
+  const pct = (actuel - precedent) / precedent * 100;
+  el.className = 'kpi-delta ' + (pct > 0.05 ? 'hausse' : pct < -0.05 ? 'baisse' : '');
+  el.textContent = (pct > 0 ? '+' : '') + pct.toLocaleString('fr-FR', FR1) + ' % vs période précédente';
+}
+
 function appliquerFiltresTdb() {
   const tab = window._tdbTabActif || 'global';
   if (tab === 'gestion') {
@@ -7347,17 +7381,17 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
 
   // KPIs
   const setEl = (id, v) => { const e=document.getElementById(id); if(e) e.textContent=v; };
-  setEl('tdb-col-heures',  totalH.toFixed(1)+'h');
-  setEl('tdb-col-cah',     bestCah>0 ? bestCah.toFixed(2)+' €/h' : '—');
-  setEl('tdb-col-photos',  totalPh+'%');
+  setEl('tdb-col-heures',  totalH.toLocaleString('fr-FR',FR1)+' h');
+  setEl('tdb-col-cah',     bestCah>0 ? bestCah.toLocaleString('fr-FR',FR2)+' €/h' : '—');
+  setEl('tdb-col-photos',  totalPh+' %');
   setEl('tdb-col-nb',      list.length);
 
   // Classement
   const divList = document.getElementById('tdb-liste-collabs');
   if (divList) divList.innerHTML = list.map((c,i) => {
-    const cah   = c.heures>0 ? (c.ca/c.heures).toFixed(2) : '—';
+    const cah   = c.heures>0 ? (c.ca/c.heures).toLocaleString('fr-FR',FR2) : '—';
     const pct   = c.total>0  ? Math.round(c.avecPhoto/c.total*100) : 0;
-    const pctCA = totalCA>0  ? (c.ca/totalCA*100).toFixed(1) : '0';
+    const pctCA = totalCA>0  ? (c.ca/totalCA*100).toLocaleString('fr-FR',FR1) : '0';
     const pctColor = pct>=80?'#4ade80':pct>=50?'#f59e0b':'#f87171';
     return '<div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px;margin-bottom:8px">'
       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">'
@@ -7365,19 +7399,19 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
           +'<span class="rang'+(i<3?' rang-top':'')+'">'+(i+1)+'</span>'
           +'<div>'
             +'<div style="font-weight:700;font-size:.85rem">'+esc(c.nom)+'</div>'
-            +'<div style="font-size:.7rem;color:var(--muted)">'+c.jours+' jour(s) · '+c.heures.toFixed(1)+'h</div>'
+            +'<div style="font-size:.7rem;color:var(--muted)">'+c.jours+' jour(s) · '+c.heures.toLocaleString('fr-FR',FR1)+' h</div>'
           +'</div>'
         +'</div>'
         +'<div style="text-align:right">'
           +'<div style="font-weight:700;color:var(--accent);font-family:var(--font-num);font-size:.88rem">'+c.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</div>'
-          +'<div style="font-size:.7rem;color:var(--muted)">'+pctCA+'% du CA</div>'
+          +'<div style="font-size:.7rem;color:var(--muted)">'+pctCA+' % du CA</div>'
         +'</div>'
       +'</div>'
       +'<div style="display:flex;gap:5px;flex-wrap:wrap">'
         +(c.heures>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">'+cah+' €/h</span>':'')
         +'<span style="font-size:.7rem;border-radius:6px;padding:2px 8px;background:'+pctColor+'22;border:1px solid '+pctColor+'55;color:'+pctColor+'">Photos '+pct+' %</span>'
-        +(c.cb>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">CB '+c.cb.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
-        +(c.esp>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">Esp. '+c.esp.toLocaleString('fr-FR',{minimumFractionDigits:0})+'€</span>':'')
+        +(c.cb>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">CB '+c.cb.toLocaleString('fr-FR',{minimumFractionDigits:0})+' €</span>':'')
+        +(c.esp>0?'<span style="font-size:.7rem;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:2px 8px">Espèces '+c.esp.toLocaleString('fr-FR',{minimumFractionDigits:0})+' €</span>':'')
       +'</div>'
     +'</div>';
   }).join('');
@@ -7386,13 +7420,13 @@ function remplirOngletCollabs(rawSuivi, dMin, dMax, filtEmpVal) {
   const tbody = document.getElementById('tdb-tbody-horaires');
   if (tbody) tbody.innerHTML = list.length
     ? list.map(c => {
-        const cah = c.heures>0?(c.ca/c.heures).toFixed(2):'—';
-        const pct = c.total>0?Math.round(c.avecPhoto/c.total*100)+'%':'—';
+        const cah = c.heures>0?(c.ca/c.heures).toLocaleString('fr-FR',FR2):'—';
+        const pct = c.total>0?Math.round(c.avecPhoto/c.total*100)+' %':'—';
         return '<tr>'
-          +'<td>'+c.nom+'</td>'
-          +'<td class="text-right mono">'+c.heures.toFixed(1)+'h</td>'
+          +'<td>'+esc(c.nom)+'</td>'
+          +'<td class="text-right mono">'+c.heures.toLocaleString('fr-FR',FR1)+' h</td>'
           +'<td class="text-right mono">'+c.jours+'</td>'
-          +'<td class="text-right mono">'+cah+'€/h</td>'
+          +'<td class="text-right mono">'+cah+' €/h</td>'
           +'<td class="text-right mono">'+pct+'</td>'
           +'<td class="text-right mono text-accent">'+c.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</td>'
           +'</tr>';
@@ -7474,7 +7508,7 @@ function remplirOngletProduits(ventesRaw, dMin, dMax) {
   if (tbl) tbl.innerHTML = prodList.length
     ? prodList.map(([p,s]) =>
         '<tr><td>'+p+'</td><td style="color:var(--muted);font-size:.75rem">'+s.type+'</td>'
-        +'<td class="text-right mono">'+s.qte.toFixed(2)+'</td>'
+        +'<td class="text-right mono">'+s.qte.toLocaleString('fr-FR',FR2)+'</td>'
         +'<td class="text-right mono text-accent">'+s.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €</td></tr>'
       ).join('')
     : '<tr><td colspan="4" style="text-align:center;color:var(--muted);padding:20px">Aucune vente produit</td></tr>';
@@ -7559,6 +7593,24 @@ async function chargerTdb() {
     document.getElementById('tdb-cb').textContent = tCB.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
     document.getElementById('tdb-esp').textContent = tEsp.toLocaleString('fr-FR',{minimumFractionDigits:2})+' €';
     document.getElementById('tdb-saisies').textContent = f.length;
+
+    // Comparaison avec la période précédente de même durée (mêmes filtres magasin / employé)
+    let prec = null;
+    if (dMin && dMax) {
+      const jours = Math.round((dMax - dMin) / 86400000);            // durée de la période, en jours
+      const pMin = new Date(dMin.getFullYear(), dMin.getMonth(), dMin.getDate() - jours);
+      const pMax = new Date(dMin.getTime() - 1);
+      const p = lignes.filter(l => l.date >= pMin && l.date <= pMax
+        && (!filtMagVal || normNom(l.magasin) === normNom(filtMagVal))
+        && (!filtEmpVal || normNom(l.employe) === normNom(filtEmpVal)));
+      const pCA = p.reduce((s,l)=>s+l.total,0), pJours = new Set(p.map(l=>l.date.toDateString())).size;
+      prec = { ca:pCA, moy: pJours ? pCA/pJours : 0, cb:p.reduce((s,l)=>s+l.cb,0), esp:p.reduce((s,l)=>s+l.esp,0), n:p.length };
+    }
+    afficherEvolution('tdb-total',    tCA,      prec && prec.ca);
+    afficherEvolution('tdb-moy-jour', moyJour,  prec && prec.moy);
+    afficherEvolution('tdb-cb',       tCB,      prec && prec.cb);
+    afficherEvolution('tdb-esp',      tEsp,     prec && prec.esp);
+    afficherEvolution('tdb-saisies',  f.length, prec && prec.n);
 
     await new Promise(r=>setTimeout(r,60));
 
@@ -7671,11 +7723,11 @@ async function chargerTdb() {
       const rows = Object.entries(stats).sort((a,b)=>b[1].heures-a[1].heures);
       tbody.innerHTML = rows.length
         ? rows.map(([nom,s])=>{
-            const caH = s.heures>0 ? (s.ca/s.heures).toFixed(2) : '—';
+            const caH = s.heures>0 ? (s.ca/s.heures).toLocaleString('fr-FR',FR2) : '—';
             const alerte = nbJoursPeriode<=7 && s.heures>48;
             return `<tr ${alerte?'style="background:#7f1d1d22"':''}>
               <td>${esc(nom)}${alerte?' <span style="color:var(--danger);font-size:.7rem">>48h</span>':''}</td>
-              <td class="text-right mono">${s.heures.toFixed(2)}h</td>
+              <td class="text-right mono">${s.heures.toLocaleString('fr-FR',FR2)} h</td>
               <td class="text-right mono">${caH!=='—'?caH+' €/h':'—'}</td>
               <td class="text-right mono text-accent">${s.ca.toLocaleString('fr-FR',{minimumFractionDigits:2})} €</td>
             </tr>`;
@@ -8550,7 +8602,7 @@ async function envoyerDisponibilites() {
   for (const el of lignes) {
     const id = el.id.replace('dispo-ligne-','');
     const magasin = document.getElementById(`dispo-mag-${id}`)?.value;
-    if (!magasin) { showToast('⚠️ Choisis un magasin pour chaque ligne','error'); return; }
+    if (!magasin) { showToast('⚠️ Choisissez un magasin pour chaque ligne','error'); return; }
     const joursCoches = JOURS_NOM.filter((_,i) => document.getElementById(`dispo-${id}-${i}`)?.checked);
     if (!joursCoches.length) { showToast('⚠️ Coche au moins un jour par magasin','error'); return; }
     rows.push([new Date().toLocaleString('fr-FR'), u.nomComplet, magasin, joursCoches.join(', ')]);
@@ -8818,10 +8870,57 @@ document.addEventListener('click', function (e) {
 });
 
 let toastTimer;
+// Fenêtre de confirmation au style de l'app (remplace confirm() du navigateur).
+// Renvoie une promesse : true si l'utilisateur confirme. Échap ou clic à côté = annuler.
+function confirmer(message, { ok = 'Confirmer', annuler = 'Annuler', danger = false } = {}) {
+  return new Promise(resolve => {
+    const fond = document.createElement('div');
+    fond.className = 'confirm-fond';
+    fond.innerHTML = `<div class="confirm-boite" role="alertdialog" aria-modal="true">
+      <p class="confirm-texte"></p>
+      <div class="confirm-actions">
+        <button type="button" class="btn btn-secondary" data-r="0"></button>
+        <button type="button" class="btn ${danger ? 'btn-danger' : 'btn-primary'}" data-r="1"></button>
+      </div></div>`;
+    fond.querySelector('.confirm-texte').textContent = message;   // textContent : jamais de HTML injecté
+    const [bNon, bOui] = fond.querySelectorAll('button');
+    bNon.textContent = annuler; bOui.textContent = ok;
+    const fermer = r => { document.removeEventListener('keydown', clavier); fond.remove(); resolve(r); };
+    const clavier = e => { if (e.key === 'Escape') fermer(false); };
+    fond.addEventListener('click', e => { if (e.target === fond) fermer(false); else if (e.target.dataset.r) fermer(e.target.dataset.r === '1'); });
+    document.addEventListener('keydown', clavier);
+    document.body.appendChild(fond);
+    bOui.focus();
+  });
+}
+
+// Traduit les erreurs techniques en messages utiles : ce qui s'est passé + quoi faire.
+const ERREURS_LISIBLES = [
+  [/Failed to fetch|NetworkError|Load failed/i, () => 'Pas de connexion — vérifiez votre réseau'],
+  [/Unable to parse range:?\s*'?([^'!]+)/i, m => `Onglet « ${m[1].trim()} » introuvable dans le Google Sheet — vérifiez son nom`],
+  [/exceeds grid limits/i, () => "Le Google Sheet n'a pas assez de lignes ou de colonnes — ajoutez-en dans l'onglet concerné"],
+  [/Quota exceeded|RESOURCE_EXHAUSTED|HTTP 429/i, () => 'Trop de demandes envoyées à Google — réessayez dans une minute'],
+  [/HTTP 401|Unauthorized|jwt expired|Session expirée/i, () => 'Session expirée — reconnectez-vous'],
+  [/HTTP 403|PERMISSION_DENIED|Forbidden/i, () => "Accès refusé — vos droits ne permettent pas cette action"],
+  [/HTTP 5\d\d|Internal Server Error|Erreur réseau/i, () => 'Le serveur a rencontré un problème — réessayez dans un instant'],
+  [/is not defined|is not a function|Cannot read propert|of undefined|of null/i, () => "Erreur inattendue — rechargez la page ; si elle revient, prévenez votre responsable"],
+];
+function rendreLisible(texte) {
+  for (const [re, fn] of ERREURS_LISIBLES) {
+    const m = texte.match(re);
+    if (!m) continue;
+    console.warn('Erreur d\'origine :', texte);                     // le détail technique reste dans la console
+    const debut = texte.slice(0, m.index).replace(/[\s:—-]+$/, '');  // « Export Excel : … » → on garde le contexte
+    return (debut && debut.length < 40 ? debut + ' : ' : '') + fn(m);
+  }
+  return texte;
+}
+
 const TOAST_ETATS = { '✅':'success', '❌':'error', '⚠':'warn', '⏳':'wait' };
 function showToast(msg,type=''){
   const brut=String(msg ?? ''), etat=TOAST_ETATS[(brut.match(/^\s*(✅|❌|⚠|⏳)/)||[])[1]] || type || '';
-  const t=document.getElementById('toast');t.textContent=sansEmoji(brut);t.className='show '+(type||'');
+  const lisible = etat === 'error' || type === 'error' ? rendreLisible(sansEmoji(brut)) : sansEmoji(brut);
+  const t=document.getElementById('toast');t.textContent=lisible;t.className='show '+(type||'');
   t.dataset.etat=etat;
   clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.className='',type==='error'?5000:3200);
 }
