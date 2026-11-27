@@ -1915,7 +1915,8 @@ async function chargerRentabilite() {
     // ── 1. CA par magasin depuis "Suivi collaborateurs" (CA déclaré chaque soir) ──
     // Colonnes : A=Nom B=Prénom C=Matricule D=Date E=Heures F=Horaires G=CA L=Magasin
     const rawSuivi = await sheetsGet(tdbId, 'Suivi collaborateurs!A2:L');
-    const caParMag = {};
+    const caParMag = {};      // clé = cleMagasin(magasin)
+    const nomsMag = {};       // clé → nom affiché
     const heuresParMag = {}; // heures × taux → coût salarial réel
 
     // ── 2. Taux horaires depuis "Collaborateurs (à mettre à jour)" col T ──
@@ -1950,15 +1951,17 @@ async function chargerRentabilite() {
       if (!aAccesTousMagasins() && !peutVoirMagasin(magasin)) return; // périmètre
 
       // CA
-      if (ca > 0) caParMag[magasin] = (caParMag[magasin]||0) + ca;
+      const cle = cleMagasin(magasin);
+      if (!nomsMag[cle]) nomsMag[cle] = magasin;
+      if (ca > 0) caParMag[cle] = (caParMag[cle]||0) + ca;
 
       // Coût salarial : heures × taux horaire du collaborateur
       if (heures > 0) {
         const taux = tauxParMat[mat] || tauxParNom[nomR] || 0;
         const coutSal = heures * taux;
-        if (!heuresParMag[magasin]) heuresParMag[magasin] = { heures: 0, coutSal: 0 };
-        heuresParMag[magasin].heures  += heures;
-        heuresParMag[magasin].coutSal += coutSal;
+        if (!heuresParMag[cle]) heuresParMag[cle] = { heures: 0, coutSal: 0 };
+        heuresParMag[cle].heures  += heures;
+        heuresParMag[cle].coutSal += coutSal;
       }
     });
 
@@ -1976,12 +1979,15 @@ async function chargerRentabilite() {
       const elec     = parseFR(r[4]);
       const loyer    = parseFR(r[5]);
       const autres   = parseFR(r[7]); // col H
-      const pctDed   = parseFR(r[8]) || 0; // col I : % déduit du CA
-      const tvaMoy   = parseFR(r[9]) || 0; // col J : TVA moy %
-      const mois     = calculerNbMois(dMin, dMax);
-      coutsFixesParMag[mag] = {
-        total: (internet + eau + elec + loyer + autres) * mois,
-        pctDed,
+      const pctProd  = parseFR(r[8]) || 0; // col I « Pourcentage de produit » : coût des marchandises, en % du CA HT
+      const tvaMoy   = parseFR(r[9]) || 0; // col J : TVA moyenne %
+      coutsFixesParMag[cleMagasin(mag)] = {
+        nom: mag,
+        mensuel: internet + eau + elec + loyer + autres,
+        // Coûts mensuels ramenés à la période, au jour près (avant : 1 mois entier par mois civil touché,
+        // donc ×2 sur « les 30 derniers jours » à cheval sur deux mois)
+        total: (internet + eau + elec + loyer + autres) * prorataMois(dMin, dMax),
+        pctProd,
         tvaMoy,
       };
     });
@@ -1996,7 +2002,7 @@ async function chargerRentabilite() {
         if (filtMag && normNom(c.magasin) !== normNom(filtMag)) return;
         if (!aAccesTousMagasins() && !peutVoirMagasin(c.magasin)) return;
         if ((dMin && c.date < dMin) || (dMax && c.date > dMax)) return;
-        ponctuelsParMag[normNom(c.magasin)] = (ponctuelsParMag[normNom(c.magasin)] || 0) + c.montant;
+        ponctuelsParMag[cleMagasin(c.magasin)] = (ponctuelsParMag[cleMagasin(c.magasin)] || 0) + c.montant;
         window._rentabPonctuels.push(c);
       });
       if (avert) avert.style.display = 'none';
@@ -2006,52 +2012,59 @@ async function chargerRentabilite() {
       if (avert && isManager()) { avert.style.display = ''; avert.textContent = `Coûts ponctuels non comptés : onglet « ${ONGLET_COUTS_PONCTUELS} » illisible (${e.message}).`; }
     }
 
-    // ── 4. Fusionner CA + coûts fixes + coûts ponctuels + salaires réels ──
-    const nomsConnus = [...Object.keys(caParMag), ...Object.keys(coutsFixesParMag), ...Object.keys(heuresParMag)];
-    const allMags = [...new Set([
-      ...nomsConnus,
-      // magasin qui n'a QUE des coûts ponctuels sur la période
-      ...window._rentabPonctuels.map(c => c.magasin).filter(m => !nomsConnus.some(n => normNom(n) === normNom(m))),
-    ])].sort((a,b)=>a.localeCompare(b,'fr'));
+    // ── 4. Fusionner CA + coût des produits + coûts fixes + coûts ponctuels + salaires ──
+    // Toutes les sommes sont indexées par cleMagasin(magasin) : le même magasin écrit différemment
+    // dans deux onglets n'est plus compté comme deux magasins.
+    window._rentabPonctuels.forEach(c => { const k = cleMagasin(c.magasin); if (!nomsMag[k]) nomsMag[k] = c.magasin; });
+    Object.entries(coutsFixesParMag).forEach(([k, c]) => { if (!nomsMag[k]) nomsMag[k] = c.nom; });
+    const cles = [...new Set([...Object.keys(caParMag), ...Object.keys(coutsFixesParMag), ...Object.keys(heuresParMag), ...Object.keys(ponctuelsParMag)])]
+      .sort((a, b) => nomsMag[a].localeCompare(nomsMag[b], 'fr'));
 
-    const data = allMags.map(mag => {
-      const ca        = caParMag[mag]              || 0;
-      const coutsFixe = coutsFixesParMag[mag]?.total || 0;
-      const coutsPonct = ponctuelsParMag[normNom(mag)] || 0;
-      const salaires  = heuresParMag[mag]?.coutSal  || 0;
-      const heuresMag = heuresParMag[mag]?.heures   || 0;
-      const pctDed    = coutsFixesParMag[mag]?.pctDed || 0; // col I
-      const tvaMoy    = coutsFixesParMag[mag]?.tvaMoy || 0; // col J
-      // 1. Déduire % commission/franchise
-      const caApresDeduction = ca * (1 - pctDed / 100);
-      // 2. Convertir TTC → HT selon TVA moy
-      const caBrutHT  = tvaMoy > 0 ? caApresDeduction / (1 + tvaMoy / 100) : caApresDeduction;
-      const deductions = ca - caBrutHT;
-      const couts     = coutsFixe + coutsPonct + salaires;
-      const marge     = caBrutHT - couts;
-      const pct       = caBrutHT > 0 ? (marge / caBrutHT * 100) : 0;
-      return { mag, ca, caBrutHT, deductions, pctDed, tvaMoy, coutsFixe, coutsPonct, salaires, heuresMag, couts, marge, pct };
+    // CA HT = CA déclaré TTC ÷ (1 + TVA). Le « Pourcentage de produit » est un COÛT (marchandises),
+    // calculé sur le CA HT ; il n'est plus retiré du CA (avant : le « CA » affiché était déjà amputé de 30 %,
+    // et la rentabilité était calculée sur ce CA réduit, donc surestimée).
+    const data = cles.map(k => {
+      const cf          = coutsFixesParMag[k];
+      const ca          = caParMag[k] || 0;
+      const tvaMoy      = cf?.tvaMoy || 0;
+      const pctProd     = cf?.pctProd || 0;
+      const caHT        = tvaMoy > 0 ? ca / (1 + tvaMoy / 100) : ca;
+      const coutProduits = caHT * pctProd / 100;
+      const coutsFixe   = cf?.total || 0;
+      const coutsPonct  = ponctuelsParMag[k] || 0;
+      const salaires    = heuresParMag[k]?.coutSal || 0;
+      const heuresMag   = heuresParMag[k]?.heures  || 0;
+      const couts       = coutProduits + coutsFixe + coutsPonct + salaires;
+      const marge       = caHT - couts;
+      const pct         = caHT > 0 ? (marge / caHT * 100) : 0;
+      return { mag: nomsMag[k], ca, caHT, tvaMoy, pctProd, coutProduits, coutsFixe, coutsPonct, salaires, heuresMag, couts, marge, pct,
+               coutsConnus: !!cf, tvaManquante: !!cf && !(tvaMoy > 0) };
     });
 
-    const fmtE = v => v.toLocaleString('fr-FR',{minimumFractionDigits:2}) + ' €';
+    const fmtE = v => v.toLocaleString('fr-FR',FR2) + ' €';
     const fmtP = v => (v>=0?'+':'') + v.toLocaleString('fr-FR',FR1) + ' %';
     const couleur = v => v >= 0 ? 'var(--success)' : 'var(--danger)';
 
     // Totaux
-    const totCA       = data.reduce((s,d)=>s+d.ca,        0);
-    const totCaBrutHT = data.reduce((s,d)=>s+d.caBrutHT,  0);
-    const totCouts    = data.reduce((s,d)=>s+d.couts,     0);
-    const totMarge    = totCaBrutHT - totCouts;
-    const totPct      = totCaBrutHT > 0 ? (totMarge/totCaBrutHT*100) : 0;
+    const totCA       = data.reduce((s,d)=>s+d.ca,    0);
+    const totCaHT     = data.reduce((s,d)=>s+d.caHT,  0);
+    const totCouts    = data.reduce((s,d)=>s+d.couts, 0);
+    const totMarge    = totCaHT - totCouts;
+    const totPct      = totCaHT > 0 ? (totMarge/totCaHT*100) : 0;
+    const coutsConnus = data.some(d => d.coutsConnus);
 
-    document.getElementById('rent-tot-ca').textContent    = fmtE(totCaBrutHT);
-    document.getElementById('rent-tot-ca').title          = 'CA TTC : ' + fmtE(totCA) + ' → CA brut HT après déductions';
+    document.getElementById('rent-tot-ca').textContent    = fmtE(totCaHT);
+    document.getElementById('rent-tot-ca').title          = '';
+    const sousCA = document.getElementById('rent-tot-ca-ttc');
+    if (sousCA) sousCA.textContent = 'soit ' + fmtE(totCA) + ' TTC déclarés';
     document.getElementById('rent-tot-couts').textContent = fmtE(totCouts);
     document.getElementById('rent-tot-marge').style.color = couleur(totMarge);
     document.getElementById('rent-tot-marge').textContent = fmtE(totMarge);
     document.getElementById('rent-tot-pct').style.color   = couleur(totPct);
-    document.getElementById('rent-tot-pct').textContent   = totCouts > 0 ? fmtP(totPct) : '—';
-    document.getElementById('rent-tot-pct').title         = totCouts > 0 ? '' : 'Aucun coût renseigné : la rentabilité ne peut pas être calculée';
+    document.getElementById('rent-tot-pct').textContent   = coutsConnus ? fmtP(totPct) : '—';
+    document.getElementById('rent-tot-pct').title         = coutsConnus ? 'Marge nette ÷ CA HT' : 'Aucun coût renseigné : la rentabilité ne peut pas être calculée';
+    const avertTVA = data.filter(d => d.tvaManquante && d.ca > 0).map(d => d.mag);
+    if (avertTVA.length && isManager()) showToast(`⚠️ TVA non renseignée pour ${avertTVA.join(', ')} : CA HT = CA TTC (onglet Coût magasin, colonne J)`, 'error');
 
     // ── Tableau — 6 colonnes avec détail salaires ──
     // Mettre à jour l'en-tête
@@ -2059,8 +2072,8 @@ async function chargerRentabilite() {
     if (thead) thead.innerHTML = `<tr>
       <th>Magasin</th>
       <th class="text-right">CA TTC</th>
-      <th class="text-right">CA brut HT</th>
-      <th class="text-right">Déductions</th>
+      <th class="text-right">CA HT</th>
+      <th class="text-right">Coût produits</th>
       <th class="text-right">Coûts fixes</th>
       <th class="text-right">Ponctuels</th>
       <th class="text-right">Salaires</th>
@@ -2069,19 +2082,20 @@ async function chargerRentabilite() {
       <th class="text-right">Rentabilité</th>
     </tr>`;
 
+    const pctTxt = v => v.toLocaleString('fr-FR', FRMAX1) + ' %';
     window._rentabData = data; // exposé pour l'export Excel
     tbody.innerHTML = data.length ? data.map(d => `
       <tr>
-        <td style="font-weight:600;font-size:.78rem">${esc(d.mag)}${d.pctDed>0||d.tvaMoy>0?'<br><span style="font-size:.6rem;color:var(--muted);font-weight:400">'+(d.pctDed>0?'−'+d.pctDed+'%':'')+( d.pctDed>0&&d.tvaMoy>0?' · ':'')+( d.tvaMoy>0?'TVA '+d.tvaMoy+'%':'')+'</span>':''}</td>
-        <td class="mono text-right" style="color:var(--muted);font-size:.75rem">${fmtE(d.ca)}</td>
-        <td class="mono text-right green" style="font-weight:700">${fmtE(d.caBrutHT)}</td>
-        <td class="mono text-right" style="color:var(--danger);font-size:.72rem">${d.deductions>0?'−'+fmtE(d.deductions):'—'}</td>
+        <td style="font-weight:600;font-size:.78rem">${esc(d.mag)}${d.coutsConnus ? `<br><span style="font-size:.62rem;color:var(--muted);font-weight:400">TVA ${d.tvaMoy > 0 ? pctTxt(d.tvaMoy) : 'non renseignée'} · produits ${pctTxt(d.pctProd)}</span>` : ''}</td>
+        <td class="mono text-right" style="color:var(--muted)">${fmtE(d.ca)}</td>
+        <td class="mono text-right" style="font-weight:700">${fmtE(d.caHT)}</td>
+        <td class="mono text-right" style="color:var(--muted)">${d.coutProduits > 0 ? fmtE(d.coutProduits) : '—'}</td>
         <td class="mono text-right" style="color:var(--muted)">${fmtE(d.coutsFixe)}</td>
         <td class="mono text-right" style="color:var(--muted)">${d.coutsPonct>0?fmtE(d.coutsPonct):'—'}</td>
-        <td class="mono text-right amber" title="${d.heuresMag.toLocaleString('fr-FR',FR1)} h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toLocaleString('fr-FR',FR1)} h</span></td>
-        <td class="mono text-right amber" style="font-weight:700">${fmtE(d.couts)}</td>
+        <td class="mono text-right" title="${d.heuresMag.toLocaleString('fr-FR',FR1)} h travaillées">${fmtE(d.salaires)}<br><span style="font-size:.62rem;color:var(--muted)">${d.heuresMag.toLocaleString('fr-FR',FR1)} h</span></td>
+        <td class="mono text-right" style="font-weight:700">${fmtE(d.couts)}</td>
         <td class="mono text-right" style="color:${couleur(d.marge)};font-weight:700">${fmtE(d.marge)}</td>
-        <td class="mono text-right" style="color:${d.couts>0?couleur(d.pct):'var(--muted)'};font-weight:${d.couts>0?700:400}">${d.couts>0?fmtP(d.pct):'Coûts non renseignés'}</td>
+        <td class="mono text-right" style="color:${d.coutsConnus?couleur(d.pct):'var(--muted)'};font-weight:${d.coutsConnus?700:400}">${d.coutsConnus?fmtP(d.pct):'Coûts non renseignés'}</td>
       </tr>`).join('') :
       '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:20px">Aucune donnée sur cette période</td></tr>';
 
@@ -2091,7 +2105,8 @@ async function chargerRentabilite() {
       creerChart('chart-rentabilite', 'bar',
         data.map(d => d.mag.length > 16 ? d.mag.slice(0,16)+'…' : d.mag),
         [
-          { label:'CA déclaré',     data:data.map(d => d.caBrutHT),  backgroundColor:CHART_COLORS[0] }, // CA brut HT après déductions
+          { label:'CA HT',          data:data.map(d => d.caHT),      backgroundColor:CHART_COLORS[0] },
+          { label:'Coût produits',  data:data.map(d => d.coutProduits), backgroundColor:CHART_COLORS[9] },
           { label:'Coûts fixes et ponctuels', data:data.map(d => d.coutsFixe + d.coutsPonct), backgroundColor:CHART_COLORS[2] },
           { label:'Salaires réels', data:data.map(d => d.salaires),  backgroundColor:CHART_COLORS[7] },
           { label:'Marge',          data:data.map(d => d.marge),     backgroundColor:data.map(d => d.marge >= 0 ? marge : perte) }
@@ -2100,7 +2115,7 @@ async function chargerRentabilite() {
       );
     }
 
-    const nbSansTaux = allMags.filter(m => heuresParMag[m]?.heures > 0 && !(heuresParMag[m]?.coutSal > 0)).length;
+    const nbSansTaux = cles.filter(k => heuresParMag[k]?.heures > 0 && !(heuresParMag[k]?.coutSal > 0)).length;
     if (nbSansTaux > 0) showToast(`⚠️ ${nbSansTaux} magasin(s) ont des heures sans taux horaire défini`, 'info');
     else showToast('✅ Rentabilité calculée','success');
   } catch(e) {
@@ -2110,6 +2125,25 @@ async function chargerRentabilite() {
 }
 
 // Calcule le nombre de mois entre deux dates (min 1)
+// Nombre de mois (décimal) couverts par la période, au jour près : un mois complet = 1,
+// du 27/10 au 26/11 = 5/31 + 26/30 ≈ 1,03. Sans période : 1 mois.
+// Clé de rapprochement d'un nom de magasin entre onglets : sans accents ni casse, espaces multiples réduits
+// (« Delame  Nice » dans Coût magasin = « Delame Nice » dans le suivi)
+function cleMagasin(m) { return normNom(String(m ?? '').replace(/\s+/g, ' ').trim()); }
+
+function prorataMois(dMin, dMax) {
+  if (!dMin || !dMax || dMax < dMin) return 1;
+  const jour = d => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+  let total = 0, m = new Date(dMin.getFullYear(), dMin.getMonth(), 1);
+  while (m <= dMax) {
+    const fin = new Date(m.getFullYear(), m.getMonth() + 1, 0);
+    const debut = jour(dMin > m ? dMin : m), arret = jour(dMax < fin ? dMax : fin);
+    total += (Math.round((arret - debut) / 86400000) + 1) / fin.getDate();
+    m = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+  }
+  return total;
+}
+
 function calculerNbMois(dMin, dMax) {
   if (!dMin || !dMax) return 1;
   const diff = (dMax.getFullYear() - dMin.getFullYear()) * 12 + (dMax.getMonth() - dMin.getMonth()) + 1;
@@ -2257,7 +2291,7 @@ async function chargerCoutsFixes() {
         loyer:    parseFR(r[5]) || 0,
         salaire:  parseFR(r[6]) || 0,
         autres:   parseFR(r[7]) || 0,
-        pctDed:   parseFR(r[8]) || 0,  // col I : % déduit du CA
+        pctDed:   parseFR(r[8]) || 0,  // col I : « Pourcentage de produit » (coût des marchandises, % du CA HT)
         tvaMoy:   parseFR(r[9]) || 0,  // col J : TVA moy % → TTC→HT
       }))
       .filter(r => r.mag);
@@ -2280,7 +2314,7 @@ function renderTableCoutsFixes() {
     { key: 'loyer',    label: 'Loyer',         col: 'F', unit: '€' },
     { key: 'salaire',  label: 'Salaire fixe',  col: 'G', unit: '€' },
     { key: 'autres',   label: 'Autres',        col: 'H', unit: '€' },
-    { key: 'pctDed',   label: '% déduit CA',   col: 'I', unit: '%', step: '0.1', placeholder: 'ex: 5'  },
+    { key: 'pctDed',   label: 'Coût produits (% CA HT)', col: 'I', unit: '%', step: '0.1', placeholder: 'ex: 30' },
     { key: 'tvaMoy',   label: 'TVA moy. (%)',  col: 'J', unit: '%', step: '0.1', placeholder: 'ex: 20' },
   ];
 
@@ -2808,7 +2842,8 @@ async function exporterRentabiliteExcel() {
 
     // ── Feuille 1 : Synthèse ──
     const totCA     = data.reduce((s,d) => s + d.ca,        0);
-    const totBrutHT = data.reduce((s,d) => s + d.caBrutHT,  0);
+    const totBrutHT = data.reduce((s,d) => s + d.caHT,  0);
+    const totProd   = data.reduce((s,d) => s + d.coutProduits, 0);
     const totCF     = data.reduce((s,d) => s + d.coutsFixe, 0);
     const totCP     = data.reduce((s,d) => s + (d.coutsPonct||0), 0);
     const totSal    = data.reduce((s,d) => s + d.salaires,  0);
@@ -2822,14 +2857,14 @@ async function exporterRentabiliteExcel() {
       ['Export Rentabilité — AllinOne'],
       ['Période : ' + periode, magLabel, '', 'Exporté le ' + dateExport],
       [],
-      ['Magasin','CA déclaré TTC (€)','CA brut HT (€)','Déductions (€)','% déduit CA','TVA moy (%)','Coûts fixes (€)','Coûts ponctuels (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
+      ['Magasin','CA déclaré TTC (€)','TVA moy (%)','CA HT (€)','Coût produits (% CA HT)','Coût produits (€)','Coûts fixes (€)','Coûts ponctuels (€)','Salaires (€)','Total coûts (€)','Marge (€)','Rentabilité (%)'],
       ...data.map(d => [
         d.mag,
         +d.ca.toFixed(2),
-        +d.caBrutHT.toFixed(2),
-        +(d.ca - d.caBrutHT).toFixed(2),
-        d.pctDed > 0 ? d.pctDed : '',
         d.tvaMoy > 0 ? d.tvaMoy : '',
+        +d.caHT.toFixed(2),
+        d.pctProd > 0 ? d.pctProd : '',
+        +d.coutProduits.toFixed(2),
         +d.coutsFixe.toFixed(2),
         +(d.coutsPonct||0).toFixed(2),
         +d.salaires.toFixed(2),
@@ -2838,12 +2873,12 @@ async function exporterRentabiliteExcel() {
         +d.pct.toFixed(1),
       ]),
       [],
-      ['TOTAL', +totCA.toFixed(2), +totBrutHT.toFixed(2), +(totCA-totBrutHT).toFixed(2),
-        '', '', +totCF.toFixed(2), +totCP.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
+      ['TOTAL', +totCA.toFixed(2), '', +totBrutHT.toFixed(2), '', +totProd.toFixed(2),
+        +totCF.toFixed(2), +totCP.toFixed(2), +totSal.toFixed(2), +totCouts.toFixed(2),
         +totMarge.toFixed(2), +totPct.toFixed(1)],
     ];
     const ws1 = XLSX.utils.aoa_to_sheet(wsData);
-    ws1['!cols'] = [22,18,16,14,12,12,16,18,14,14,14,14].map(w => ({wch:w}));
+    ws1['!cols'] = [24,18,12,14,16,16,14,18,14,14,14,14].map(w => ({wch:w}));
     XLSX.utils.book_append_sheet(wb, ws1, 'Synthèse');
 
     // ── Feuille : Coûts ponctuels de la période ──
