@@ -124,6 +124,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
 <div id="loader">
   <div class="logo">Allin<span>One</span></div>
+  <div class="signature-voltis">par Voltis Solutions</div>
   <div class="spinner"></div>
   <p style="color:var(--muted);font-size:.84rem;margin-top:4px">Initialisation…</p>
 </div>
@@ -131,6 +132,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 <!-- ÉCRAN LOGIN -->
 <div id="login-screen">
   <div class="login-logo">Allin<span>One</span></div>
+  <div class="signature-voltis">par Voltis Solutions</div>
   <div class="login-subtitle">Connexion collaborateur</div>
   <div class="login-box">
     <div id="login-error" class="login-error">Matricule ou code PIN incorrect</div>
@@ -165,6 +167,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     <a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:none;margin:0 8px">Confidentialité</a>
     ·
     <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:none;margin:0 8px">Conditions</a>
+    <div class="pied-voltis">© <span class="annee-courante">2026</span> Voltis Solutions</div>
   </div>
 </div>
 
@@ -175,7 +178,10 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
 <!-- ══════ HEADER ══════ -->
 <div class="header" id="main-header" style="display:none">
-  <div class="header-title">Allin<span>One</span><span style="font-size:.55rem;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:.02em" id="app-version-label"></span></div>
+  <div class="header-marque">
+    <div class="header-title">Allin<span>One</span><span style="font-size:.55rem;font-weight:600;color:var(--muted);margin-left:5px;letter-spacing:.02em" id="app-version-label"></span></div>
+    <div class="header-signature">par Voltis Solutions</div>
+  </div>
   <div style="display:flex;align-items:center;gap:8px">
     <!-- Bouton thème -->
     <button id="theme-toggle-btn" onclick="toggleTheme()" aria-label="Changer le thème"
@@ -1280,6 +1286,7 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
   <div style="text-align:center;margin-top:20px;font-size:.68rem">
     <a href="privacy.html" target="_blank" style="color:var(--muted);text-decoration:none;margin:0 8px">Politique de confidentialité</a>·
     <a href="terms.html" target="_blank" style="color:var(--muted);text-decoration:none;margin:0 8px">Conditions d'utilisation</a>
+    <div class="pied-voltis">AllinOne est une application éditée par Voltis Solutions</div>
   </div>
 </div>
 
