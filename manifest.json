@@ -1,7 +1,7 @@
 {
   "name": "AllinOne App",
   "short_name": "AllinOne",
-  "description": "Application de gestion FG Developpement",
+  "description": "AllinOne par Voltis Solutions — gestion des ventes, du CA, du planning et des stocks",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

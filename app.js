@@ -9250,3 +9250,8 @@ if (document.readyState === 'loading') {
 }
 
 
+
+// Année du pied de page « © … Voltis Solutions » (jamais à mettre à jour à la main)
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.annee-courante').forEach(e => { e.textContent = new Date().getFullYear(); });
+});
