@@ -1,3 +1,9 @@
+V2.6.1
+Correction rentabilité : le « CA » affiché était déjà diminué du coût des produits (colonne « Pourcentage de produit », 30 %). Le CA HT est maintenant le vrai CA, et le coût des produits apparaît comme un coût dans sa propre colonne
+Correction rentabilité : le pourcentage de rentabilité était calculé sur ce CA réduit, donc surestimé ; il est maintenant calculé sur le CA HT
+Correction rentabilité : les coûts fixes mensuels sont ramenés au nombre de jours de la période ; sur une période à cheval sur deux mois (ex. les 30 derniers jours), ils étaient comptés deux fois
+Correction rentabilité : un magasin écrit avec un espace en trop dans un onglet n'apparaît plus deux fois (une ligne sans coûts, une ligne sans CA)
+Rentabilité : alerte pour les managers si la TVA d'un magasin n'est pas renseignée (le CA HT serait alors égal au TTC)
 V2.6.0
 AllinOne passe sous Voltis Solutions : « par Voltis Solutions » sur l'écran de connexion, au chargement et sous le nom de l'application en haut de l'écran
 Pages Confidentialité et Conditions d'utilisation : éditeur Voltis Solutions, nom AllinOne et couleurs de l'application ; le lien « Retour à l'application » fonctionne de nouveau

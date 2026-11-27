@@ -838,8 +838,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
     </div>
     <!-- Totaux -->
     <div class="kpi-grid">
-      <div class="stat-card"><div class="label">CA Total</div><div class="value green mono" id="rent-tot-ca">—</div></div>
-      <div class="stat-card"><div class="label">Coûts Total</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
+      <div class="stat-card"><div class="label">CA HT</div><div class="value green mono" id="rent-tot-ca">—</div><div class="kpi-delta" id="rent-tot-ca-ttc"></div></div>
+      <div class="stat-card"><div class="label">Coûts totaux</div><div class="value amber mono" id="rent-tot-couts">—</div></div>
       <div class="stat-card"><div class="label">Marge nette</div><div class="value mono" id="rent-tot-marge">—</div></div>
       <div class="stat-card"><div class="label">Rentabilité</div><div class="value mono" id="rent-tot-pct">—</div></div>
     </div>
@@ -879,7 +879,8 @@ document.write('<link rel="stylesheet" href="./style.css?v=' + APP_VERSION + '">
 
       <!-- Info -->
       <div style="background:rgba(91,143,249,.06);border:1px solid rgba(91,143,249,.2);border-radius:var(--radius);padding:10px 14px;margin-bottom:12px;font-size:.76rem;color:var(--muted);line-height:1.5">
-        Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont utilisés dans le calcul de rentabilité selon la période sélectionnée.
+        Ces coûts sont <strong style="color:var(--text)">mensuels</strong> par magasin. Ils sont ramenés au nombre de jours de la période analysée (un mois complet = 1 mois de coûts).
+        <br><strong style="color:var(--text)">Coût produits</strong> : coût des marchandises, en % du CA HT. <strong style="color:var(--text)">TVA moy.</strong> sert à passer du CA TTC déclaré au CA HT.
         <br>Le champ <strong style="color:var(--text)">Salaire</strong> est indicatif — les salaires réels sont calculés depuis les heures déclarées.
       </div>
 
